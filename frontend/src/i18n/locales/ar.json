@@ -1,0 +1,48 @@
+{
+  "nav": {
+    "dashboard": "لوحة التحكم",
+    "workList": "قائمة المشاريع",
+    "equipmentTracking": "تتبع المعدات",
+    "masters": "الرئيسية",
+    "employeeMaster": "بيانات الموظفين",
+    "projectMaster": "بيانات المشاريع",
+    "equipmentMaster": "بيانات المعدات",
+    "profile": "الملف الشخصي",
+    "logout": "تسجيل الخروج"
+  },
+  "auth": {
+    "login": "تسجيل الدخول",
+    "register": "إنشاء حساب",
+    "email": "البريد الإلكتروني",
+    "password": "كلمة المرور",
+    "mobile": "رقم الهاتف",
+    "otp": "رمز التحقق",
+    "sendOtp": "إرسال الرمز",
+    "verifyOtp": "تأكيد الرمز",
+    "googleSignIn": "تسجيل الدخول بجوجل",
+    "noAccount": "ليس لديك حساب؟",
+    "haveAccount": "لديك حساب بالفعل؟",
+    "loginWithEmail": "البريد الإلكتروني",
+    "loginWithOTP": "رمز الهاتف",
+    "loginWithGoogle": "جوجل"
+  },
+  "common": {
+    "save": "حفظ",
+    "cancel": "إلغاء",
+    "edit": "تعديل",
+    "delete": "حذف",
+    "loading": "جاري التحميل...",
+    "search": "بحث",
+    "filter": "تصفية",
+    "date": "التاريخ",
+    "actions": "إجراءات",
+    "name": "الاسم",
+    "remarks": "ملاحظات",
+    "submit": "إرسال",
+    "close": "إغلاق",
+    "yes": "نعم",
+    "no": "لا",
+    "error": "خطأ",
+    "success": "نجاح"
+  }
+}

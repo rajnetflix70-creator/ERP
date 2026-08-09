@@ -1,0 +1,48 @@
+{
+  "nav": {
+    "dashboard": "डैशबोर्ड",
+    "workList": "कार्य सूची",
+    "equipmentTracking": "उपकरण ट्रैकिंग",
+    "masters": "मास्टर",
+    "employeeMaster": "कर्मचारी मास्टर",
+    "projectMaster": "प्रोजेक्ट मास्टर",
+    "equipmentMaster": "उपकरण मास्टर",
+    "profile": "प्रोफ़ाइल",
+    "logout": "लॉग आउट"
+  },
+  "auth": {
+    "login": "लॉग इन",
+    "register": "रजिस्टर करें",
+    "email": "ईमेल",
+    "password": "पासवर्ड",
+    "mobile": "मोबाइल नंबर",
+    "otp": "ओटीपी कोड",
+    "sendOtp": "ओटीपी भेजें",
+    "verifyOtp": "ओटीपी सत्यापित करें",
+    "googleSignIn": "Google से साइन इन करें",
+    "noAccount": "क्या आपके पास खाता नहीं है?",
+    "haveAccount": "क्या आपके पास पहले से खाता है?",
+    "loginWithEmail": "ईमेल/पासवर्ड",
+    "loginWithOTP": "मोबाइल ओटीपी",
+    "loginWithGoogle": "गूगल"
+  },
+  "common": {
+    "save": "सहेजें",
+    "cancel": "रद्द करें",
+    "edit": "संपादित करें",
+    "delete": "हटाएं",
+    "loading": "लोड हो रहा है...",
+    "search": "खोजें",
+    "filter": "फ़िल्टर",
+    "date": "तारीख",
+    "actions": "कार्रवाई",
+    "name": "नाम",
+    "remarks": "टिप्पणियाँ",
+    "submit": "जमा करें",
+    "close": "बंद करें",
+    "yes": "हाँ",
+    "no": "नहीं",
+    "error": "त्रुटि",
+    "success": "सफलता"
+  }
+}

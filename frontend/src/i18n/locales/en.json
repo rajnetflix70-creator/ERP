@@ -1,0 +1,48 @@
+{
+  "nav": {
+    "dashboard": "Dashboard",
+    "workList": "Work List",
+    "equipmentTracking": "Equipment Tracking",
+    "masters": "Masters",
+    "employeeMaster": "Employee Master",
+    "projectMaster": "Project Master",
+    "equipmentMaster": "Equipment Master",
+    "profile": "Profile",
+    "logout": "Logout"
+  },
+  "auth": {
+    "login": "Login",
+    "register": "Register",
+    "email": "Email",
+    "password": "Password",
+    "mobile": "Mobile Number",
+    "otp": "OTP Code",
+    "sendOtp": "Send OTP",
+    "verifyOtp": "Verify OTP",
+    "googleSignIn": "Sign in with Google",
+    "noAccount": "Don't have an account?",
+    "haveAccount": "Already have an account?",
+    "loginWithEmail": "Email/Password",
+    "loginWithOTP": "Mobile OTP",
+    "loginWithGoogle": "Google"
+  },
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "edit": "Edit",
+    "delete": "Delete",
+    "loading": "Loading...",
+    "search": "Search",
+    "filter": "Filter",
+    "date": "Date",
+    "actions": "Actions",
+    "name": "Name",
+    "remarks": "Remarks",
+    "submit": "Submit",
+    "close": "Close",
+    "yes": "Yes",
+    "no": "No",
+    "error": "Error",
+    "success": "Success"
+  }
+}
