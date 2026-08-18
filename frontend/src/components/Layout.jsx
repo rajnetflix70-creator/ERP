@@ -20,9 +20,6 @@ const Layout = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [mastersOpen, setMastersOpen] = useState(
-    location.pathname.startsWith('/masters')
-  );
 
   const handleLogout = () => {
     logout();
@@ -42,10 +39,11 @@ const Layout = () => {
     if (p === '/equipment/maintenance') return 'Maintenance Work Orders';
     if (p === '/equipment/breakdown') return 'Emergency Breakdown Log';
     if (p === '/equipment/documents') return 'Document & Compliance Vault';
+    if (p === '/masters/employees') return 'Employee & Staff Master Directory';
     if (p === '/masters/operators') return 'Equipment Operators Master';
     if (p === '/masters/projects') return 'Site & Project Master (AK-Jobs)';
     if (p === '/masters/vendors') return 'Vendor & Service Directory';
-    if (p === '/reports') return 'ERP Reports & Exports';
+    if (p === '/reports') return 'ERP Reports & Analytics';
     if (p === '/notifications') return 'Notification Alert Center';
     return 'AK Construction ERP';
   };
@@ -70,7 +68,7 @@ const Layout = () => {
           </span>
         </div>
 
-        {/* Main Nav (14 Sections) */}
+        {/* Main Nav (15 Sections) */}
         <div className="sidebar-section">
           <NavLink to="/" end className={({ isActive }) => `sidebar-link${isActive ? ' active' : ''}`} onClick={closeSidebar}>
             <span className="link-icon">📊</span>
@@ -115,6 +113,11 @@ const Layout = () => {
           <NavLink to="/equipment/documents" className={({ isActive }) => `sidebar-link${isActive ? ' active' : ''}`} onClick={closeSidebar}>
             <span className="link-icon">📁</span>
             Documents Vault
+          </NavLink>
+
+          <NavLink to="/masters/employees" className={({ isActive }) => `sidebar-link${isActive ? ' active' : ''}`} onClick={closeSidebar}>
+            <span className="link-icon">👥</span>
+            Employee Master
           </NavLink>
 
           <NavLink to="/masters/operators" className={({ isActive }) => `sidebar-link${isActive ? ' active' : ''}`} onClick={closeSidebar}>

@@ -17,6 +17,7 @@ import DocumentManagement from './pages/DocumentManagement';
 import OperatorsMaster from './pages/OperatorsMaster';
 import ProjectMaster from './pages/ProjectMaster';
 import VendorsMaster from './pages/VendorsMaster';
+import EmployeeMaster from './pages/EmployeeMaster';
 import ReportsModule from './pages/ReportsModule';
 import NotificationCenter from './pages/NotificationCenter';
 
@@ -38,6 +39,7 @@ function App() {
               <Route path="equipment/maintenance" element={<MaintenanceManagement />} />
               <Route path="equipment/breakdown" element={<BreakdownManagement />} />
               <Route path="equipment/documents" element={<DocumentManagement />} />
+              <Route path="masters/employees" element={<EmployeeMaster />} />
               <Route path="masters/operators" element={<OperatorsMaster />} />
               <Route path="masters/projects" element={<ProjectMaster />} />
               <Route path="masters/vendors" element={<VendorsMaster />} />
