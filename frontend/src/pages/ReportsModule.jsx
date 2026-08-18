@@ -117,22 +117,25 @@ const ReportsModule = () => {
               </tr>
             </thead>
             <tbody>
-              {reportsData && reportsData.site_counts.map((sc, idx) => (
-                <tr key={idx} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                  <td style={{ padding: '0.75rem', fontWeight: '600' }}>{sc.current_location_name || 'UNASSIGNED STORE'}</td>
-                  <td style={{ padding: '0.75rem', fontWeight: '700', color: '#2563eb' }}>{sc.cnt} units</td>
-                  <td style={{ padding: '0.75rem' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                      <div style={{ flex: 1, backgroundColor: '#e2e8f0', height: '8px', borderRadius: '4px', overflow: 'hidden' }}>
-                        <div style={{ width: `${Math.min(100, (parseInt(sc.cnt) / 15) * 100)}%`, backgroundColor: '#2563eb', height: '100%' }} />
+              {reportsData && (() => {
+                const grandTotal = reportsData.site_counts.reduce((sum, sc) => sum + parseInt(sc.cnt || 0), 0) || 1;
+                return reportsData.site_counts.map((sc, idx) => (
+                  <tr key={idx} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                    <td style={{ padding: '0.75rem', fontWeight: '600' }}>{sc.current_location_name || 'UNASSIGNED STORE'}</td>
+                    <td style={{ padding: '0.75rem', fontWeight: '700', color: '#2563eb' }}>{sc.cnt} units</td>
+                    <td style={{ padding: '0.75rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                        <div style={{ flex: 1, backgroundColor: '#e2e8f0', height: '8px', borderRadius: '4px', overflow: 'hidden' }}>
+                          <div style={{ width: `${Math.min(100, (parseInt(sc.cnt) / grandTotal) * 100)}%`, backgroundColor: '#2563eb', height: '100%' }} />
+                        </div>
+                        <span style={{ fontWeight: '600', fontSize: '0.8rem', color: '#475569' }}>
+                          {Math.round((parseInt(sc.cnt) / grandTotal) * 100)}%
+                        </span>
                       </div>
-                      <span style={{ fontWeight: '600', fontSize: '0.8rem', color: '#475569' }}>
-                        {Math.round((parseInt(sc.cnt) / 111) * 100)}%
-                      </span>
-                    </div>
-                  </td>
-                </tr>
-              ))}
+                    </td>
+                  </tr>
+                ));
+              })()}
             </tbody>
           </table>
         </div>

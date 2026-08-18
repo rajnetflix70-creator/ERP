@@ -14,6 +14,20 @@ const ROLE_LABELS = {
   worker: 'Worker',
 };
 
+const NavGroup = ({ label, children }) => (
+  <div className="sidebar-group">
+    <div className="sidebar-group-label">{label}</div>
+    {children}
+  </div>
+);
+
+const SideLink = ({ to, icon, label, end = false, onClick }) => (
+  <NavLink to={to} end={end} className={({ isActive }) => `sidebar-link${isActive ? ' active' : ''}`} onClick={onClick}>
+    <span className="link-icon">{icon}</span>
+    {label}
+  </NavLink>
+);
+
 const Layout = () => {
   const { t } = useTranslation();
   const { user, logout } = useAuth();
@@ -21,40 +35,35 @@ const Layout = () => {
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
-  };
-
+  const handleLogout = () => { logout(); navigate('/login'); };
   const closeSidebar = () => setSidebarOpen(false);
 
   const getPageTitle = () => {
     const p = location.pathname;
-    if (p === '/') return 'Equipment ERP Dashboard';
-    if (p === '/equipment/master') return 'Equipment Master Catalog';
-    if (p === '/equipment/allocation') return 'Site Equipment Allocation';
-    if (p === '/equipment/movement') return 'Equipment Site Transfer';
-    if (p === '/equipment/daily-log') return 'Daily Usage & PDF Matrix Log';
-    if (p === '/attendance/bulk') return 'Bulk Attendance Sheet';
-    if (p === '/equipment/maintenance') return 'Maintenance Work Orders';
-    if (p === '/equipment/breakdown') return 'Emergency Breakdown Log';
-    if (p === '/equipment/documents') return 'Document & Compliance Vault';
-    if (p === '/masters/employees') return 'Employee & Staff Master Directory';
-    if (p === '/masters/operators') return 'Equipment Operators Master';
-    if (p === '/masters/projects') return 'Site & Project Master (AK-Jobs)';
-    if (p === '/masters/vendors') return 'Vendor & Service Directory';
-    if (p === '/reports') return 'ERP Reports & Analytics';
-    if (p === '/notifications') return 'Notification Alert Center';
-    return 'AK Construction ERP';
+    const titles = {
+      '/': 'Dashboard',
+      '/project/work-packages': 'Project Work Packages — Kanban',
+      '/masters/projects': 'Site & Project Master',
+      '/equipment/master': 'Equipment Master Catalog',
+      '/equipment/allocation': 'Site Equipment Allocation',
+      '/equipment/movement': 'Equipment Site Transfer',
+      '/equipment/daily-log': 'Daily Equipment Log',
+      '/attendance/bulk': 'Bulk Attendance Sheet',
+      '/equipment/maintenance': 'Maintenance Work Orders',
+      '/equipment/breakdown': 'Breakdown Log',
+      '/equipment/documents': 'Documents & Compliance Vault',
+      '/masters/employees': 'Employee & Staff Master',
+      '/masters/operators': 'Equipment Operators Master',
+      '/masters/vendors': 'Vendor & Supplier Directory',
+      '/reports': 'Reports & Analytics',
+      '/notifications': 'Notification Center',
+    };
+    return titles[p] || 'AK Construction ERP';
   };
 
   return (
     <div className="app-shell">
-      {/* Mobile overlay */}
-      <div
-        className={`sidebar-overlay ${sidebarOpen ? 'open' : ''}`}
-        onClick={closeSidebar}
-      />
+      <div className={`sidebar-overlay ${sidebarOpen ? 'open' : ''}`} onClick={closeSidebar} />
 
       {/* ── Sidebar ── */}
       <aside className={`sidebar ${sidebarOpen ? 'open' : ''}`}>
@@ -64,86 +73,45 @@ const Layout = () => {
             🏗️ <span>AK Construction</span>
           </div>
           <span style={{ fontSize: '0.72rem', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-            Equipment Management ERP
+            Site Management ERP
           </span>
         </div>
 
-        {/* Main Nav (15 Sections) */}
-        <div className="sidebar-section">
-          <NavLink to="/" end className={({ isActive }) => `sidebar-link${isActive ? ' active' : ''}`} onClick={closeSidebar}>
-            <span className="link-icon">📊</span>
-            Dashboard
-          </NavLink>
+        {/* Navigation */}
+        <div className="sidebar-nav">
 
-          <NavLink to="/equipment/master" className={({ isActive }) => `sidebar-link${isActive ? ' active' : ''}`} onClick={closeSidebar}>
-            <span className="link-icon">⚙️</span>
-            Equipment Master
-          </NavLink>
+          <SideLink to="/" icon="📊" label="Dashboard" end onClick={closeSidebar} />
 
-          <NavLink to="/equipment/allocation" className={({ isActive }) => `sidebar-link${isActive ? ' active' : ''}`} onClick={closeSidebar}>
-            <span className="link-icon">📍</span>
-            Site Allocation
-          </NavLink>
+          <NavGroup label="📋 PROJECT">
+            <SideLink to="/project/work-packages" icon="📋" label="Work Packages" onClick={closeSidebar} />
+            <SideLink to="/masters/projects" icon="🏗️" label="Project Master" onClick={closeSidebar} />
+          </NavGroup>
 
-          <NavLink to="/equipment/movement" className={({ isActive }) => `sidebar-link${isActive ? ' active' : ''}`} onClick={closeSidebar}>
-            <span className="link-icon">🚛</span>
-            Equipment Movement
-          </NavLink>
+          <NavGroup label="👷 WORKFORCE">
+            <SideLink to="/attendance/bulk" icon="📋" label="Bulk Attendance" onClick={closeSidebar} />
+            <SideLink to="/masters/employees" icon="👥" label="Employee Master" onClick={closeSidebar} />
+            <SideLink to="/masters/operators" icon="🦺" label="Operators Master" onClick={closeSidebar} />
+          </NavGroup>
 
-          <NavLink to="/equipment/daily-log" className={({ isActive }) => `sidebar-link${isActive ? ' active' : ''}`} onClick={closeSidebar}>
-            <span className="link-icon">📅</span>
-            Daily Equipment Log
-          </NavLink>
+          <NavGroup label="🔧 EQUIPMENT">
+            <SideLink to="/equipment/master" icon="⚙️" label="Equipment Master" onClick={closeSidebar} />
+            <SideLink to="/equipment/allocation" icon="📍" label="Site Allocation" onClick={closeSidebar} />
+            <SideLink to="/equipment/movement" icon="🚛" label="Movement Log" onClick={closeSidebar} />
+            <SideLink to="/equipment/daily-log" icon="📅" label="Daily Log" onClick={closeSidebar} />
+            <SideLink to="/equipment/maintenance" icon="🔧" label="Maintenance" onClick={closeSidebar} />
+            <SideLink to="/equipment/breakdown" icon="⚠️" label="Breakdowns" onClick={closeSidebar} />
+            <SideLink to="/equipment/documents" icon="📁" label="Documents Vault" onClick={closeSidebar} />
+          </NavGroup>
 
-          <NavLink to="/attendance/bulk" className={({ isActive }) => `sidebar-link${isActive ? ' active' : ''}`} onClick={closeSidebar}>
-            <span className="link-icon">📋</span>
-            Bulk Attendance Sheet
-          </NavLink>
+          <NavGroup label="🏢 MASTERS">
+            <SideLink to="/masters/vendors" icon="🏢" label="Vendors" onClick={closeSidebar} />
+          </NavGroup>
 
-          <NavLink to="/equipment/maintenance" className={({ isActive }) => `sidebar-link${isActive ? ' active' : ''}`} onClick={closeSidebar}>
-            <span className="link-icon">🔧</span>
-            Maintenance
-          </NavLink>
+          <NavGroup label="📊 REPORTS">
+            <SideLink to="/reports" icon="📈" label="Reports & Analytics" onClick={closeSidebar} />
+            <SideLink to="/notifications" icon="🔔" label="Notifications" onClick={closeSidebar} />
+          </NavGroup>
 
-          <NavLink to="/equipment/breakdown" className={({ isActive }) => `sidebar-link${isActive ? ' active' : ''}`} onClick={closeSidebar}>
-            <span className="link-icon">⚠️</span>
-            Breakdown Log
-          </NavLink>
-
-          <NavLink to="/equipment/documents" className={({ isActive }) => `sidebar-link${isActive ? ' active' : ''}`} onClick={closeSidebar}>
-            <span className="link-icon">📁</span>
-            Documents Vault
-          </NavLink>
-
-          <NavLink to="/masters/employees" className={({ isActive }) => `sidebar-link${isActive ? ' active' : ''}`} onClick={closeSidebar}>
-            <span className="link-icon">👥</span>
-            Employee Master
-          </NavLink>
-
-          <NavLink to="/masters/operators" className={({ isActive }) => `sidebar-link${isActive ? ' active' : ''}`} onClick={closeSidebar}>
-            <span className="link-icon">👷</span>
-            Operators Master
-          </NavLink>
-
-          <NavLink to="/masters/projects" className={({ isActive }) => `sidebar-link${isActive ? ' active' : ''}`} onClick={closeSidebar}>
-            <span className="link-icon">🏗️</span>
-            Sites / Projects
-          </NavLink>
-
-          <NavLink to="/masters/vendors" className={({ isActive }) => `sidebar-link${isActive ? ' active' : ''}`} onClick={closeSidebar}>
-            <span className="link-icon">🏢</span>
-            Vendors Directory
-          </NavLink>
-
-          <NavLink to="/reports" className={({ isActive }) => `sidebar-link${isActive ? ' active' : ''}`} onClick={closeSidebar}>
-            <span className="link-icon">📈</span>
-            Reports & Analytics
-          </NavLink>
-
-          <NavLink to="/notifications" className={({ isActive }) => `sidebar-link${isActive ? ' active' : ''}`} onClick={closeSidebar}>
-            <span className="link-icon">🔔</span>
-            Notification Center
-          </NavLink>
         </div>
 
         {/* Footer */}

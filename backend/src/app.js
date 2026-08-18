@@ -9,6 +9,7 @@ const authMiddleware = require('./middleware/auth');
 const authRoutes = require('./modules/auth/routes');
 const employeeRoutes = require('./modules/employees/routes');
 const projectRoutes  = require('./modules/projects/routes');
+const workPackageRoutes = require('./modules/work_packages/routes');
 const equipmentMachineRoutes = require('./modules/equipment_machines/routes');
 const attendanceRoutes = require('./modules/attendance/routes');
 
@@ -28,6 +29,7 @@ app.get('/api/v1/health', (req, res) => res.json({ status: 'ok' }));
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/employees', authMiddleware, employeeRoutes);
 app.use('/api/v1/projects',  authMiddleware, projectRoutes);
+app.use('/api/v1/work-packages', authMiddleware, workPackageRoutes);
 app.use('/api/v1/equipment-machines', authMiddleware, equipmentMachineRoutes);
 app.use('/api/v1/attendance', authMiddleware, attendanceRoutes);
 
