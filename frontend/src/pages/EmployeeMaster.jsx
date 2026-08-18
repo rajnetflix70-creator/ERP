@@ -4,25 +4,7 @@ import {
   getEmployees, createEmployee, updateEmployee, deactivateEmployee, getRoles,
 } from '../api/employees';
 import Modal from '../components/Modal';
-
-const COUNTRY_CODES = [
-  { code: '+971', label: '🇦🇪 UAE (+971)' },
-  { code: '+91',  label: '🇮🇳 India (+91)' },
-  { code: '+966', label: '🇸🇦 KSA (+966)' },
-  { code: '+974', label: '🇶🇦 Qatar (+974)' },
-  { code: '+968', label: '🇴🇲 Oman (+968)' },
-  { code: '+973', label: '🇧🇭 Bahrain (+973)' },
-  { code: '+965', label: '🇰🇼 Kuwait (+965)' },
-  { code: '+44',  label: '🇬🇧 UK (+44)' },
-  { code: '+1',   label: '🇺🇸 USA (+1)' },
-  { code: '+92',  label: '🇵🇰 Pakistan (+92)' },
-  { code: '+880', label: '🇧🇩 Bangladesh (+880)' },
-  { code: '+63',  label: '🇵🇭 Philippines (+63)' },
-  { code: '+20',  label: '🇪🇬 Egypt (+20)' },
-  { code: '+94',  label: '🇱🇰 Sri Lanka (+94)' },
-  { code: '+977', label: '🇳🇵 Nepal (+977)' },
-  { code: '+60',  label: '🇲🇾 Malaysia (+60)' },
-];
+import CountryCodeSelect, { ALL_COUNTRY_CODES } from '../components/CountryCodeSelect';
 
 const EMPTY_FORM = {
   full_name: '', email: '', password: '',
@@ -105,7 +87,7 @@ const EmployeeMaster = () => {
     let digitsOnly = mob;
 
     if (mob.startsWith('+')) {
-      const match = COUNTRY_CODES.find(c => mob.startsWith(c.code));
+      const match = ALL_COUNTRY_CODES.find(c => mob.startsWith(c.code));
       if (match) {
         matchedCode = match.code;
         digitsOnly = mob.substring(match.code.length);
@@ -346,18 +328,12 @@ const EmployeeMaster = () => {
               </div>
 
               <div className="form-group">
-                <label className="form-label">Mobile Number (Country Code + Mobile)</label>
-                <div style={{ display: 'flex', gap: 6 }}>
-                  <select
-                    className="form-control"
+                <label className="form-label">Mobile Number (Search Country Code + Mobile)</label>
+                <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                  <CountryCodeSelect
                     value={countryCode}
-                    onChange={e => setCountryCode(e.target.value)}
-                    style={{ width: '135px', flexShrink: 0, fontWeight: '600' }}
-                  >
-                    {COUNTRY_CODES.map(c => (
-                      <option key={c.code} value={c.code}>{c.label}</option>
-                    ))}
-                  </select>
+                    onChange={setCountryCode}
+                  />
                   <input
                     className="form-control"
                     name="localMobile"
