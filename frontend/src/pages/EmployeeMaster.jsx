@@ -5,8 +5,27 @@ import {
 } from '../api/employees';
 import Modal from '../components/Modal';
 
+const COUNTRY_CODES = [
+  { code: '+971', label: '🇦🇪 UAE (+971)' },
+  { code: '+91',  label: '🇮🇳 India (+91)' },
+  { code: '+966', label: '🇸🇦 KSA (+966)' },
+  { code: '+974', label: '🇶🇦 Qatar (+974)' },
+  { code: '+968', label: '🇴🇲 Oman (+968)' },
+  { code: '+973', label: '🇧🇭 Bahrain (+973)' },
+  { code: '+965', label: '🇰🇼 Kuwait (+965)' },
+  { code: '+44',  label: '🇬🇧 UK (+44)' },
+  { code: '+1',   label: '🇺🇸 USA (+1)' },
+  { code: '+92',  label: '🇵🇰 Pakistan (+92)' },
+  { code: '+880', label: '🇧🇩 Bangladesh (+880)' },
+  { code: '+63',  label: '🇵🇭 Philippines (+63)' },
+  { code: '+20',  label: '🇪🇬 Egypt (+20)' },
+  { code: '+94',  label: '🇱🇰 Sri Lanka (+94)' },
+  { code: '+977', label: '🇳🇵 Nepal (+977)' },
+  { code: '+60',  label: '🇲🇾 Malaysia (+60)' },
+];
+
 const EMPTY_FORM = {
-  full_name: '', email: '', mobile_number: '', password: '',
+  full_name: '', email: '', password: '',
   role_id: '', preferred_language: 'en', is_active: true,
 };
 
@@ -20,11 +39,15 @@ const EmployeeMaster = () => {
   const [filterActive, setFilterActive] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [modalOpen, setModalOpen] = useState(false);
-  const [editTarget, setEditTarget] = useState(null); // null = create
+  const [editTarget, setEditTarget] = useState(null);
+
+  // Form states
   const [form, setForm] = useState(EMPTY_FORM);
+  const [countryCode, setCountryCode] = useState('+971');
+  const [localMobile, setLocalMobile] = useState('');
   const [formError, setFormError] = useState('');
   const [formLoading, setFormLoading] = useState(false);
-  const [alert, setAlert] = useState(null); // { type, message }
+  const [alert, setAlert] = useState(null);
 
   const loadEmployees = useCallback(async () => {
     setLoading(true);
@@ -59,6 +82,8 @@ const EmployeeMaster = () => {
   const openCreate = () => {
     setEditTarget(null);
     setForm({ ...EMPTY_FORM, role_id: roles.find(r => r.name === 'worker')?.id || '' });
+    setCountryCode('+971');
+    setLocalMobile('');
     setFormError('');
     setModalOpen(true);
   };
@@ -68,12 +93,26 @@ const EmployeeMaster = () => {
     setForm({
       full_name: emp.full_name || '',
       email: emp.email || '',
-      mobile_number: emp.mobile_number || '',
       password: '',
       role_id: emp.role_id || '',
       preferred_language: emp.preferred_language || 'en',
       is_active: emp.is_active,
     });
+
+    // Parse existing country code and mobile number
+    let mob = emp.mobile_number || '';
+    let matchedCode = '+971';
+    let digitsOnly = mob;
+
+    if (mob.startsWith('+')) {
+      const match = COUNTRY_CODES.find(c => mob.startsWith(c.code));
+      if (match) {
+        matchedCode = match.code;
+        digitsOnly = mob.substring(match.code.length);
+      }
+    }
+    setCountryCode(matchedCode);
+    setLocalMobile(digitsOnly);
     setFormError('');
     setModalOpen(true);
   };
@@ -86,13 +125,21 @@ const EmployeeMaster = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setFormError('');
+
+    const cleanLocalMobile = localMobile.trim();
+    const fullMobile = cleanLocalMobile
+      ? (cleanLocalMobile.startsWith('+') ? cleanLocalMobile : `${countryCode}${cleanLocalMobile}`)
+      : '';
+
     setFormLoading(true);
     try {
-      const payload = { ...form };
-      // Don't send empty password on edit
+      const payload = {
+        ...form,
+        mobile_number: fullMobile || null,
+      };
+
       if (!payload.password) delete payload.password;
       if (!payload.email) delete payload.email;
-      if (!payload.mobile_number) delete payload.mobile_number;
       payload.role_id = parseInt(payload.role_id);
 
       if (editTarget) {
@@ -132,7 +179,7 @@ const EmployeeMaster = () => {
       {/* Page header */}
       <div className="page-header">
         <h1 className="page-title">👤 {t('nav.employeeMaster')}</h1>
-        <p className="page-subtitle">Manage all company employees — create, edit, and deactivate.</p>
+        <p className="page-subtitle">Manage company staff accounts — create, edit, role assignment, and international contact details.</p>
       </div>
 
       {/* Alert */}
@@ -198,9 +245,8 @@ const EmployeeMaster = () => {
                 <th>#</th>
                 <th>Full Name</th>
                 <th>Email</th>
-                <th>Mobile</th>
+                <th>Mobile Number</th>
                 <th>Role</th>
-                <th>Site</th>
                 <th>Language</th>
                 <th>Status</th>
                 <th>Actions</th>
@@ -209,30 +255,35 @@ const EmployeeMaster = () => {
             <tbody>
               {pagedEmployees.map((emp, idx) => (
                 <tr key={emp.id}>
-                  <td style={{ color: 'var(--color-text-muted)', fontVariantNumeric: 'tabular-nums' }}>{(currentPage - 1) * PAGE_SIZE + idx + 1}</td>
-                  <td style={{ fontWeight: 600 }}>{emp.full_name}</td>
-                  <td style={{ color: 'var(--color-text-muted)', fontSize: '0.88rem' }}>{emp.email || '—'}</td>
-                  <td style={{ fontSize: '0.88rem' }}>{emp.mobile_number || '—'}</td>
+                  <td style={{ color: 'var(--color-text-muted)', fontVariantNumeric: 'tabular-nums' }}>
+                    {(currentPage - 1) * PAGE_SIZE + idx + 1}
+                  </td>
+                  <td className="font-semibold" style={{ color: 'var(--color-header)' }}>
+                    {emp.full_name}
+                  </td>
+                  <td style={{ fontSize: '0.85rem' }}>{emp.email || '—'}</td>
+                  <td style={{ fontSize: '0.85rem', fontVariantNumeric: 'tabular-nums', fontWeight: 600 }}>
+                    {emp.mobile_number || '—'}
+                  </td>
                   <td>
-                    <span className={`badge ${emp.role === 'worker' ? 'badge-consumable' : 'badge-asset'}`}>
+                    <span className="badge badge-asset" style={{ fontSize: '0.75rem' }}>
                       {roleLabel(emp.role)}
                     </span>
                   </td>
-                  <td style={{ fontSize: '0.88rem', color: 'var(--color-text-muted)' }}>{emp.site_name || '—'}</td>
-                  <td style={{ fontSize: '0.85rem' }}>
-                    {{ en: '🇬🇧 EN', ar: '🇦🇪 AR', hi: '🇮🇳 HI' }[emp.preferred_language] || emp.preferred_language}
+                  <td style={{ fontSize: '0.82rem' }}>
+                    {emp.preferred_language === 'ar' ? '🇦🇪 Arabic' : emp.preferred_language === 'hi' ? '🇮🇳 Hindi' : '🇬🇧 English'}
                   </td>
                   <td>
                     <span className={`badge ${emp.is_active ? 'badge-present' : 'badge-absent'}`}>
-                      {emp.is_active ? 'Active' : 'Inactive'}
+                      {emp.is_active ? '🟢 Active' : '🔴 Inactive'}
                     </span>
                   </td>
                   <td>
                     <div style={{ display: 'flex', gap: 6 }}>
-                      <button className="btn btn-secondary btn-sm" onClick={() => openEdit(emp)}>✏️ Edit</button>
+                      <button className="btn btn-sm btn-secondary" onClick={() => openEdit(emp)}>✏️ Edit</button>
                       {emp.is_active && (
-                        <button className="btn btn-sm" style={{ background: 'var(--color-danger-lt)', color: 'var(--color-danger)', border: '1.5px solid var(--color-danger)' }} onClick={() => handleDeactivate(emp)}>
-                          🚫 Deactivate
+                        <button className="btn btn-sm btn-danger" onClick={() => handleDeactivate(emp)} title="Deactivate">
+                          🚫
                         </button>
                       )}
                     </div>
@@ -244,7 +295,7 @@ const EmployeeMaster = () => {
         )}
       </div>
 
-      {/* Pagination Controls */}
+      {/* Pagination */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 16, flexWrap: 'wrap', gap: 12 }}>
         <p style={{ color: 'var(--color-text-muted)', fontSize: '0.82rem', margin: 0 }}>
           Showing {Math.min((currentPage - 1) * PAGE_SIZE + 1, employees.length)}–{Math.min(currentPage * PAGE_SIZE, employees.length)} of {employees.length} employees
@@ -260,30 +311,7 @@ const EmployeeMaster = () => {
             >
               ◀
             </button>
-
-            {(() => {
-              const pages = [];
-              const show = new Set([1, totalPages]);
-              for (let i = Math.max(1, currentPage - 1); i <= Math.min(totalPages, currentPage + 1); i++) show.add(i);
-              const sorted = [...show].sort((a, b) => a - b);
-              sorted.forEach((page, idx) => {
-                if (idx > 0 && page - sorted[idx - 1] > 1) {
-                  pages.push(<span key={`e${page}`} style={{ padding: '0 6px', color: 'var(--color-text-muted)', fontSize: '0.85rem', userSelect: 'none' }}>…</span>);
-                }
-                pages.push(
-                  <button
-                    key={page}
-                    className={`btn btn-sm ${page === currentPage ? 'btn-primary' : 'btn-secondary'}`}
-                    onClick={() => setCurrentPage(page)}
-                    style={{ minWidth: 36, fontWeight: page === currentPage ? 700 : 400 }}
-                  >
-                    {page}
-                  </button>
-                );
-              });
-              return pages;
-            })()}
-
+            <span style={{ fontSize: '0.85rem', padding: '0 8px' }}>Page {currentPage} of {totalPages}</span>
             <button
               className="btn btn-sm btn-secondary"
               disabled={currentPage === totalPages}
@@ -314,12 +342,32 @@ const EmployeeMaster = () => {
               <div className="form-group">
                 <label className="form-label">Email</label>
                 <input className="form-control" name="email" type="email" value={form.email} onChange={handleFormChange} placeholder="email@company.ae" />
-                <p className="form-hint">Required if no mobile</p>
+                <p className="form-hint" style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginTop: 4 }}>Required if no mobile</p>
               </div>
+
               <div className="form-group">
-                <label className="form-label">Mobile (E.164)</label>
-                <input className="form-control" name="mobile_number" value={form.mobile_number} onChange={handleFormChange} placeholder="+971501234567" />
-                <p className="form-hint">Required if no email</p>
+                <label className="form-label">Mobile Number (Country Code + Mobile)</label>
+                <div style={{ display: 'flex', gap: 6 }}>
+                  <select
+                    className="form-control"
+                    value={countryCode}
+                    onChange={e => setCountryCode(e.target.value)}
+                    style={{ width: '135px', flexShrink: 0, fontWeight: '600' }}
+                  >
+                    {COUNTRY_CODES.map(c => (
+                      <option key={c.code} value={c.code}>{c.label}</option>
+                    ))}
+                  </select>
+                  <input
+                    className="form-control"
+                    name="localMobile"
+                    value={localMobile}
+                    onChange={e => setLocalMobile(e.target.value)}
+                    placeholder="501234567"
+                    style={{ flex: 1 }}
+                  />
+                </div>
+                <p className="form-hint" style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginTop: 4 }}>Required if no email</p>
               </div>
             </div>
           </div>

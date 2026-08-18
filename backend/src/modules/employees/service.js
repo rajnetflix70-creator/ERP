@@ -49,7 +49,6 @@ async function getEmployee(id) {
     err.statusCode = 404;
     throw err;
   }
-  // Remove password hash from response
   delete user.password_hash;
   return user;
 }
@@ -58,17 +57,17 @@ async function createEmployee(data) {
   const { full_name, email, mobile_number, role_id, password, preferred_language, is_active } = data;
 
   if (email) {
-    const existing = await db('users').where({ email }).first();
+    const existing = await db('users').whereILike('email', email.trim()).first();
     if (existing) {
-      const err = new Error('Email already registered');
+      const err = new Error(`Email address "${email}" is already registered to another user account.`);
       err.statusCode = 409;
       throw err;
     }
   }
   if (mobile_number) {
-    const existing = await db('users').where({ mobile_number }).first();
+    const existing = await db('users').where({ mobile_number: mobile_number.trim() }).first();
     if (existing) {
-      const err = new Error('Mobile number already registered');
+      const err = new Error(`Mobile number "${mobile_number}" is already registered to another user account.`);
       err.statusCode = 409;
       throw err;
     }
@@ -79,8 +78,8 @@ async function createEmployee(data) {
   const [user] = await db('users')
     .insert({
       full_name,
-      email: email || null,
-      mobile_number: mobile_number || null,
+      email: email ? email.trim() : null,
+      mobile_number: mobile_number ? mobile_number.trim() : null,
       role_id,
       password_hash,
       preferred_language: preferred_language || 'en',
@@ -103,18 +102,18 @@ async function updateEmployee(id, data) {
   }
 
   // Check uniqueness for email/mobile if changed
-  if (email && email !== existing.email) {
-    const dup = await db('users').where({ email }).whereNot({ id }).first();
+  if (email && email.trim() !== existing.email) {
+    const dup = await db('users').whereILike('email', email.trim()).whereNot({ id }).first();
     if (dup) {
-      const err = new Error('Email already in use');
+      const err = new Error(`Email address "${email}" is already registered to another user account.`);
       err.statusCode = 409;
       throw err;
     }
   }
-  if (mobile_number && mobile_number !== existing.mobile_number) {
-    const dup = await db('users').where({ mobile_number }).whereNot({ id }).first();
+  if (mobile_number && mobile_number.trim() !== existing.mobile_number) {
+    const dup = await db('users').where({ mobile_number: mobile_number.trim() }).whereNot({ id }).first();
     if (dup) {
-      const err = new Error('Mobile number already in use');
+      const err = new Error(`Mobile number "${mobile_number}" is already registered to another user account.`);
       err.statusCode = 409;
       throw err;
     }
@@ -122,8 +121,8 @@ async function updateEmployee(id, data) {
 
   const updateData = {};
   if (full_name !== undefined) updateData.full_name = full_name;
-  if (email !== undefined) updateData.email = email;
-  if (mobile_number !== undefined) updateData.mobile_number = mobile_number;
+  if (email !== undefined) updateData.email = email ? email.trim() : null;
+  if (mobile_number !== undefined) updateData.mobile_number = mobile_number ? mobile_number.trim() : null;
   if (role_id !== undefined) updateData.role_id = role_id;
   if (preferred_language !== undefined) updateData.preferred_language = preferred_language;
   if (is_active !== undefined) updateData.is_active = is_active;
