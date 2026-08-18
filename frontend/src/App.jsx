@@ -21,6 +21,9 @@ import EmployeeMaster from './pages/EmployeeMaster';
 import ReportsModule from './pages/ReportsModule';
 import NotificationCenter from './pages/NotificationCenter';
 import ProjectManagement from './pages/ProjectManagement';
+import MaterialMaster from './pages/MaterialMaster';
+import MaterialRequest from './pages/MaterialRequest';
+import SiteStock from './pages/SiteStock';
 
 function App() {
   return (
@@ -45,6 +48,9 @@ function App() {
               <Route path="masters/projects" element={<ProjectMaster />} />
               <Route path="masters/vendors" element={<VendorsMaster />} />
               <Route path="project/work-packages" element={<ProjectManagement />} />
+              <Route path="materials/catalog" element={<MaterialMaster />} />
+              <Route path="materials/requests" element={<MaterialRequest />} />
+              <Route path="materials/stock" element={<SiteStock />} />
               <Route path="reports" element={<ReportsModule />} />
               <Route path="notifications" element={<NotificationCenter />} />
               <Route path="masters/equipment" element={<EquipmentMaster />} />

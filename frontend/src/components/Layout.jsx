@@ -44,6 +44,9 @@ const Layout = () => {
       '/': 'Dashboard',
       '/project/work-packages': 'Project Work Packages — Kanban',
       '/masters/projects': 'Site & Project Master',
+      '/materials/catalog': 'Material Master Catalog',
+      '/materials/requests': 'Material Requests',
+      '/materials/stock': 'Site Material Stock & Balance',
       '/equipment/master': 'Equipment Master Catalog',
       '/equipment/allocation': 'Site Equipment Allocation',
       '/equipment/movement': 'Equipment Site Transfer',
@@ -85,6 +88,12 @@ const Layout = () => {
           <NavGroup label="📋 PROJECT">
             <SideLink to="/project/work-packages" icon="📋" label="Work Packages" onClick={closeSidebar} />
             <SideLink to="/masters/projects" icon="🏗️" label="Project Master" onClick={closeSidebar} />
+          </NavGroup>
+
+          <NavGroup label="📦 MATERIALS">
+            <SideLink to="/materials/catalog" icon="📦" label="Material Catalog" onClick={closeSidebar} />
+            <SideLink to="/materials/requests" icon="📤" label="Material Requests" onClick={closeSidebar} />
+            <SideLink to="/materials/stock" icon="📊" label="Site Stock" onClick={closeSidebar} />
           </NavGroup>
 
           <NavGroup label="👷 WORKFORCE">
