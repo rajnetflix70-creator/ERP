@@ -60,7 +60,13 @@ const ProjectManagement = () => {
     setLoading(true);
     try {
       const data = await getKanbanBoard(selectedProject || undefined);
-      setBoard(data);
+      setBoard({
+        not_started: Array.isArray(data?.not_started) ? data.not_started : [],
+        in_progress: Array.isArray(data?.in_progress) ? data.in_progress : [],
+        blocked:     Array.isArray(data?.blocked)     ? data.blocked     : [],
+        delayed:     Array.isArray(data?.delayed)     ? data.delayed     : [],
+        completed:   Array.isArray(data?.completed)   ? data.completed   : [],
+      });
     } catch(e) {
       setAlert({ type: 'error', message: 'Failed to load board' });
     } finally {
@@ -70,9 +76,9 @@ const ProjectManagement = () => {
 
   useEffect(() => {
     loadBoard();
-    getProjects().then(setProjects).catch(() => {});
-    getEmployees().then(setEmployees).catch(() => {});
-    apiClient.get('/projects').then(r => setSites(r.data)).catch(() => {});
+    getProjects().then(r => setProjects(Array.isArray(r) ? r : (r?.projects || []))).catch(() => setProjects([]));
+    getEmployees().then(r => setEmployees(Array.isArray(r) ? r : (r?.employees || []))).catch(() => setEmployees([]));
+    apiClient.get('/projects').then(r => setSites(Array.isArray(r?.data) ? r.data : [])).catch(() => setSites([]));
   }, [loadBoard]);
 
   /* ── Form Handlers ──────────────────────────────────────── */

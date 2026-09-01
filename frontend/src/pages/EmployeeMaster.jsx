@@ -39,7 +39,7 @@ const EmployeeMaster = () => {
       if (filterRole) params.role = filterRole;
       if (filterActive !== '') params.is_active = filterActive;
       const data = await getEmployees(params);
-      setEmployees(data);
+      setEmployees(Array.isArray(data) ? data : (data?.employees || []));
     } catch (e) {
       setAlert({ type: 'error', message: e.response?.data?.message || 'Failed to load employees' });
     } finally {
@@ -48,7 +48,7 @@ const EmployeeMaster = () => {
   }, [search, filterRole, filterActive]);
 
   useEffect(() => {
-    getRoles().then(setRoles).catch(() => {});
+    getRoles().then(r => setRoles(Array.isArray(r) ? r : (r?.roles || []))).catch(() => setRoles([]));
     loadEmployees();
   }, [loadEmployees]);
 
