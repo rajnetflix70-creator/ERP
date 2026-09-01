@@ -1,5 +1,5 @@
 const db = require('../../db');
-const { v4: uuidv4 } = require('uuid');
+const { randomUUID } = require('crypto');
 
 async function getPRs() {
   return db('purchase_requests as pr')
