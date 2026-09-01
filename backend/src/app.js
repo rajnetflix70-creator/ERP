@@ -21,27 +21,7 @@ const app = express();
 
 app.use(helmet({ contentSecurityPolicy: false }));
 
-// CORS — locked to CORS_ORIGIN in production, open in development
-const allowedOrigins = process.env.CORS_ORIGIN
-  ? process.env.CORS_ORIGIN.split(',').map(o => o.trim())
-  : [];
-
-app.use(cors({
-  origin: (origin, callback) => {
-    // Allow requests with no origin (curl, mobile apps, server-to-server)
-    if (!origin) return callback(null, true);
-    // In development or if no CORS_ORIGIN set, allow everything
-    if (allowedOrigins.length === 0) return callback(null, true);
-    if (allowedOrigins.includes(origin)) return callback(null, true);
-    return callback(new Error(`CORS: origin '${origin}' not allowed`));
-  },
-  credentials: true,
-}));
-
-app.use(express.json());
-app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
-
-// Static assets from frontend build
+// Static assets from frontend build — served BEFORE CORS so JS/CSS never trigger 500 CORS errors
 const distPath = path.join(__dirname, '../../frontend/dist');
 app.use(express.static(distPath, {
   setHeaders: (res, filePath) => {
@@ -49,6 +29,23 @@ app.use(express.static(distPath, {
       res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
     }
   }
+}));
+
+// CORS — locked to CORS_ORIGIN in production, open in development
+const allowedOrigins = process.env.CORS_ORIGIN
+  ? process.env.CORS_ORIGIN.split(',').map(o => o.trim()).filter(Boolean)
+  : [];
+
+app.use(cors({
+  origin: (origin, callback) => {
+    // Allow requests with no origin (same-origin, curl, mobile apps)
+    if (!origin) return callback(null, true);
+    // In development or if no CORS_ORIGIN set, allow everything
+    if (allowedOrigins.length === 0) return callback(null, true);
+    if (allowedOrigins.includes(origin)) return callback(null, true);
+    return callback(null, false);
+  },
+  credentials: true,
 }));
 
 app.get('/api/v1/health', (req, res) => res.json({ status: 'ok' }));
