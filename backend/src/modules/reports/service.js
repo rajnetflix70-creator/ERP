@@ -13,8 +13,8 @@ async function getDashboardStats() {
     .count('id as cnt').first();
 
   // Materials
-  const totalMaterialValueResult = await db('materials').sum('unit_price as val').first(); // simplify
-  const lowStockAlerts = await db('site_material_balances').whereRaw('qty_available < 10').count('id as cnt').first();
+  const totalMaterialValueResult = await db('materials').sum('standard_rate as val').first();
+  const lowStockAlerts = await db('site_material_stock').whereRaw('balance_qty < 10').count('id as cnt').first();
 
   // Financials (Billing)
   const totalBilled = await db('invoices').sum('total_amount as val').first();
