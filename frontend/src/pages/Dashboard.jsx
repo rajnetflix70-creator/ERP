@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { getProjectStats } from '../api/projects';
+import './Dashboard.css';
 
 const Dashboard = () => {
   const { t } = useTranslation();
@@ -33,84 +34,132 @@ const Dashboard = () => {
     return "Good evening";
   };
 
+  const kpiCards = [
+    {
+      number: stats?.total || 0,
+      label: 'Total Projects',
+      icon: '🏗️',
+      accent: '#3b82f6',
+      accentLt: '#eff6ff',
+      onClick: () => navigate('/masters/projects'),
+    },
+    {
+      number: stats?.active || 0,
+      label: 'Active Projects',
+      icon: '✅',
+      accent: '#10b981',
+      accentLt: '#ecfdf5',
+      onClick: null,
+    },
+    {
+      number: stats?.needs_supervisor || 0,
+      label: 'Need Supervisor',
+      icon: '⚠️',
+      accent: '#f59e0b',
+      accentLt: '#fffbeb',
+      onClick: null,
+    },
+    {
+      number: stats?.total_area ? Number(stats.total_area).toLocaleString() : '0',
+      label: 'Total Area (sqft)',
+      icon: '📐',
+      accent: '#8b5cf6',
+      accentLt: '#f5f3ff',
+      onClick: null,
+    },
+  ];
+
+  const statusItems = [
+    { label: 'Active',            value: stats?.active || 0,            color: '#10b981' },
+    { label: 'Grouting Pending',  value: stats?.grouting_pending || 0,  color: '#f59e0b' },
+    { label: 'Completed',         value: stats?.completed || 0,          color: '#3b82f6' },
+    { label: 'Stopped',           value: stats?.stopped || 0,            color: '#ef4444' },
+    { label: 'Strengthening',     value: stats?.strengthening || 0,      color: '#8b5cf6' },
+  ];
+
+  const quickActions = [
+    { icon: '📋', label: 'View Work List',      path: '/work-list' },
+    { icon: '🚚', label: 'Equipment Tracking',  path: '/equipment/tracking' },
+    { icon: '🏗️', label: 'Project Master',      path: '/masters/projects' },
+    { icon: '👤', label: 'Employee Master',     path: '/masters/employees' },
+    { icon: '⚙️', label: 'Equipment Master',    path: '/masters/equipment' },
+  ];
+
   return (
-    <div>
-      <div className="page-header">
-        <h1 className="page-title">{getGreeting()}, {user?.full_name}</h1>
-        <p className="page-subtitle">{new Date().toLocaleString('en-AE', { timeZone: 'Asia/Dubai' })} (UAE Time)</p>
+    <div className="dashboard-wrapper">
+
+      {/* Header */}
+      <div className="dashboard-header">
+        <div className="dashboard-greeting">
+          <h1>{getGreeting()}, {user?.full_name}</h1>
+          <p>Here's what's happening with your projects today.</p>
+        </div>
+        <div className="dashboard-date">
+          {new Date().toLocaleString('en-AE', { timeZone: 'Asia/Dubai', dateStyle: 'long', timeStyle: 'short' })} (UAE Time)
+        </div>
       </div>
 
       {loading ? (
         <div className="text-center py-4">{t('common.loading')}</div>
       ) : (
         <>
-          <div className="grid-4 mb-4">
-            <div className="stat-card" style={{ cursor: 'pointer' }} onClick={() => navigate('/work-list')}>
-              <div className="stat-number">{stats?.total || 0}</div>
-              <div className="stat-label">Total Projects</div>
-            </div>
-            <div className="stat-card">
-              <div className="stat-number" style={{ color: 'var(--color-success)' }}>{stats?.active || 0}</div>
-              <div className="stat-label">Active Projects</div>
-            </div>
-            <div className="stat-card">
-              <div className="stat-number" style={{ color: 'var(--color-warning)' }}>{stats?.needs_supervisor || 0}</div>
-              <div className="stat-label">Need Supervisor</div>
-            </div>
-            <div className="stat-card">
-              <div className="stat-number" style={{ color: 'var(--color-info, #6ea8fe)' }}>
-                {stats?.total_area ? Number(stats.total_area).toLocaleString() : '0'}
+          {/* KPI Cards */}
+          <div className="kpi-grid">
+            {kpiCards.map((card) => (
+              <div
+                key={card.label}
+                className="kpi-card"
+                style={{ '--kpi-accent': card.accent, '--kpi-accent-lt': card.accentLt, cursor: card.onClick ? 'pointer' : 'default' }}
+                onClick={card.onClick || undefined}
+              >
+                <div className="kpi-icon">{card.icon}</div>
+                <div className="kpi-number">{card.number}</div>
+                <div className="kpi-label">{card.label}</div>
               </div>
-              <div className="stat-label">Total Area (sqft)</div>
-            </div>
+            ))}
           </div>
 
-          <div className="grid-2">
-            <div className="card">
-              <div className="card-header">
-                <h3 className="card-title">Project Status Overview</h3>
+          {/* Bottom Section */}
+          <div className="dashboard-bottom-grid">
+
+            {/* Project Status Overview */}
+            <div className="status-overview-card">
+              <div className="status-card-header">
+                <h3>Project Status Overview</h3>
               </div>
-              <div style={{ padding: '16px' }}>
-                {[
-                  { label: 'Active', value: stats?.active || 0, color: '#2ecc71' },
-                  { label: 'Grouting Pending', value: stats?.grouting_pending || 0, color: '#f39c12' },
-                  { label: 'Completed', value: stats?.completed || 0, color: '#3498db' },
-                  { label: 'Stopped', value: stats?.stopped || 0, color: '#e74c3c' },
-                  { label: 'Strengthening', value: stats?.strengthening || 0, color: '#9b59b6' },
-                ].map((item) => (
-                  <div key={item.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: '1px solid var(--color-border)' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <span style={{ width: 12, height: 12, borderRadius: '50%', background: item.color, display: 'inline-block' }} />
-                      <span>{item.label}</span>
+              <div className="status-list">
+                {statusItems.map((item) => (
+                  <div key={item.label} className="status-row">
+                    <div className="status-row-left">
+                      <span className="status-dot" style={{ background: item.color }} />
+                      {item.label}
                     </div>
-                    <span style={{ fontWeight: 700, fontSize: '1.1rem' }}>{item.value}</span>
+                    <span className="status-count">{item.value}</span>
                   </div>
                 ))}
               </div>
             </div>
 
-            <div className="card">
-              <div className="card-header">
-                <h3 className="card-title">Quick Actions</h3>
+            {/* Quick Actions */}
+            <div className="quick-actions-card">
+              <div className="quick-actions-header">
+                <h3>Quick Actions</h3>
               </div>
-              <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                <button className="btn btn-primary" onClick={() => navigate('/work-list')}>
-                  📋 View Work List
-                </button>
-                <button className="btn btn-primary" onClick={() => navigate('/equipment/tracking')}>
-                  🚚 Equipment Tracking
-                </button>
-                <button className="btn btn-primary" onClick={() => navigate('/masters/projects')}>
-                  🏗 Project Master
-                </button>
-                <button className="btn btn-primary" onClick={() => navigate('/masters/employees')}>
-                  👤 Employee Master
-                </button>
-                <button className="btn btn-primary" onClick={() => navigate('/masters/equipment')}>
-                  ⚙️ Equipment Master
-                </button>
+              <div className="quick-actions-list">
+                {quickActions.map((action) => (
+                  <button
+                    key={action.label}
+                    className="quick-action-btn"
+                    onClick={() => navigate(action.path)}
+                  >
+                    <span className="qa-icon">{action.icon}</span>
+                    <span className="qa-label">{action.label}</span>
+                    <span className="qa-arrow">›</span>
+                  </button>
+                ))}
               </div>
             </div>
+
           </div>
         </>
       )}

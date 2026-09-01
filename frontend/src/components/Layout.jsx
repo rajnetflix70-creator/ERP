@@ -23,7 +23,7 @@ const NavGroup = ({ label, children }) => (
 
 const SideLink = ({ to, icon, label, end = false, onClick }) => (
   <NavLink to={to} end={end} className={({ isActive }) => `sidebar-link${isActive ? ' active' : ''}`} onClick={onClick}>
-    <span className="link-icon">{icon}</span>
+    <span className="link-icon-wrap">{icon}</span>
     {label}
   </NavLink>
 );
@@ -47,15 +47,21 @@ const Layout = () => {
       '/materials/catalog': 'Material Master Catalog',
       '/materials/requests': 'Material Requests',
       '/materials/stock': 'Site Material Stock & Balance',
+      '/procurement/requests': 'Purchase Requests',
+      '/procurement/orders': 'Purchase Orders',
+      '/billing/clients': 'Client Master',
+      '/billing/invoices': 'Billing & Invoicing',
       '/equipment/master': 'Equipment Master Catalog',
       '/equipment/allocation': 'Site Equipment Allocation',
       '/equipment/movement': 'Equipment Site Transfer',
       '/equipment/daily-log': 'Daily Equipment Log',
-      '/attendance/bulk': 'Bulk Attendance Sheet',
+      '/attendance/bulk': 'Daily Bulk Attendance',
+      '/attendance/payroll': 'Payroll Summary',
+      '/attendance/history': 'Attendance History',
       '/equipment/maintenance': 'Maintenance Work Orders',
       '/equipment/breakdown': 'Breakdown Log',
       '/equipment/documents': 'Documents & Compliance Vault',
-      '/masters/employees': 'Employee & Staff Master',
+      '/masters/employees': 'Employee Master',
       '/masters/operators': 'Equipment Operators Master',
       '/masters/vendors': 'Vendor & Supplier Directory',
       '/reports': 'Reports & Analytics',
@@ -71,13 +77,12 @@ const Layout = () => {
       {/* ── Sidebar ── */}
       <aside className={`sidebar ${sidebarOpen ? 'open' : ''}`}>
         {/* Logo */}
-        <div className="sidebar-logo" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', padding: '1.25rem 1.5rem', gap: '0.2rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', fontSize: '1.2rem', fontWeight: '700' }}>
-            🏗️ <span>AK Construction</span>
+        <div className="sidebar-logo">
+          <div className="logo-icon">🏗️</div>
+          <div className="logo-text">
+            <span className="logo-title">AK Construction</span>
+            <span className="logo-subtitle">Site Management ERP</span>
           </div>
-          <span style={{ fontSize: '0.72rem', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-            Site Management ERP
-          </span>
         </div>
 
         {/* Navigation */}
@@ -98,8 +103,20 @@ const Layout = () => {
 
           <NavGroup label="👷 WORKFORCE">
             <SideLink to="/attendance/bulk" icon="📋" label="Bulk Attendance" onClick={closeSidebar} />
+            <SideLink to="/attendance/history" icon="📅" label="Attendance History" onClick={closeSidebar} />
+            <SideLink to="/attendance/payroll" icon="💵" label="Payroll Summary" onClick={closeSidebar} />
             <SideLink to="/masters/employees" icon="👥" label="Employee Master" onClick={closeSidebar} />
             <SideLink to="/masters/operators" icon="🦺" label="Operators Master" onClick={closeSidebar} />
+          </NavGroup>
+
+          <NavGroup label="🛒 PROCUREMENT">
+            <SideLink to="/procurement/requests" icon="📋" label="Purchase Requests" onClick={closeSidebar} />
+            <SideLink to="/procurement/orders" icon="🛒" label="Purchase Orders" onClick={closeSidebar} />
+          </NavGroup>
+
+          <NavGroup label="💰 BILLING & INVOICING">
+            <SideLink to="/billing/clients" icon="🏢" label="Client Master" onClick={closeSidebar} />
+            <SideLink to="/billing/invoices" icon="📄" label="Invoices & Payments" onClick={closeSidebar} />
           </NavGroup>
 
           <NavGroup label="🔧 EQUIPMENT">
@@ -128,13 +145,18 @@ const Layout = () => {
           <LanguageSwitcher variant="sidebar" />
           {user && (
             <div className="sidebar-user">
-              <span className="sidebar-user-name">{user.full_name || user.email || user.mobile}</span>
-              <span className="sidebar-user-role">{ROLE_LABELS[user.role] || user.role}</span>
+              <div className="sidebar-user-avatar">
+                {(user.full_name || user.email || 'U').charAt(0).toUpperCase()}
+              </div>
+              <div className="sidebar-user-info">
+                <div className="sidebar-user-name">{user.full_name || user.email || user.mobile}</div>
+                <div className="sidebar-user-role">{ROLE_LABELS[user.role] || user.role}</div>
+              </div>
             </div>
           )}
           <button
             className="btn btn-sm"
-            style={{ background: 'rgba(255,255,255,0.12)', color: 'white', border: '1.5px solid rgba(255,255,255,0.2)', width: '100%', marginTop: '0.5rem' }}
+            style={{ background: 'rgba(239,68,68,0.15)', color: 'rgba(255,255,255,0.8)', border: '1px solid rgba(239,68,68,0.3)', width: '100%', marginTop: '2px', borderRadius: '10px' }}
             onClick={handleLogout}
           >
             🚪 Logout

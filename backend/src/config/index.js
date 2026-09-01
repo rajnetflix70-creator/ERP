@@ -20,12 +20,20 @@ const config = {
   },
   s3: {
     endpoint: process.env.MINIO_ENDPOINT,
+    publicEndpoint: process.env.MINIO_PUBLIC_ENDPOINT || process.env.MINIO_ENDPOINT,
     bucket: process.env.MINIO_BUCKET
-  }
+  },
+  // Comma-separated list of allowed origins for CORS (e.g. https://akconstruction.ae)
+  corsOrigin: process.env.CORS_ORIGIN || '',
 };
 
-if (config.env === 'production' && (!config.jwt.secret || config.jwt.secret === 'changeme_at_least_32_chars_random_string')) {
-  throw new Error('JWT_SECRET is missing or insecure in production');
+if (config.env === 'production') {
+  if (!config.jwt.secret || config.jwt.secret === 'changeme_at_least_32_chars_random_string') {
+    throw new Error('JWT_SECRET is missing or insecure in production');
+  }
+  if (!config.corsOrigin) {
+    throw new Error('CORS_ORIGIN must be set in production (e.g. https://akconstruction.ae)');
+  }
 }
 
 module.exports = config;

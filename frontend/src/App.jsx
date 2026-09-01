@@ -11,6 +11,12 @@ import SiteAllocation from './pages/SiteAllocation';
 import EquipmentMovement from './pages/EquipmentMovement';
 import DailyLogModule from './pages/DailyLogModule';
 import BulkAttendance from './pages/BulkAttendance';
+import PayrollSummary from './pages/PayrollSummary';
+import AttendanceHistory from './pages/AttendanceHistory';
+import PurchaseRequest from './pages/PurchaseRequest';
+import PurchaseOrders from './pages/PurchaseOrders';
+import ClientMaster from './pages/ClientMaster';
+import BillingInvoicing from './pages/BillingInvoicing';
 import MaintenanceManagement from './pages/MaintenanceManagement';
 import BreakdownManagement from './pages/BreakdownManagement';
 import DocumentManagement from './pages/DocumentManagement';
@@ -40,6 +46,8 @@ function App() {
               <Route path="equipment/movement" element={<EquipmentMovement />} />
               <Route path="equipment/daily-log" element={<DailyLogModule />} />
               <Route path="attendance/bulk" element={<BulkAttendance />} />
+              <Route path="attendance/payroll" element={<PayrollSummary />} />
+              <Route path="attendance/history" element={<AttendanceHistory />} />
               <Route path="equipment/maintenance" element={<MaintenanceManagement />} />
               <Route path="equipment/breakdown" element={<BreakdownManagement />} />
               <Route path="equipment/documents" element={<DocumentManagement />} />
@@ -51,6 +59,10 @@ function App() {
               <Route path="materials/catalog" element={<MaterialMaster />} />
               <Route path="materials/requests" element={<MaterialRequest />} />
               <Route path="materials/stock" element={<SiteStock />} />
+              <Route path="procurement/requests" element={<PurchaseRequest />} />
+              <Route path="procurement/orders" element={<PurchaseOrders />} />
+              <Route path="billing/clients" element={<ClientMaster />} />
+              <Route path="billing/invoices" element={<BillingInvoicing />} />
               <Route path="reports" element={<ReportsModule />} />
               <Route path="notifications" element={<NotificationCenter />} />
               <Route path="masters/equipment" element={<EquipmentMaster />} />

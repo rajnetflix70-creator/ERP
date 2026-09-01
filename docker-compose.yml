@@ -78,9 +78,14 @@ services:
       TWILIO_AUTH_TOKEN: ${TWILIO_AUTH_TOKEN:-}
       TWILIO_VERIFY_SERVICE_SID: ${TWILIO_VERIFY_SERVICE_SID:-}
       MINIO_ENDPOINT: http://minio:9000
+      # Publicly accessible MinIO URL for presigned download links sent to browsers.
+      # In production set this to e.g. https://storage.akconstruction.ae
+      MINIO_PUBLIC_ENDPOINT: ${MINIO_PUBLIC_ENDPOINT:-}
       MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-changeme_minio_password}
       MINIO_BUCKET: ${MINIO_BUCKET:-sitetrack}
+      # Comma-separated list of allowed CORS origins (e.g. https://akconstruction.ae)
+      CORS_ORIGIN: ${CORS_ORIGIN:-}
     ports:
       - "3001:3001"
     volumes:

@@ -151,7 +151,18 @@ async function listVendors() {
 }
 
 async function createVendor(data) {
-  const [v] = await db('vendors').insert(data).returning('*');
+  // Strip id (null from frontend) and any undefined fields before inserting
+  const { id, ...rest } = data;
+  const insertData = Object.fromEntries(
+    Object.entries(rest).filter(([_, v]) => v !== undefined && v !== null || typeof v === 'boolean' || typeof v === 'number')
+  );
+  const [v] = await db('vendors').insert(insertData).returning('*');
+  return v;
+}
+
+async function updateVendor(id, data) {
+  const { id: _id, ...rest } = data;
+  const [v] = await db('vendors').where({ id }).update({ ...rest, updated_at: db.fn.now() }).returning('*');
   return v;
 }
 
@@ -186,7 +197,7 @@ module.exports = {
   listBreakdowns, createBreakdown, updateBreakdown,
   listDocuments, createDocument,
   listOperators, createOperator,
-  listVendors, createVendor,
+  listVendors, createVendor, updateVendor,
   listNotifications, markNotificationRead,
   getReportsData
 };

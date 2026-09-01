@@ -113,6 +113,9 @@ async function listVendors(req, res, next) {
 async function createVendor(req, res, next) {
   try { res.status(201).json(await erpExtra.createVendor(req.body)); } catch (e) { next(e); }
 }
+async function updateVendor(req, res, next) {
+  try { res.json(await erpExtra.updateVendor(req.params.id, req.body)); } catch (e) { next(e); }
+}
 
 async function listNotifications(req, res, next) {
   try { res.json(await erpExtra.listNotifications()); } catch (e) { next(e); }
@@ -133,7 +136,7 @@ module.exports = {
   listBreakdowns, createBreakdown, updateBreakdown,
   listDocuments, createDocument,
   listOperators, createOperator,
-  listVendors, createVendor,
+  listVendors, createVendor, updateVendor,
   listNotifications, markNotificationRead,
   getReportsData
 };

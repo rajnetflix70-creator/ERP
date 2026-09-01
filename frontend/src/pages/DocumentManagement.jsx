@@ -248,7 +248,7 @@ const DocumentManagement = () => {
                   </td>
                   <td style={{ padding: '0.75rem' }}>
                     <button
-                      onClick={() => alert(`Downloading ${d.document_type} PDF simulation...`)}
+                      onClick={() => setAlert({ type: 'success', message: `Downloading ${d.document_type} PDF simulation...` })}
                       style={{
                         padding: '0.3rem 0.6rem',
                         fontSize: '0.8rem',

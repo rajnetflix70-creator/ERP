@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { getBulkAttendanceList, submitBulkAttendance, getAttendanceSummary } from '../api/attendance';
+import apiClient from '../api/client';
 
 const formatDateStr = (dateObj) => {
   const y = dateObj.getFullYear();
@@ -29,6 +30,8 @@ const BulkAttendance = () => {
   const todayStr = getTodayStr();
 
   const [selectedDate, setSelectedDate] = useState(todayStr);
+  const [selectedProject, setSelectedProject] = useState('');
+  const [projects, setProjects] = useState([]);
   const [employees, setEmployees] = useState([]);
   const [summary, setSummary] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -43,18 +46,20 @@ const BulkAttendance = () => {
   const loadAttendance = useCallback(async () => {
     setLoading(true);
     try {
-      const [listRes, summaryRes] = await Promise.all([
-        getBulkAttendanceList(selectedDate),
-        getAttendanceSummary(selectedDate),
+      const [listRes, summaryRes, projRes] = await Promise.all([
+        getBulkAttendanceList(selectedDate, selectedProject || undefined),
+        getAttendanceSummary(selectedDate, selectedProject || undefined),
+        projects.length === 0 ? apiClient.get('/projects').then(r => r.data) : Promise.resolve(projects),
       ]);
       setEmployees(listRes);
       setSummary(summaryRes);
+      if (projRes.length > 0 && projects.length === 0) setProjects(projRes);
     } catch (e) {
       setAlert({ type: 'error', message: 'Failed to load bulk attendance list' });
     } finally {
       setLoading(false);
     }
-  }, [selectedDate]);
+  }, [selectedDate, selectedProject, projects.length]);
 
   useEffect(() => {
     loadAttendance();
@@ -103,6 +108,7 @@ const BulkAttendance = () => {
 
       await submitBulkAttendance({
         attendance_date: selectedDate,
+        project_id: selectedProject || undefined,
         records: updatedRecords,
       });
 
@@ -130,11 +136,13 @@ const BulkAttendance = () => {
         remarks: emp.remarks || '',
       }));
 
-      await submitBulkAttendance({
+      const payload = {
         attendance_date: selectedDate,
-        records: recordsToSubmit,
-      });
+        project_id: selectedProject || undefined,
+        records: recordsToSubmit
+      };
 
+      await submitBulkAttendance(payload);
       setAlert({
         type: 'success',
         message: `Saved attendance records for ${recordsToSubmit.length} employees on ${selectedDate}.`,
@@ -172,14 +180,23 @@ const BulkAttendance = () => {
           <h1 className="page-title">📅 {t('nav.bulkAttendance', 'Daily Bulk Attendance')}</h1>
           <p className="page-subtitle">List all active employees and insert/update daily attendance records with 1-click controls.</p>
         </div>
-        <button
-          className="btn btn-success btn-lg"
-          onClick={handleOneClickAllPresent}
-          disabled={submitting || loading || employees.length === 0}
-          style={{ fontWeight: 800 }}
-        >
-          {submitting ? <><span className="spinner" /> Saving…</> : '⚡ 1-Click: Mark All Present & Save'}
-        </button>
+        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+          <button
+            className="btn btn-primary"
+            onClick={() => window.open(`${import.meta.env.VITE_API_BASE_URL}/attendance/export-excel?date=${selectedDate}&project_id=${selectedProject}`, '_blank')}
+            style={{ fontWeight: 700 }}
+          >
+            📥 Download Excel
+          </button>
+          <button
+            className="btn btn-success btn-lg"
+            onClick={handleOneClickAllPresent}
+            disabled={submitting || loading || employees.length === 0}
+            style={{ fontWeight: 800 }}
+          >
+            {submitting ? <><span className="spinner" /> Saving…</> : '⚡ 1-Click: Mark All Present & Save'}
+          </button>
+        </div>
       </div>
 
       {alert && (
@@ -219,7 +236,7 @@ const BulkAttendance = () => {
       <div className="card" style={{ marginBottom: 20 }}>
         {/* Date Selector & Quick Pick */}
         <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center', marginBottom: 16, borderBottom: '1px solid var(--color-border)', paddingBottom: 12 }}>
-          <span style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--color-header)' }}>📅 Attendance Date:</span>
+          <span style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--color-header)' }}>📅 Date & Site:</span>
           <input
             type="date"
             className="form-control"
@@ -236,6 +253,11 @@ const BulkAttendance = () => {
           <button className={`btn btn-sm ${selectedDate === getOffsetDateStr(1) ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setSelectedDate(getOffsetDateStr(1))}>
             Tomorrow ▶
           </button>
+          <div style={{ borderLeft: '1px solid var(--color-border)', margin: '0 8px', height: 32 }} />
+          <select className="form-control" style={{ width: 220 }} value={selectedProject} onChange={e => setSelectedProject(e.target.value)}>
+            <option value="">🏢 General / HQ (No Project)</option>
+            {projects.map(p => <option key={p.id} value={p.id}>{p.project_name}</option>)}
+          </select>
         </div>
 
         {/* Filters & Bulk Quick Toggles */}

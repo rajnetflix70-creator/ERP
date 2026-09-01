@@ -6,7 +6,6 @@ const Modal = ({ isOpen, onClose, title, subtitle, icon, children, size = 'defau
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
-      // Focus trap
       setTimeout(() => modalRef.current?.focus(), 50);
     } else {
       document.body.style.overflow = '';
@@ -22,7 +21,7 @@ const Modal = ({ isOpen, onClose, title, subtitle, icon, children, size = 'defau
 
   if (!isOpen) return null;
 
-  const sizeClass = size === 'lg' ? 'modal-lg' : size === 'sm' ? 'modal-sm' : '';
+  const sizeClass = size === 'lg' ? 'modal-lg' : size === 'sm' ? 'modal-sm' : size === 'xl' ? 'modal-xl' : '';
 
   return (
     <div className="modal-overlay" onClick={onClose}>
@@ -32,21 +31,28 @@ const Modal = ({ isOpen, onClose, title, subtitle, icon, children, size = 'defau
         onClick={e => e.stopPropagation()}
         tabIndex={-1}
       >
+        {/* Header */}
         <div className="modal-header">
           <div className="modal-header-content">
-            {icon && <span className="modal-icon">{icon}</span>}
+            {icon && (
+              <div className="modal-icon">
+                {icon}
+              </div>
+            )}
             <div>
               <h3 className="modal-title">{title}</h3>
               {subtitle && <p className="modal-subtitle">{subtitle}</p>}
             </div>
           </div>
           <button className="modal-close" onClick={onClose} aria-label="Close">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <line x1="18" y1="6" x2="6" y2="18" />
               <line x1="6" y1="6" x2="18" y2="18" />
             </svg>
           </button>
         </div>
+
+        {/* Body */}
         <div className="modal-body">
           {children}
         </div>

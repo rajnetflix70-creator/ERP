@@ -324,7 +324,6 @@ const EmployeeMaster = () => {
               <div className="form-group">
                 <label className="form-label">Email</label>
                 <input className="form-control" name="email" type="email" value={form.email} onChange={handleFormChange} placeholder="email@company.ae" />
-                <p className="form-hint" style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginTop: 4 }}>Required if no mobile</p>
               </div>
 
               <div className="form-group">
@@ -343,7 +342,6 @@ const EmployeeMaster = () => {
                     style={{ flex: 1 }}
                   />
                 </div>
-                <p className="form-hint" style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginTop: 4 }}>Required if no email</p>
               </div>
             </div>
           </div>

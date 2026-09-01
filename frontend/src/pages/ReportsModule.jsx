@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import apiClient from '../api/client';
 
 const ReportsModule = () => {
@@ -12,7 +13,7 @@ const ReportsModule = () => {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const res = await apiClient.get('/equipment-machines/reports');
+      const res = await apiClient.get('/reports/dashboard');
       setReportsData(res.data);
     } catch (e) {
       console.error(e);
@@ -21,124 +22,117 @@ const ReportsModule = () => {
     }
   };
 
-  const handleExportExcel = (reportTitle) => {
-    alert(`Exporting "${reportTitle}" as Microsoft Excel (.xlsx)... Download will begin immediately.`);
+  const handleExportPDF = () => {
+    window.print();
   };
 
-  const handleExportPDF = (reportTitle) => {
-    alert(`Generating PDF Document for "${reportTitle}"... Download will begin immediately.`);
-  };
+  if (loading) return <div style={{ padding: '2rem', textAlign: 'center' }}>Generating Analytics & Reports...</div>;
 
-  if (loading) return <div style={{ padding: '2rem', textAlign: 'center' }}>Generating ERP analytics & reports...</div>;
+  if (!reportsData) return <div style={{ padding: '2rem', textAlign: 'center' }}>Error loading data.</div>;
+
+  const { kpis, charts } = reportsData;
+
+  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#a855f7', '#ec4899'];
 
   return (
-    <div style={{ padding: '1.5rem', maxWidth: '1200px', margin: '0 auto' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-        <h2 style={{ fontSize: '1.5rem', fontWeight: '700', color: '#1e293b', margin: 0 }}>
-          📊 ERP Reports & Construction Analytics
-        </h2>
+    <div className="reports-container" style={{ padding: '1.5rem', maxWidth: '1200px', margin: '0 auto' }}>
+      <style>{`
+        @media print {
+          body * { visibility: hidden; }
+          .reports-container, .reports-container * { visibility: visible; }
+          .reports-container { position: absolute; left: 0; top: 0; width: 100%; padding: 0 !important; }
+          .no-print { display: none !important; }
+        }
+      `}</style>
+      
+      <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+        <div>
+          <h2 style={{ fontSize: '1.5rem', fontWeight: '700', color: '#1e293b', margin: 0 }}>
+            📊 Enterprise Analytics Dashboard
+          </h2>
+          <p className="page-subtitle no-print">Project progress, expenses, workforce, and performance.</p>
+        </div>
 
-        <div style={{ display: 'flex', gap: '0.75rem' }}>
+        <div className="no-print" style={{ display: 'flex', gap: '0.75rem' }}>
           <button
-            onClick={() => handleExportExcel('Full Construction Equipment Master Register')}
-            style={{
-              padding: '0.6rem 1.2rem',
-              backgroundColor: '#16a34a',
-              color: '#fff',
-              fontWeight: '600',
-              border: 'none',
-              borderRadius: '6px',
-              cursor: 'pointer'
-            }}
-          >
-            📊 Export Excel (.xlsx)
-          </button>
-          <button
-            onClick={() => handleExportPDF('Full Construction Equipment Master Register')}
-            style={{
-              padding: '0.6rem 1.2rem',
-              backgroundColor: '#dc2626',
-              color: '#fff',
-              fontWeight: '600',
-              border: 'none',
-              borderRadius: '6px',
-              cursor: 'pointer'
-            }}
+            onClick={handleExportPDF}
+            style={{ padding: '0.6rem 1.2rem', backgroundColor: '#dc2626', color: '#fff', fontWeight: '600', border: 'none', borderRadius: '6px', cursor: 'pointer' }}
           >
             📄 Export PDF
           </button>
         </div>
       </div>
 
-      {/* Summary KPI grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem', marginBottom: '2rem' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
         <div style={{ background: '#fff', padding: '1.25rem', borderRadius: '10px', border: '1px solid #e2e8f0', boxShadow: '0 2px 4px rgba(0,0,0,0.03)' }}>
-          <div style={{ fontSize: '0.85rem', color: '#64748b', fontWeight: '600' }}>Equipment Status Tracking</div>
+          <div style={{ fontSize: '0.85rem', color: '#64748b', fontWeight: '600' }}>Active Projects</div>
           <div style={{ fontSize: '1.8rem', fontWeight: '700', color: '#0f172a', marginTop: '0.2rem' }}>
-            {reportsData ? reportsData.equipment_stats.length : 0} Status Types
+            {kpis.activeProjects} / {kpis.totalProjects}
           </div>
         </div>
 
         <div style={{ background: '#fff', padding: '1.25rem', borderRadius: '10px', border: '1px solid #e2e8f0', boxShadow: '0 2px 4px rgba(0,0,0,0.03)' }}>
-          <div style={{ fontSize: '0.85rem', color: '#64748b', fontWeight: '600' }}>Active Fleet Sites</div>
+          <div style={{ fontSize: '0.85rem', color: '#64748b', fontWeight: '600' }}>Workforce Today</div>
           <div style={{ fontSize: '1.8rem', fontWeight: '700', color: '#2563eb', marginTop: '0.2rem' }}>
-            {reportsData ? reportsData.site_counts.length : 0} Active Sites
+            {kpis.todayAttendance} <span style={{ fontSize: '1rem', color: '#64748b' }}>/ {kpis.totalEmployees}</span>
           </div>
         </div>
 
         <div style={{ background: '#fff', padding: '1.25rem', borderRadius: '10px', border: '1px solid #e2e8f0', boxShadow: '0 2px 4px rgba(0,0,0,0.03)' }}>
-          <div style={{ fontSize: '0.85rem', color: '#64748b', fontWeight: '600' }}>YTD Maintenance Cost</div>
+          <div style={{ fontSize: '0.85rem', color: '#64748b', fontWeight: '600' }}>Total Invoiced</div>
           <div style={{ fontSize: '1.8rem', fontWeight: '700', color: '#16a34a', marginTop: '0.2rem' }}>
-            AED {reportsData ? parseFloat(reportsData.total_maintenance_cost || 0).toLocaleString() : 0}
+            AED {parseFloat(kpis.totalBilled).toLocaleString()}
           </div>
         </div>
 
         <div style={{ background: '#fff', padding: '1.25rem', borderRadius: '10px', border: '1px solid #e2e8f0', boxShadow: '0 2px 4px rgba(0,0,0,0.03)' }}>
-          <div style={{ fontSize: '0.85rem', color: '#64748b', fontWeight: '600' }}>Document Warning Banners</div>
-          <div style={{ fontSize: '1.8rem', fontWeight: '700', color: '#ea580c', marginTop: '0.2rem' }}>
-            {reportsData ? reportsData.expiring_docs_count : 0} Items
+          <div style={{ fontSize: '0.85rem', color: '#64748b', fontWeight: '600' }}>Low Stock Alerts</div>
+          <div style={{ fontSize: '1.8rem', fontWeight: '700', color: '#dc2626', marginTop: '0.2rem' }}>
+            {kpis.lowStockAlerts} Items
           </div>
         </div>
       </div>
 
-      {/* Site-wise equipment distribution report */}
-      <div style={{ background: '#ffffff', borderRadius: '12px', padding: '1.5rem', boxShadow: '0 4px 12px rgba(0,0,0,0.05)', border: '1px solid #e2e8f0', marginBottom: '2rem' }}>
-        <h3 style={{ fontSize: '1.15rem', fontWeight: '600', marginBottom: '1rem', color: '#0f172a' }}>
-          Site-Wise Equipment Fleet Utilization Report
-        </h3>
-
-        <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.9rem' }}>
-            <thead>
-              <tr style={{ background: '#f8fafc', borderBottom: '2px solid #e2e8f0' }}>
-                <th style={{ padding: '0.75rem' }}>Site / Store Location</th>
-                <th style={{ padding: '0.75rem' }}>Total Deployed Equipment</th>
-                <th style={{ padding: '0.75rem' }}>Utilization Percentage</th>
-              </tr>
-            </thead>
-            <tbody>
-              {reportsData && (() => {
-                const grandTotal = reportsData.site_counts.reduce((sum, sc) => sum + parseInt(sc.cnt || 0), 0) || 1;
-                return reportsData.site_counts.map((sc, idx) => (
-                  <tr key={idx} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                    <td style={{ padding: '0.75rem', fontWeight: '600' }}>{sc.current_location_name || 'UNASSIGNED STORE'}</td>
-                    <td style={{ padding: '0.75rem', fontWeight: '700', color: '#2563eb' }}>{sc.cnt} units</td>
-                    <td style={{ padding: '0.75rem' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                        <div style={{ flex: 1, backgroundColor: '#e2e8f0', height: '8px', borderRadius: '4px', overflow: 'hidden' }}>
-                          <div style={{ width: `${Math.min(100, (parseInt(sc.cnt) / grandTotal) * 100)}%`, backgroundColor: '#2563eb', height: '100%' }} />
-                        </div>
-                        <span style={{ fontWeight: '600', fontSize: '0.8rem', color: '#475569' }}>
-                          {Math.round((parseInt(sc.cnt) / grandTotal) * 100)}%
-                        </span>
-                      </div>
-                    </td>
-                  </tr>
-                ));
-              })()}
-            </tbody>
-          </table>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem', marginBottom: '2rem' }}>
+        <div style={{ background: '#ffffff', borderRadius: '12px', padding: '1.5rem', border: '1px solid #e2e8f0' }}>
+          <h3 style={{ fontSize: '1.15rem', fontWeight: '600', marginBottom: '1.5rem', color: '#0f172a' }}>
+            Project Completion Progress (%)
+          </h3>
+          <div style={{ height: 300, width: '100%' }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={charts.projectProgress}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                <XAxis dataKey="name" tick={{ fontSize: 12 }} />
+                <YAxis domain={[0, 100]} />
+                <Tooltip cursor={{ fill: '#f1f5f9' }} />
+                <Bar dataKey="progress" fill="#2563eb" radius={[4, 4, 0, 0]} name="Progress %" />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+          {charts.projectProgress.length === 0 && <p style={{ textAlign: 'center', color: '#64748b' }}>No active projects data.</p>}
         </div>
+
+        <div style={{ background: '#ffffff', borderRadius: '12px', padding: '1.5rem', border: '1px solid #e2e8f0' }}>
+          <h3 style={{ fontSize: '1.15rem', fontWeight: '600', marginBottom: '1.5rem', color: '#0f172a' }}>
+            Monthly Invoicing / Revenue
+          </h3>
+          <div style={{ height: 300, width: '100%' }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={charts.monthlyBilling}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                <XAxis dataKey="month" tick={{ fontSize: 12 }} />
+                <YAxis />
+                <Tooltip formatter={(value) => `AED ${parseFloat(value).toLocaleString()}`} />
+                <Bar dataKey="amount" fill="#16a34a" radius={[4, 4, 0, 0]} name="Total Billed (AED)" />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+          {charts.monthlyBilling.length === 0 && <p style={{ textAlign: 'center', color: '#64748b' }}>No billing data available.</p>}
+        </div>
+      </div>
+      
+      <div style={{ textAlign: 'center', color: '#94a3b8', fontSize: '0.85rem', marginTop: '2rem' }}>
+        Report generated on {new Date().toLocaleString()} by SiteTrack ERP
       </div>
     </div>
   );

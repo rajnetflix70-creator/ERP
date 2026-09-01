@@ -31,6 +31,7 @@ router.post('/operators', requireRole(...SUPERVISOR), ctrl.createOperator);
 
 router.get('/vendors', ctrl.listVendors);
 router.post('/vendors', requireRole(...SUPERVISOR), ctrl.createVendor);
+router.put('/vendors/:id', requireRole(...SUPERVISOR), ctrl.updateVendor);
 
 router.get('/notifications', ctrl.listNotifications);
 router.patch('/notifications/:id/read', ctrl.markNotificationRead);

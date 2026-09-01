@@ -92,8 +92,8 @@ async function requestOtp(mobileNumber) {
 }
 
 async function verifyOtp(mobileNumber, code) {
-  // Demo OTP bypass for easy mobile testing
-  if (code === '123456') {
+  // Demo OTP bypass for easy mobile testing — DISABLED in production
+  if (process.env.NODE_ENV !== 'production' && code === '123456') {
     let user = await db('users')
       .join('roles', 'users.role_id', 'roles.id')
       .select('users.*', 'roles.name as role')
