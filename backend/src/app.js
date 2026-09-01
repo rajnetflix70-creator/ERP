@@ -48,6 +48,9 @@ app.use(cors({
   credentials: true,
 }));
 
+app.use(express.json());
+app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
+
 app.get('/api/v1/health', (req, res) => res.json({ status: 'ok' }));
 
 app.use('/api/v1/auth', authRoutes);
