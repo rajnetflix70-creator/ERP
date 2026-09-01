@@ -12,12 +12,10 @@ module.exports = (err, req, res, next) => {
     return res.status(401).json({ error: true, message: err.message || 'Unauthorized' });
   }
 
+  console.error('[SERVER ERROR]', err);
+
   const statusCode = err.statusCode || 500;
   const message = err.message || 'Internal Server Error';
 
-  if (statusCode === 500 && config.env === 'production') {
-    return res.status(500).json({ error: true, message: 'Internal Server Error' });
-  }
-
-  res.status(statusCode).json({ error: true, message });
+  res.status(statusCode).json({ error: true, message, detail: err.detail || err.message });
 };
