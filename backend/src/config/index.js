@@ -31,8 +31,9 @@ if (config.env === 'production') {
   if (!config.jwt.secret || config.jwt.secret === 'changeme_at_least_32_chars_random_string') {
     throw new Error('JWT_SECRET is missing or insecure in production');
   }
+  // CORS_ORIGIN is optional for same-origin (Railway full-stack) deployments
   if (!config.corsOrigin) {
-    throw new Error('CORS_ORIGIN must be set in production (e.g. https://akconstruction.ae)');
+    console.warn('[WARN] CORS_ORIGIN is not set — all origins allowed. Set it to restrict API access.');
   }
 }
 
