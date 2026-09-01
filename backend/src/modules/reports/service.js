@@ -6,7 +6,7 @@ async function getDashboardStats() {
   const activeProjects = await db('projects').where('status', 'in_progress').count('id as cnt').first();
   
   // Workforce
-  const totalEmployees = await db('employees').where('is_active', true).count('id as cnt').first();
+  const totalEmployees = await db('users').where('is_active', true).count('id as cnt').first();
   const todayAttendance = await db('attendance_records')
     .where('attendance_date', db.raw('CURRENT_DATE'))
     .where('status', 'Present')

@@ -8,7 +8,7 @@ async function getPRs() {
     .leftJoin('users as u', 'pr.requested_by', 'u.id')
     .select(
       'pr.id', 'pr.pr_number', 'pr.status', 'pr.priority', 'pr.date_needed',
-      'p.project_name', 's.site_name', 'u.full_name as requested_by_name', 'pr.created_at'
+      'p.project_name', 's.name as site_name', 'u.full_name as requested_by_name', 'pr.created_at'
     )
     .orderBy('pr.created_at', 'desc');
 }
