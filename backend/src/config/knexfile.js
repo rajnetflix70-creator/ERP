@@ -1,9 +1,22 @@
 const path = require('path');
 require('dotenv').config({ path: path.resolve(__dirname, '../../.env') });
 
+const isProduction = process.env.NODE_ENV === 'production';
+
+function getConnection() {
+  if (!process.env.DATABASE_URL) return process.env.DATABASE_URL;
+  if (isProduction) {
+    return {
+      connectionString: process.env.DATABASE_URL,
+      ssl: { rejectUnauthorized: false }
+    };
+  }
+  return process.env.DATABASE_URL;
+}
+
 const commonConfig = {
   client: 'pg',
-  connection: process.env.DATABASE_URL,
+  connection: getConnection(),
   migrations: {
     directory: path.join(__dirname, '../db/migrations')
   },
