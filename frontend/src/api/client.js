@@ -1,7 +1,17 @@
 import axios from 'axios';
 
+const getBaseURL = () => {
+  const envUrl = import.meta.env.VITE_API_BASE_URL;
+  if (!envUrl || envUrl.includes('akconstruction.ae') || envUrl.includes('localhost')) {
+    if (typeof window !== 'undefined' && window.location.hostname !== 'localhost') {
+      return '/api/v1';
+    }
+  }
+  return envUrl || '/api/v1';
+};
+
 const apiClient = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || '/api/v1',
+  baseURL: getBaseURL(),
   headers: {
     'Content-Type': 'application/json',
   },
