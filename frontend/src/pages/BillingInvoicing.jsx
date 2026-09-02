@@ -38,9 +38,9 @@ const BillingInvoicing = () => {
         getClients(),
         apiClient.get('/projects').then(r => r.data)
       ]);
-      setInvoices(invData);
-      setClients(cData.filter(c => c.is_active));
-      setProjects(pData);
+      setInvoices(Array.isArray(invData) ? invData : []);
+      setClients(Array.isArray(cData) ? cData.filter(c => c?.is_active) : []);
+      setProjects(Array.isArray(pData) ? pData : []);
     } catch (e) {
       console.error(e);
     } finally {

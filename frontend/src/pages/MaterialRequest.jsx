@@ -52,7 +52,9 @@ const MaterialRequest = () => {
         getMaterials({ is_active: true }),
         apiClient.get('/projects').then(r => r.data),
       ]);
-      setRequests(reqs); setMaterials(mats); setProjects(projs);
+      setRequests(Array.isArray(reqs) ? reqs : []);
+      setMaterials(Array.isArray(mats) ? mats : []);
+      setProjects(Array.isArray(projs) ? projs : []);
     } catch(e) { setAlert({ type: 'error', message: 'Failed to load requests' }); }
     finally { setLoading(false); }
   }, [filterStatus]);

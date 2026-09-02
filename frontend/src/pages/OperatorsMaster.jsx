@@ -26,8 +26,8 @@ const OperatorsMaster = () => {
         apiClient.get('/equipment-machines/operators'),
         apiClient.get('/equipment-machines')
       ]);
-      setOperators(oRes.data || []);
-      setMachines(mRes.data || []);
+      setOperators(Array.isArray(oRes?.data) ? oRes.data : []);
+      setMachines(Array.isArray(mRes?.data) ? mRes.data : []);
     } catch (e) {
       console.error(e);
     } finally {
@@ -201,7 +201,7 @@ const OperatorsMaster = () => {
               </tr>
             </thead>
             <tbody>
-              {operators.map(o => (
+              {(Array.isArray(operators) ? operators : []).map(o => (
                 <tr key={o.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
                   <td style={{ padding: '0.75rem', fontWeight: '600' }}>{o.employee_id}</td>
                   <td style={{ padding: '0.75rem', fontWeight: '600', color: '#0f172a' }}>{o.name}</td>

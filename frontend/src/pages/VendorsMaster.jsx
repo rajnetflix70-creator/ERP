@@ -33,7 +33,7 @@ const VendorsMaster = () => {
     setLoading(true);
     try {
       const vRes = await apiClient.get('/equipment-machines/vendors');
-      setVendors(vRes.data || []);
+      setVendors(Array.isArray(vRes?.data) ? vRes.data : []);
     } catch (e) {
       console.error(e);
     } finally {

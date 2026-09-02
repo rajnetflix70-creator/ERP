@@ -31,7 +31,7 @@ const MaterialMaster = () => {
     setLoading(true);
     try {
       const data = await getMaterials({ search: search || undefined, category: filterCat || undefined });
-      setMaterials(data);
+      setMaterials(Array.isArray(data) ? data : (data?.materials || []));
     } catch(e) { setAlert({ type: 'error', message: 'Failed to load materials' }); }
     finally { setLoading(false); }
   }, [search, filterCat]);

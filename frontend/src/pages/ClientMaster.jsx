@@ -24,7 +24,7 @@ const ClientMaster = () => {
     setLoading(true);
     try {
       const data = await getClients();
-      setClients(data);
+      setClients(Array.isArray(data) ? data : (data?.clients || []));
     } catch (e) {
       console.error(e);
     } finally {
@@ -98,7 +98,7 @@ const ClientMaster = () => {
                 </tr>
               </thead>
               <tbody>
-                {clients.map(c => (
+                {(Array.isArray(clients) ? clients : []).map(c => (
                   <tr key={c.id}>
                     <td style={{ fontWeight: 600 }}>{c.name}</td>
                     <td>{c.contact_person || '—'}</td>

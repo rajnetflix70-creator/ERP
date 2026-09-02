@@ -29,16 +29,16 @@ const PurchaseOrders = () => {
     try {
       const [poData, prData, vData, sData, mData] = await Promise.all([
         getPOs(),
-        getPRs().then(r => r.filter(pr => pr.status === 'approved')), // Only approved PRs
-        apiClient.get('/vendors').then(r => r.data),
-        apiClient.get('/sites').then(r => r.data),
-        apiClient.get('/materials').then(r => r.data)
+        getPRs().then(r => (Array.isArray(r) ? r.filter(pr => pr?.status === 'approved') : [])).catch(() => []),
+        apiClient.get('/vendors').then(r => (Array.isArray(r?.data) ? r.data : [])).catch(() => []),
+        apiClient.get('/sites').then(r => (Array.isArray(r?.data) ? r.data : [])).catch(() => []),
+        apiClient.get('/materials').then(r => (Array.isArray(r?.data) ? r.data : [])).catch(() => [])
       ]);
-      setPOs(poData);
-      setPRs(prData);
-      setVendors(vData);
-      setSites(sData);
-      setMaterials(mData);
+      setPOs(Array.isArray(poData) ? poData : []);
+      setPRs(Array.isArray(prData) ? prData : []);
+      setVendors(Array.isArray(vData) ? vData : []);
+      setSites(Array.isArray(sData) ? sData : []);
+      setMaterials(Array.isArray(mData) ? mData : []);
     } catch (e) {
       console.error(e);
     } finally {
