@@ -48,7 +48,10 @@ const EmployeeMaster = () => {
       const data = await getEmployees(params);
       setEmployees(Array.isArray(data) ? data : (data?.employees || []));
     } catch (e) {
-      setAlert({ type: 'error', message: e.response?.data?.message || 'Failed to load employees' });
+      const msg = e.response?.status === 403 || e.response?.status === 401
+        ? '⚠️ Permission error: Please Log Out and Log In with super_admin@sitetrack.ae / Admin@1234.'
+        : (e.response?.data?.message || 'Failed to load employees');
+      setAlert({ type: 'error', message: msg });
     } finally {
       setLoading(false);
     }
