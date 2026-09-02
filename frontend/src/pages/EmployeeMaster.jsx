@@ -137,10 +137,12 @@ const EmployeeMaster = () => {
       payload.role_id = parseInt(payload.role_id);
 
       if (editTarget) {
-        await updateEmployee(editTarget.id, payload);
+        const res = await updateEmployee(editTarget.id, payload);
+        if (res?.error) throw new Error(res.message || 'Update failed');
         setAlert({ type: 'success', message: `${form.full_name} updated successfully.` });
       } else {
-        await createEmployee(payload);
+        const res = await createEmployee(payload);
+        if (res?.error) throw new Error(res.message || 'Creation failed');
         setAlert({ type: 'success', message: `${form.full_name} added successfully.` });
       }
       setSearch('');
