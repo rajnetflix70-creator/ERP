@@ -7,11 +7,11 @@ const SUPERVISOR_ROLES = ['super_admin', 'company_admin', 'project_manager', 'si
 // GET /api/v1/employees/roles — lookup for role dropdown (all authenticated)
 router.get('/roles', ctrl.listRoles);
 
-// GET /api/v1/employees — list all employees (admin/supervisor can search)
-router.get('/', requireRole(...SUPERVISOR_ROLES), ctrl.listEmployees);
+// GET /api/v1/employees — list all employees (all authenticated)
+router.get('/', ctrl.listEmployees);
 
 // GET /api/v1/employees/:id
-router.get('/:id', requireRole(...SUPERVISOR_ROLES), ctrl.getEmployee);
+router.get('/:id', ctrl.getEmployee);
 
 // POST /api/v1/employees — create
 router.post('/', requireRole(...SUPERVISOR_ROLES), ctrl.createEmployee);
