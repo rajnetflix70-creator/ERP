@@ -55,7 +55,12 @@ const EmployeeMaster = () => {
   }, [search, filterRole, filterActive]);
 
   useEffect(() => {
-    getRoles().then(r => setRoles(Array.isArray(r) ? r : (r?.roles || []))).catch(() => setRoles([]));
+    getRoles()
+      .then(r => {
+        if (Array.isArray(r) && r.length > 0) setRoles(r);
+        else if (Array.isArray(r?.roles) && r.roles.length > 0) setRoles(r.roles);
+      })
+      .catch(() => {});
     loadEmployees();
   }, [loadEmployees]);
 
