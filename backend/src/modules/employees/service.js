@@ -24,7 +24,13 @@ async function listEmployees(filters = {}) {
     )
     .orderBy('users.created_at', 'desc');
 
-  if (filters.role) query = query.where('roles.name', filters.role);
+  if (filters.role) {
+    if (!isNaN(filters.role)) {
+      query = query.where('roles.id', parseInt(filters.role, 10));
+    } else {
+      query = query.where('roles.name', filters.role);
+    }
+  }
   if (filters.is_active !== undefined) query = query.where('users.is_active', filters.is_active);
   if (filters.search) {
     query = query.where(function () {

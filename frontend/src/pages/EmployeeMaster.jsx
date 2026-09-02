@@ -143,6 +143,9 @@ const EmployeeMaster = () => {
         await createEmployee(payload);
         setAlert({ type: 'success', message: `${form.full_name} added successfully.` });
       }
+      setSearch('');
+      setFilterRole('');
+      setFilterActive('');
       setModalOpen(false);
       loadEmployees();
     } catch (err) {
