@@ -125,6 +125,11 @@ const EmployeeMaster = () => {
       ? (cleanLocalMobile.startsWith('+') ? cleanLocalMobile : `${countryCode}${cleanLocalMobile}`)
       : '';
 
+    if (!form.email && !fullMobile) {
+      setFormError('Please enter either an Email address or a Mobile number.');
+      return;
+    }
+
     setFormLoading(true);
     try {
       const payload = {
