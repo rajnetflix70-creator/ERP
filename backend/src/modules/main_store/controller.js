@@ -1,4 +1,4 @@
-const knex = require('../db');
+const knex = require('../../db');
 
 // --- Categories ---
 exports.getCategories = async (req, res, next) => {
