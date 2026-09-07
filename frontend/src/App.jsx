@@ -36,6 +36,7 @@ import MainStoreMaterial from './pages/MainStoreMaterial';
 import MainStorePurchaseOrder from './pages/MainStorePurchaseOrder';
 import MainStoreReturnOrder from './pages/MainStoreReturnOrder';
 import MaterialConsumption from './pages/MaterialConsumption';
+import MaterialConsumptionReport from './pages/MaterialConsumptionReport';
 
 function App() {
   return (
@@ -80,6 +81,7 @@ function App() {
               <Route path="main-store/purchase-order" element={<MainStorePurchaseOrder />} />
               <Route path="main-store/return-order" element={<MainStoreReturnOrder />} />
               <Route path="materials/consumption" element={<MaterialConsumption />} />
+              <Route path="materials/consumption-report" element={<MaterialConsumptionReport />} />
             </Route>
           </Route>
 
