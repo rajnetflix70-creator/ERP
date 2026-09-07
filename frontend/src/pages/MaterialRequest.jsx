@@ -1,301 +1,434 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { getMaterialRequests, createMaterialRequest, approveRequest, issueRequest } from '../api/materials';
-import { getMaterials } from '../api/materials';
-import apiClient from '../api/client';
-import Modal from '../components/Modal';
-
-const STATUS_CONFIG = {
-  pending:   { label: 'Pending Approval', color: '#ca8a04', bg: '#fefce8', icon: '⏳' },
-  approved:  { label: 'Approved',         color: '#2563eb', bg: '#eff6ff', icon: '✅' },
-  rejected:  { label: 'Rejected',         color: '#dc2626', bg: '#fef2f2', icon: '❌' },
-  issued:    { label: 'Issued to Site',   color: '#16a34a', bg: '#f0fdf4', icon: '📤' },
-  cancelled: { label: 'Cancelled',        color: '#64748b', bg: '#f8fafc', icon: '🚫' },
-};
-
-const PRIORITY_CONFIG = {
-  urgent: { color: '#dc2626', bg: '#fef2f2', label: '🔴 Urgent' },
-  normal: { color: '#2563eb', bg: '#eff6ff', label: '🔵 Normal' },
-  low:    { color: '#64748b', bg: '#f8fafc', label: '⬜ Low'    },
-};
-
-const EMPTY_REQ = { project_id: '', site_id: '', material_id: '', qty_requested: '', date_needed: '', purpose: '', priority: 'normal' };
+import React, { useState, useEffect } from 'react';
+import client from '../api/client';
 
 const MaterialRequest = () => {
-  const [requests, setRequests]     = useState([]);
-  const [materials, setMaterials]   = useState([]);
-  const [projects, setProjects]     = useState([]);
-  const [loading, setLoading]       = useState(true);
-  const [alert, setAlert]           = useState(null);
-  const [filterStatus, setFilterStatus] = useState('');
+  const [requests, setRequests] = useState([]);
+  const [materials, setMaterials] = useState([]);
+  const [engineers, setEngineers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
+  const [entriesPerPage, setEntriesPerPage] = useState(10);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [view, setView] = useState('list'); // 'list' | 'form'
 
-  const [reqModalOpen, setReqModalOpen] = useState(false);
-  const [form, setForm]                 = useState(EMPTY_REQ);
-  const [formLoading, setFormLoading]   = useState(false);
-  const [formError, setFormError]       = useState('');
+  const [formData, setFormData] = useState({
+    job_no: '',
+    client_name: '',
+    project_name: '',
+    project_location: '',
+    address: '',
+    engineer: '',
+    total_area: '',
+    items: []
+  });
 
-  // Approve/Reject modal
-  const [approveModal, setApproveModal] = useState(false);
-  const [approveTarget, setApproveTarget] = useState(null);
-  const [approveAction, setApproveAction] = useState('approved');
-  const [approveNotes, setApproveNotes]   = useState('');
-
-  // Issue modal
-  const [issueModal, setIssueModal]     = useState(false);
-  const [issueTarget, setIssueTarget]   = useState(null);
-  const [issueQty, setIssueQty]         = useState('');
-
-  const load = useCallback(async () => {
+  const fetchData = async () => {
     setLoading(true);
     try {
-      const [reqs, mats, projs] = await Promise.all([
-        getMaterialRequests({ status: filterStatus || undefined }),
-        getMaterials({ is_active: true }),
-        apiClient.get('/projects').then(r => r.data),
+      const [reqRes, matRes, empRes] = await Promise.all([
+        client.get('/materials/requests'),
+        client.get('/main-store/materials'),
+        client.get('/employees')
       ]);
-      setRequests(Array.isArray(reqs) ? reqs : []);
-      setMaterials(Array.isArray(mats) ? mats : []);
-      setProjects(Array.isArray(projs) ? projs : []);
-    } catch(e) { setAlert({ type: 'error', message: 'Failed to load requests' }); }
-    finally { setLoading(false); }
-  }, [filterStatus]);
+      setRequests(Array.isArray(reqRes.data?.data) ? reqRes.data.data : Array.isArray(reqRes.data) ? reqRes.data : []);
+      
+      const matList = Array.isArray(matRes.data?.data) ? matRes.data.data : [];
+      setMaterials(matList);
 
-  useEffect(() => { load(); }, [load]);
+      const empList = Array.isArray(empRes.data?.data) ? empRes.data.data : Array.isArray(empRes.data) ? empRes.data : [];
+      setEngineers(empList);
 
-  const handleCreate = async (e) => {
-    e.preventDefault(); setFormError(''); setFormLoading(true);
-    try {
-      const payload = { ...form };
-      if (!payload.site_id) delete payload.site_id;
-      if (!payload.date_needed) delete payload.date_needed;
-      payload.qty_requested = parseFloat(payload.qty_requested);
-      await createMaterialRequest(payload);
-      setAlert({ type: 'success', message: 'Material request submitted.' });
-      setReqModalOpen(false); load();
-    } catch(err) { setFormError(err.response?.data?.message || 'Error'); }
-    finally { setFormLoading(false); }
+      // Initialize form material rows
+      if (matList.length > 0) {
+        setFormData(prev => ({
+          ...prev,
+          items: matList.map(m => ({
+            material_id: m.id,
+            name: m.name,
+            brand_name: m.brand_name || 'Generic',
+            main_qty: m.quantity || 0,
+            unit: m.unit || 'pcs',
+            requested_qty: 0,
+            selected: false
+          }))
+        }));
+      }
+    } catch (err) {
+      console.error(err);
+      setRequests([]);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleApprove = async () => {
-    try {
-      await approveRequest(approveTarget.id, { status: approveAction, approval_notes: approveNotes });
-      setAlert({ type: 'success', message: `Request ${approveAction}.` });
-      setApproveModal(false); setApproveNotes(''); load();
-    } catch(e) { setAlert({ type: 'error', message: e.response?.data?.message || 'Error' }); }
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const handleCheckboxChange = (index) => {
+    setFormData(prev => {
+      const updated = [...prev.items];
+      updated[index].selected = !updated[index].selected;
+      return { ...prev, items: updated };
+    });
   };
 
-  const handleIssue = async () => {
-    try {
-      await issueRequest(issueTarget.id, { qty_issued: parseFloat(issueQty) });
-      setAlert({ type: 'success', message: `${issueQty} ${issueTarget.unit_of_measure} issued to site.` });
-      setIssueModal(false); load();
-    } catch(e) { setAlert({ type: 'error', message: e.response?.data?.message || 'Error' }); }
+  const handleQtyChange = (index, value) => {
+    setFormData(prev => {
+      const updated = [...prev.items];
+      updated[index].requested_qty = value;
+      return { ...prev, items: updated };
+    });
   };
 
-  // Stats
-  const stats = Object.entries(STATUS_CONFIG).map(([k, v]) => ({ ...v, key: k, count: requests.filter(r => r.status === k).length }));
+  const handleSave = async (e) => {
+    e.preventDefault();
+    try {
+      const selectedMaterials = formData.items.filter(i => i.selected && Number(i.requested_qty) > 0);
+      if (selectedMaterials.length === 0) {
+        alert('Please select at least one material with a quantity greater than 0');
+        return;
+      }
 
-  const HEADER_STYLE = { background: 'linear-gradient(135deg, #1e3a5f 0%, #2d5986 100%)', color: '#fff' };
-  const selectedMat = materials.find(m => m.id === form.material_id);
+      const payload = {
+        job_no: formData.job_no,
+        client_name: formData.client_name,
+        project_name: formData.project_name,
+        project_location: formData.project_location,
+        address: formData.address,
+        engineer: formData.engineer,
+        total_area: formData.total_area,
+        items: selectedMaterials.map(m => ({
+          material_id: m.material_id,
+          qty_requested: Number(m.requested_qty)
+        }))
+      };
+
+      await client.post('/materials/requests', payload);
+      setView('list');
+      fetchData();
+    } catch (err) {
+      alert('Error saving material request: ' + (err.response?.data?.message || err.message));
+    }
+  };
+
+  const filtered = Array.isArray(requests) ? requests.filter(r => 
+    (r.mr_number || r.job_no || '').toLowerCase().includes(search.toLowerCase()) ||
+    (r.project_name || '').toLowerCase().includes(search.toLowerCase()) ||
+    (r.client_name || '').toLowerCase().includes(search.toLowerCase())
+  ) : [];
+
+  const totalEntries = filtered.length;
+  const totalPages = Math.ceil(totalEntries / entriesPerPage) || 1;
+  const startIndex = (currentPage - 1) * entriesPerPage;
+  const paginated = filtered.slice(startIndex, startIndex + entriesPerPage);
 
   return (
-    <div>
-      <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
-        <div>
-          <h1 className="page-title">📤 Material Requests</h1>
-          <p className="page-subtitle">Raise material requests from site → approve → issue to project site</p>
-        </div>
-        <button className="btn btn-primary" onClick={() => { setForm(EMPTY_REQ); setFormError(''); setReqModalOpen(true); }}>+ New Request</button>
+    <div style={{ padding: '20px', background: '#f4f6f9', minHeight: '100vh' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+        <h2 style={{ fontSize: '24px', fontWeight: '600', color: '#333' }}>
+          {view === 'list' ? 'Material Requests' : 'New Material Request'}
+        </h2>
       </div>
 
-      {alert && (
-        <div className={`alert alert-${alert.type === 'success' ? 'success' : 'error'}`} style={{ marginBottom: 16 }}>
-          {alert.type === 'success' ? '✅' : '❌'} {alert.message}
-          <button style={{ marginInlineStart: 'auto', background: 'none', border: 'none', cursor: 'pointer' }} onClick={() => setAlert(null)}>✕</button>
-        </div>
-      )}
-
-      {/* Status KPIs */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 10, marginBottom: 20 }}>
-        {[{ key:'', icon:'📋', label:'All', count: requests.length, color:'#2563eb', bg:'#eff6ff' }, ...stats].map(s => (
-          <div key={s.key} className="card"
-            style={{ padding: '0.85rem', textAlign: 'center', cursor: 'pointer', border: filterStatus === s.key ? `2px solid ${s.color}` : '2px solid transparent', background: filterStatus === s.key ? s.bg : '#fff', transition: 'all 0.15s' }}
-            onClick={() => setFilterStatus(s.key)}>
-            <div style={{ fontSize: '1.3rem' }}>{s.icon}</div>
-            <div style={{ fontSize: '1.5rem', fontWeight: 800, color: s.color }}>{s.count}</div>
-            <div style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 600 }}>{s.label}</div>
-          </div>
-        ))}
-      </div>
-
-      {/* Table */}
-      <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
-        <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <thead>
-              <tr style={HEADER_STYLE}>
-                {['MR No.', 'Material', 'Project', 'Qty Requested', 'Date Needed', 'Priority', 'Status', 'Requested By', 'Actions'].map(h => (
-                  <th key={h} style={{ padding: '12px 14px', fontWeight: 700, fontSize: '0.82rem', whiteSpace: 'nowrap' }}>{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {loading ? (
-                <tr><td colSpan={9} style={{ padding: 40, textAlign: 'center' }}><div className="spinner" /></td></tr>
-              ) : requests.length === 0 ? (
-                <tr><td colSpan={9} style={{ padding: 40, textAlign: 'center', color: '#94a3b8' }}>No requests found.</td></tr>
-              ) : requests.map((req, i) => {
-                const sc = STATUS_CONFIG[req.status] || STATUS_CONFIG.pending;
-                const pc = PRIORITY_CONFIG[req.priority] || PRIORITY_CONFIG.normal;
-                return (
-                  <tr key={req.id} style={{ background: i % 2 === 0 ? '#fff' : '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
-                    <td style={{ padding: '10px 14px', fontFamily: 'monospace', fontWeight: 700, color: '#2563eb' }}>{req.mr_number}</td>
-                    <td style={{ padding: '10px 14px' }}>
-                      <div style={{ fontWeight: 700, color: '#0f172a' }}>{req.material_name}</div>
-                      <div style={{ fontSize: '0.72rem', color: '#94a3b8' }}>{req.category}</div>
-                    </td>
-                    <td style={{ padding: '10px 14px', color: '#475569', fontSize: '0.82rem' }}>
-                      {req.project_name}<br />
-                      {req.ak_job_no && <span style={{ fontFamily: 'monospace', fontSize: '0.72rem', color: '#94a3b8' }}>{req.ak_job_no}</span>}
-                    </td>
-                    <td style={{ padding: '10px 14px', fontWeight: 700 }}>
-                      {req.qty_requested} <span style={{ fontSize: '0.76rem', color: '#64748b' }}>{req.unit_of_measure}</span>
-                      {req.qty_issued && <div style={{ fontSize: '0.72rem', color: '#16a34a' }}>Issued: {req.qty_issued} {req.unit_of_measure}</div>}
-                    </td>
-                    <td style={{ padding: '10px 14px', color: '#64748b', fontSize: '0.82rem' }}>{req.date_needed ? req.date_needed.slice(0,10) : '—'}</td>
-                    <td style={{ padding: '10px 14px' }}>
-                      <span style={{ background: pc.bg, color: pc.color, padding: '3px 8px', borderRadius: 4, fontSize: '0.74rem', fontWeight: 700 }}>{pc.label}</span>
-                    </td>
-                    <td style={{ padding: '10px 14px' }}>
-                      <span style={{ background: sc.bg, color: sc.color, padding: '3px 8px', borderRadius: 4, fontSize: '0.74rem', fontWeight: 700 }}>{sc.icon} {sc.label}</span>
-                    </td>
-                    <td style={{ padding: '10px 14px', fontSize: '0.8rem', color: '#475569' }}>{req.requested_by_name || '—'}</td>
-                    <td style={{ padding: '10px 14px' }}>
-                      <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
-                        {req.status === 'pending' && (
-                          <>
-                            <button className="btn btn-sm" style={{ background: '#f0fdf4', color: '#16a34a', border: 'none', fontSize: '0.72rem', padding: '4px 8px' }}
-                              onClick={() => { setApproveTarget(req); setApproveAction('approved'); setApproveNotes(''); setApproveModal(true); }}>✅ Approve</button>
-                            <button className="btn btn-sm" style={{ background: '#fef2f2', color: '#dc2626', border: 'none', fontSize: '0.72rem', padding: '4px 8px' }}
-                              onClick={() => { setApproveTarget(req); setApproveAction('rejected'); setApproveNotes(''); setApproveModal(true); }}>❌ Reject</button>
-                          </>
-                        )}
-                        {req.status === 'approved' && (
-                          <button className="btn btn-sm" style={{ background: '#eff6ff', color: '#2563eb', border: 'none', fontSize: '0.72rem', padding: '4px 8px' }}
-                            onClick={() => { setIssueTarget(req); setIssueQty(req.qty_requested); setIssueModal(true); }}>📤 Issue</button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* New Request Modal */}
-      <Modal isOpen={reqModalOpen} onClose={() => setReqModalOpen(false)} title="New Material Request" subtitle="Submit a request to issue material to a project site" icon="📤" size="lg">
-        <form onSubmit={handleCreate}>
-          {formError && <div className="alert alert-error" style={{ marginBottom: 14 }}>❌ {formError}</div>}
-          <div className="form-section">
-            <div className="form-section-title">Request Details</div>
-            <div className="grid-2" style={{ gap: 12 }}>
-              <div className="form-group">
-                <label className="form-label">Project <span style={{ color: 'red' }}>*</span></label>
-                <select className="form-control" value={form.project_id} onChange={e => setForm(f => ({ ...f, project_id: e.target.value }))} required>
-                  <option value="">Select Project…</option>
-                  {projects.map(p => <option key={p.id} value={p.id}>{p.project_name} {p.ak_job_no ? `(${p.ak_job_no})` : ''}</option>)}
-                </select>
-              </div>
-              <div className="form-group">
-                <label className="form-label">Priority</label>
-                <select className="form-control" value={form.priority} onChange={e => setForm(f => ({ ...f, priority: e.target.value }))}>
-                  <option value="urgent">🔴 Urgent</option>
-                  <option value="normal">🔵 Normal</option>
-                  <option value="low">⬜ Low</option>
-                </select>
-              </div>
-            </div>
-            <div className="form-group">
-              <label className="form-label">Material <span style={{ color: 'red' }}>*</span></label>
-              <select className="form-control" value={form.material_id} onChange={e => setForm(f => ({ ...f, material_id: e.target.value }))} required>
-                <option value="">Select Material…</option>
-                {materials.map(m => <option key={m.id} value={m.id}>[{m.material_code}] {m.name} ({m.unit_of_measure})</option>)}
-              </select>
-            </div>
-            <div className="grid-2" style={{ gap: 12 }}>
-              <div className="form-group">
-                <label className="form-label">Quantity Required <span style={{ color: 'red' }}>*</span></label>
-                <div style={{ display: 'flex', gap: 8 }}>
-                  <input type="number" className="form-control" step="0.01" value={form.qty_requested} onChange={e => setForm(f => ({ ...f, qty_requested: e.target.value }))} required placeholder="0" />
-                  {selectedMat && <span style={{ display: 'flex', alignItems: 'center', padding: '0 10px', background: '#f1f5f9', borderRadius: 8, fontSize: '0.82rem', fontWeight: 700, color: '#475569', whiteSpace: 'nowrap' }}>{selectedMat.unit_of_measure}</span>}
-                </div>
-              </div>
-              <div className="form-group">
-                <label className="form-label">Date Needed</label>
-                <input type="date" className="form-control" value={form.date_needed} onChange={e => setForm(f => ({ ...f, date_needed: e.target.value }))} />
-              </div>
-            </div>
-            <div className="form-group">
-              <label className="form-label">Purpose / Scope</label>
-              <textarea className="form-control" rows={3} value={form.purpose} onChange={e => setForm(f => ({ ...f, purpose: e.target.value }))} placeholder="What will this material be used for?" />
-            </div>
-          </div>
-          <div className="modal-actions">
-            <button type="button" className="btn btn-secondary" onClick={() => setReqModalOpen(false)}>Cancel</button>
-            <button type="submit" className="btn btn-primary" disabled={formLoading}>
-              {formLoading ? <><span className="spinner" /> Submitting…</> : '📤 Submit Request'}
+      {view === 'list' ? (
+        <div style={{ background: '#fff', borderRadius: '4px', border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+          <div style={{ padding: '12px 20px', background: '#fcfcfc', borderBottom: '1px solid #edf2f7', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ fontSize: '12px', fontWeight: '700', textTransform: 'uppercase', color: '#888', letterSpacing: '0.5px' }}>
+              MATERIAL REQUEST LIST
+            </span>
+            <button 
+              onClick={() => setView('form')}
+              style={{ background: 'none', border: 'none', color: '#3182ce', fontWeight: '600', cursor: 'pointer', fontSize: '13px' }}
+            >
+              ADD NEW
             </button>
           </div>
-        </form>
-      </Modal>
 
-      {/* Approve / Reject Modal */}
-      <Modal isOpen={approveModal} onClose={() => setApproveModal(false)} title={approveAction === 'approved' ? 'Approve Request' : 'Reject Request'} icon={approveAction === 'approved' ? '✅' : '❌'} size="sm">
-        {approveTarget && (
-          <div>
-            <div style={{ background: '#f8fafc', borderRadius: 8, padding: '12px 14px', marginBottom: 16 }}>
-              <div style={{ fontWeight: 700 }}>{approveTarget.material_name}</div>
-              <div style={{ color: '#64748b', fontSize: '0.82rem', marginTop: 4 }}>
-                {approveTarget.qty_requested} {approveTarget.unit_of_measure} — {approveTarget.project_name}
-              </div>
+          <div style={{ padding: '15px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
+            <div style={{ fontSize: '14px', color: '#555' }}>
+              Show {' '}
+              <select 
+                value={entriesPerPage} 
+                onChange={(e) => { setEntriesPerPage(Number(e.target.value)); setCurrentPage(1); }}
+                style={{ padding: '4px 8px', borderRadius: '4px', border: '1px solid #ccc' }}
+              >
+                <option value={10}>10</option>
+                <option value={25}>25</option>
+                <option value={50}>50</option>
+              </select>
+              {' '} entries
             </div>
-            <div className="form-group">
-              <label className="form-label">{approveAction === 'approved' ? 'Approval Notes' : 'Rejection Reason'}</label>
-              <textarea className="form-control" rows={3} value={approveNotes} onChange={e => setApproveNotes(e.target.value)} placeholder="Optional notes…" />
+            <div>
+              <span style={{ fontSize: '14px', color: '#555', marginRight: '8px' }}>Search:</span>
+              <input 
+                type="text"
+                value={search}
+                onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
+                style={{ padding: '5px 10px', borderRadius: '4px', border: '1px solid #ccc', outline: 'none' }}
+              />
             </div>
-            <div className="modal-actions">
-              <button className="btn btn-secondary" onClick={() => setApproveModal(false)}>Cancel</button>
-              <button className="btn btn-primary" style={{ background: approveAction === 'approved' ? '#16a34a' : '#dc2626' }} onClick={handleApprove}>
-                {approveAction === 'approved' ? '✅ Approve' : '❌ Reject'}
+          </div>
+
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '14px' }}>
+              <thead>
+                <tr style={{ background: '#f8fafc', borderTop: '1px solid #e2e8f0', borderBottom: '2px solid #e2e8f0' }}>
+                  <th style={{ padding: '10px 15px', width: '50px' }}>#</th>
+                  <th style={{ padding: '10px 15px' }}>Job No / Req No</th>
+                  <th style={{ padding: '10px 15px' }}>Project Name</th>
+                  <th style={{ padding: '10px 15px' }}>Client/Contractor</th>
+                  <th style={{ padding: '10px 15px' }}>Engineer</th>
+                  <th style={{ padding: '10px 15px' }}>Status</th>
+                  <th style={{ padding: '10px 15px' }}>Created Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                {loading ? (
+                  <tr><td colSpan="7" style={{ textAlign: 'center', padding: '20px' }}>Loading...</td></tr>
+                ) : paginated.length === 0 ? (
+                  <tr><td colSpan="7" style={{ textAlign: 'center', padding: '20px', color: '#777' }}>No material requests found</td></tr>
+                ) : (
+                  paginated.map((r, idx) => (
+                    <tr key={r.id || idx} style={{ borderBottom: '1px solid #edf2f7' }}>
+                      <td style={{ padding: '10px 15px', color: '#666' }}>{startIndex + idx + 1}</td>
+                      <td style={{ padding: '10px 15px', fontWeight: '600', color: '#3182ce' }}>{r.job_no || r.mr_number || '-'}</td>
+                      <td style={{ padding: '10px 15px', color: '#2d3748', fontWeight: '500' }}>{r.project_name || '-'}</td>
+                      <td style={{ padding: '10px 15px', color: '#4a5568' }}>{r.client_name || '-'}</td>
+                      <td style={{ padding: '10px 15px', color: '#4a5568' }}>{r.engineer || '-'}</td>
+                      <td style={{ padding: '10px 15px' }}>
+                        <span style={{ background: '#fefce8', color: '#ca8a04', padding: '2px 8px', borderRadius: '4px', fontWeight: '600', fontSize: '12px' }}>
+                          {r.status || 'Pending'}
+                        </span>
+                      </td>
+                      <td style={{ padding: '10px 15px', color: '#718096' }}>
+                        {r.created_at ? new Date(r.created_at).toLocaleDateString() : '-'}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          <div style={{ padding: '15px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #e2e8f0', flexWrap: 'wrap', gap: '10px' }}>
+            <div style={{ fontSize: '13px', color: '#718096' }}>
+              Showing {totalEntries === 0 ? 0 : startIndex + 1} to {Math.min(startIndex + entriesPerPage, totalEntries)} of {totalEntries} entries
+            </div>
+
+            <div style={{ display: 'flex', gap: '2px' }}>
+              <button 
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage(p => p - 1)}
+                style={{ padding: '5px 12px', border: '1px solid #cbd5e0', background: currentPage === 1 ? '#edf2f7' : '#fff', cursor: currentPage === 1 ? 'not-allowed' : 'pointer', fontSize: '12px', color: '#4a5568', borderRadius: '3px 0 0 3px' }}
+              >
+                PREVIOUS
+              </button>
+              {Array.from({ length: totalPages }, (_, i) => i + 1).slice(0, 5).map(num => (
+                <button 
+                  key={num}
+                  onClick={() => setCurrentPage(num)}
+                  style={{ padding: '5px 12px', border: '1px solid #cbd5e0', background: currentPage === num ? '#3182ce' : '#fff', color: currentPage === num ? '#fff' : '#4a5568', cursor: 'pointer', fontSize: '12px' }}
+                >
+                  {num}
+                </button>
+              ))}
+              <button 
+                disabled={currentPage === totalPages || totalPages === 0}
+                onClick={() => setCurrentPage(p => p + 1)}
+                style={{ padding: '5px 12px', border: '1px solid #cbd5e0', background: (currentPage === totalPages || totalPages === 0) ? '#edf2f7' : '#fff', cursor: (currentPage === totalPages || totalPages === 0) ? 'not-allowed' : 'pointer', fontSize: '12px', color: '#4a5568', borderRadius: '0 3px 3px 0' }}
+              >
+                NEXT
               </button>
             </div>
           </div>
-        )}
-      </Modal>
+        </div>
+      ) : (
+        <div style={{ background: '#fff', borderRadius: '4px', border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+          <div style={{ padding: '12px 20px', background: '#fcfcfc', borderBottom: '1px solid #edf2f7' }}>
+            <span style={{ fontSize: '12px', fontWeight: '700', textTransform: 'uppercase', color: '#888', letterSpacing: '0.5px' }}>
+              MATERIAL REQUEST FIELDS
+            </span>
+          </div>
 
-      {/* Issue Modal */}
-      <Modal isOpen={issueModal} onClose={() => setIssueModal(false)} title="Issue Material to Site" icon="📤" size="sm">
-        {issueTarget && (
-          <div>
-            <div style={{ background: '#eff6ff', borderRadius: 8, padding: '12px 14px', marginBottom: 16 }}>
-              <div style={{ fontWeight: 700, color: '#2563eb' }}>{issueTarget.material_name}</div>
-              <div style={{ color: '#64748b', fontSize: '0.82rem', marginTop: 4 }}>Approved qty: {issueTarget.qty_requested} {issueTarget.unit_of_measure}</div>
-            </div>
-            <div className="form-group">
-              <label className="form-label">Quantity to Issue <span style={{ color: 'red' }}>*</span></label>
-              <div style={{ display: 'flex', gap: 8 }}>
-                <input type="number" className="form-control" step="0.01" value={issueQty} onChange={e => setIssueQty(e.target.value)} />
-                <span style={{ display: 'flex', alignItems: 'center', padding: '0 10px', background: '#f1f5f9', borderRadius: 8, fontSize: '0.82rem', fontWeight: 700, whiteSpace: 'nowrap' }}>{issueTarget.unit_of_measure}</span>
+          <form onSubmit={handleSave} style={{ padding: '30px 40px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '30px', marginBottom: '20px' }}>
+              <div style={{ display: 'flex', alignItems: 'center' }}>
+                <label style={{ width: '170px', fontWeight: '700', fontSize: '14px', color: '#333' }}>
+                  Job No<span style={{ color: 'red' }}>*</span>
+                </label>
+                <input 
+                  type="text"
+                  required
+                  value={formData.job_no}
+                  onChange={(e) => setFormData({ ...formData, job_no: e.target.value })}
+                  style={{ flex: 1, padding: '8px 12px', borderRadius: '4px', border: '1px solid #ccc', outline: 'none' }}
+                />
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center' }}>
+                <label style={{ width: '170px', fontWeight: '700', fontSize: '14px', color: '#333' }}>
+                  Client/Contractor Name<span style={{ color: 'red' }}>*</span>
+                </label>
+                <input 
+                  type="text"
+                  required
+                  value={formData.client_name}
+                  onChange={(e) => setFormData({ ...formData, client_name: e.target.value })}
+                  style={{ flex: 1, padding: '8px 12px', borderRadius: '4px', border: '1px solid #ccc', outline: 'none' }}
+                />
               </div>
             </div>
-            <div className="modal-actions">
-              <button className="btn btn-secondary" onClick={() => setIssueModal(false)}>Cancel</button>
-              <button className="btn btn-primary" style={{ background: '#16a34a' }} onClick={handleIssue}>📤 Issue to Site</button>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '30px', marginBottom: '20px' }}>
+              <div style={{ display: 'flex', alignItems: 'center' }}>
+                <label style={{ width: '170px', fontWeight: '700', fontSize: '14px', color: '#333' }}>
+                  Project Name<span style={{ color: 'red' }}>*</span>
+                </label>
+                <input 
+                  type="text"
+                  required
+                  value={formData.project_name}
+                  onChange={(e) => setFormData({ ...formData, project_name: e.target.value })}
+                  style={{ flex: 1, padding: '8px 12px', borderRadius: '4px', border: '1px solid #ccc', outline: 'none' }}
+                />
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center' }}>
+                <label style={{ width: '170px', fontWeight: '700', fontSize: '14px', color: '#333' }}>
+                  Project Location<span style={{ color: 'red' }}>*</span>
+                </label>
+                <input 
+                  type="text"
+                  required
+                  value={formData.project_location}
+                  onChange={(e) => setFormData({ ...formData, project_location: e.target.value })}
+                  style={{ flex: 1, padding: '8px 12px', borderRadius: '4px', border: '1px solid #ccc', outline: 'none' }}
+                />
+              </div>
             </div>
-          </div>
-        )}
-      </Modal>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '30px', marginBottom: '20px' }}>
+              <div style={{ display: 'flex', alignItems: 'flex-start' }}>
+                <label style={{ width: '170px', fontWeight: '700', fontSize: '14px', color: '#333', marginTop: '8px' }}>
+                  Address
+                </label>
+                <textarea 
+                  rows="3"
+                  value={formData.address}
+                  onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                  style={{ flex: 1, padding: '8px 12px', borderRadius: '4px', border: '1px solid #ccc', outline: 'none' }}
+                />
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center' }}>
+                <label style={{ width: '170px', fontWeight: '700', fontSize: '14px', color: '#333' }}>
+                  Engineer<span style={{ color: 'red' }}>*</span>
+                </label>
+                <select
+                  required
+                  value={formData.engineer}
+                  onChange={(e) => setFormData({ ...formData, engineer: e.target.value })}
+                  style={{ flex: 1, padding: '8px 12px', borderRadius: '4px', border: '1px solid #ccc', outline: 'none' }}
+                >
+                  <option value="">Select</option>
+                  <option value="Project Engineer 1">Project Engineer 1</option>
+                  <option value="Project Engineer 2">Project Engineer 2</option>
+                  <option value="Project Engineer 3">Project Engineer 3</option>
+                  <option value="Project Engineer 4">Project Engineer 4</option>
+                  {engineers.map(e => (
+                    <option key={e.id} value={e.full_name || e.name}>{e.full_name || e.name}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '30px', marginBottom: '30px' }}>
+              <div style={{ display: 'flex', alignItems: 'center' }}>
+                <label style={{ width: '170px', fontWeight: '700', fontSize: '14px', color: '#333' }}>
+                  Total Area<span style={{ color: 'red' }}>*</span>
+                </label>
+                <input 
+                  type="text"
+                  required
+                  value={formData.total_area}
+                  onChange={(e) => setFormData({ ...formData, total_area: e.target.value })}
+                  style={{ flex: 1, padding: '8px 12px', borderRadius: '4px', border: '1px solid #ccc', outline: 'none' }}
+                />
+              </div>
+            </div>
+
+            {/* Materials Checklist Table */}
+            <div style={{ marginBottom: '30px' }}>
+              <label style={{ fontWeight: '700', fontSize: '14px', color: '#333', marginBottom: '10px', display: 'block' }}>
+                Materials<span style={{ color: 'red' }}>*</span>
+              </label>
+
+              <div style={{ border: '1px solid #ccc', borderRadius: '4px', overflow: 'hidden' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px' }}>
+                  <thead>
+                    <tr style={{ background: '#f8fafc', borderBottom: '2px solid #e2e8f0' }}>
+                      <th style={{ padding: '10px 15px', textAlign: 'left', width: '35%' }}>Material Description</th>
+                      <th style={{ padding: '10px 15px', textAlign: 'left', width: '25%' }}>Brand Name</th>
+                      <th style={{ padding: '10px 15px', textAlign: 'left', width: '15%' }}>Main Qty</th>
+                      <th style={{ padding: '10px 15px', textAlign: 'left', width: '10%' }}>Unit</th>
+                      <th style={{ padding: '10px 15px', textAlign: 'left', width: '15%' }}>Req Qty</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {formData.items.length === 0 ? (
+                      <tr><td colSpan="5" style={{ padding: '15px', textAlign: 'center', color: '#777' }}>No materials configured in store</td></tr>
+                    ) : (
+                      formData.items.map((item, idx) => (
+                        <tr key={idx} style={{ borderBottom: '1px solid #edf2f7' }}>
+                          <td style={{ padding: '10px 15px' }}>
+                            <label style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                              <input 
+                                type="checkbox"
+                                checked={item.selected}
+                                onChange={() => handleCheckboxChange(idx)}
+                              />
+                              <span style={{ fontWeight: '500' }}>{item.name}</span>
+                            </label>
+                          </td>
+                          <td style={{ padding: '10px 15px', color: '#555' }}>{item.brand_name}</td>
+                          <td style={{ padding: '10px 15px', fontWeight: '600' }}>{item.main_qty}</td>
+                          <td style={{ padding: '10px 15px', color: '#777' }}>{item.unit}</td>
+                          <td style={{ padding: '10px 15px' }}>
+                            <input 
+                              type="number"
+                              value={item.requested_qty}
+                              onChange={(e) => handleQtyChange(idx, e.target.value)}
+                              disabled={!item.selected}
+                              style={{ width: '100%', padding: '6px 10px', borderRadius: '4px', border: '1px solid #ccc', background: item.selected ? '#fff' : '#f7fafc' }}
+                            />
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <button 
+                type="submit" 
+                style={{ background: '#2b5876', color: '#fff', padding: '8px 24px', borderRadius: '4px', border: 'none', fontWeight: '600', cursor: 'pointer' }}
+              >
+                Submit
+              </button>
+              <button 
+                type="button" 
+                onClick={() => setView('list')}
+                style={{ background: '#e2e8f0', color: '#4a5568', padding: '8px 20px', borderRadius: '4px', border: 'none', fontWeight: '600', cursor: 'pointer' }}
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
     </div>
   );
 };
