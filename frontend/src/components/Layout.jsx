@@ -111,6 +111,7 @@ const Layout = () => {
           <NavGroup label="📦 MATERIALS">
             <SideLink to="/materials/catalog" icon="📦" label="Material Catalog" onClick={closeSidebar} />
             <SideLink to="/materials/requests" icon="📤" label="Material Requests" onClick={closeSidebar} />
+            <SideLink to="/materials/consumption" icon="📉" label="Consumption" onClick={closeSidebar} />
             <SideLink to="/materials/stock" icon="📊" label="Site Stock" onClick={closeSidebar} />
           </NavGroup>
 
