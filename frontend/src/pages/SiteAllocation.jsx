@@ -29,9 +29,9 @@ const SiteAllocation = () => {
         apiClient.get('/projects'),
         apiClient.get('/equipment-machines/operators')
       ]);
-      setMachines(mRes.data || []);
-      setProjects(pRes.data || []);
-      setOperators(oRes.data || []);
+      setMachines(Array.isArray(mRes?.data) ? mRes.data : []);
+      setProjects(Array.isArray(pRes?.data) ? pRes.data : []);
+      setOperators(Array.isArray(oRes?.data) ? oRes.data : []);
     } catch (e) {
       console.error(e);
     } finally {
@@ -63,6 +63,9 @@ const SiteAllocation = () => {
       setSelectedProject('');
       setSelectedOperator('');
       setModalOpen(false);
+      setMachines(Array.isArray(machines) ? machines : []);
+      setProjects(Array.isArray(projects) ? projects : []);
+      setOperators(Array.isArray(operators) ? operators : []);
       fetchData();
     } catch (err) {
       setAlert({ type: 'error', message: 'Failed to allocate equipment.' });
@@ -73,7 +76,10 @@ const SiteAllocation = () => {
 
   if (loading) return <div style={{ padding: '2rem', textAlign: 'center' }}>Loading site fleet allocations...</div>;
 
-  const deployedMachines = machines.filter(m => m.status === 'deployed' || (m.current_location_name && !m.current_location_name.toUpperCase().includes('STORE')));
+  const safeMachines = Array.isArray(machines) ? machines : [];
+  const safeProjects = Array.isArray(projects) ? projects : [];
+  const safeOperators = Array.isArray(operators) ? operators : [];
+  const deployedMachines = safeMachines.filter(m => m?.status === 'deployed' || (m?.current_location_name && !m.current_location_name.toUpperCase().includes('STORE')));
 
   return (
     <div style={{ padding: '1.5rem', maxWidth: '1200px', margin: '0 auto' }}>

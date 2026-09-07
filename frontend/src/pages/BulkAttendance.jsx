@@ -156,7 +156,7 @@ const BulkAttendance = () => {
   };
 
   // Filtering
-  const filteredEmployees = employees.filter(emp => {
+  const filteredEmployees = (Array.isArray(employees) ? employees : []).filter(emp => {
     if (filterRole && emp.role !== filterRole) return false;
     if (search) {
       const q = search.toLowerCase();

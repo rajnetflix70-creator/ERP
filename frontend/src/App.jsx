@@ -30,6 +30,11 @@ import ProjectManagement from './pages/ProjectManagement';
 import MaterialMaster from './pages/MaterialMaster';
 import MaterialRequest from './pages/MaterialRequest';
 import SiteStock from './pages/SiteStock';
+import MainStoreCategory from './pages/MainStoreCategory';
+import MainStoreBrand from './pages/MainStoreBrand';
+import MainStoreMaterial from './pages/MainStoreMaterial';
+import MainStorePurchaseOrder from './pages/MainStorePurchaseOrder';
+import MainStoreReturnOrder from './pages/MainStoreReturnOrder';
 
 function App() {
   return (
@@ -66,6 +71,13 @@ function App() {
               <Route path="reports" element={<ReportsModule />} />
               <Route path="notifications" element={<NotificationCenter />} />
               <Route path="masters/equipment" element={<EquipmentMaster />} />
+
+              {/* Main Store routes */}
+              <Route path="main-store/category" element={<MainStoreCategory />} />
+              <Route path="main-store/brand" element={<MainStoreBrand />} />
+              <Route path="main-store/materials" element={<MainStoreMaterial />} />
+              <Route path="main-store/purchase-order" element={<MainStorePurchaseOrder />} />
+              <Route path="main-store/return-order" element={<MainStoreReturnOrder />} />
             </Route>
           </Route>
 

@@ -16,6 +16,7 @@ const attendanceRoutes = require('./modules/attendance/routes');
 const procurementRoutes = require('./modules/procurement/routes');
 const billingRoutes = require('./modules/billing/routes');
 const reportsRoutes = require('./modules/reports/routes');
+const mainStoreRoutes = require('./modules/main_store/routes');
 
 const app = express();
 
@@ -63,6 +64,7 @@ app.use('/api/v1/attendance', authMiddleware, attendanceRoutes);
 app.use('/api/v1/procurement', authMiddleware, procurementRoutes);
 app.use('/api/v1/billing', authMiddleware, billingRoutes);
 app.use('/api/v1/reports', authMiddleware, reportsRoutes);
+app.use('/api/v1/main-store', authMiddleware, mainStoreRoutes);
 
 // SPA fallback for React Router & 404 for unknown API routes
 app.use((req, res, next) => {

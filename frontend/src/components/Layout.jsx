@@ -66,6 +66,11 @@ const Layout = () => {
       '/masters/vendors': 'Vendor & Supplier Directory',
       '/reports': 'Reports & Analytics',
       '/notifications': 'Notification Center',
+      '/main-store/category': 'Manage Category',
+      '/main-store/brand': 'Manage Brand',
+      '/main-store/materials': 'Manage Material',
+      '/main-store/purchase-order': 'Manage Purchase Order',
+      '/main-store/return-order': 'Manage Return Order',
     };
     return titles[p] || 'AK Construction ERP';
   };
@@ -89,6 +94,14 @@ const Layout = () => {
         <div className="sidebar-nav">
 
           <SideLink to="/" icon="📊" label="Dashboard" end onClick={closeSidebar} />
+
+          <NavGroup label="🏭 MAIN STORE">
+            <SideLink to="/main-store/category" icon="🏷️" label="Category" onClick={closeSidebar} />
+            <SideLink to="/main-store/brand" icon="🏷️" label="Brand" onClick={closeSidebar} />
+            <SideLink to="/main-store/materials" icon="📦" label="Materials" onClick={closeSidebar} />
+            <SideLink to="/main-store/purchase-order" icon="🛒" label="Purchase Order" onClick={closeSidebar} />
+            <SideLink to="/main-store/return-order" icon="🔄" label="Return Order" onClick={closeSidebar} />
+          </NavGroup>
 
           <NavGroup label="📋 PROJECT">
             <SideLink to="/project/work-packages" icon="📋" label="Work Packages" onClick={closeSidebar} />

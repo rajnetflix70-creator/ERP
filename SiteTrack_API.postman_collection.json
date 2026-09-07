@@ -1,0 +1,198 @@
+{
+	"info": {
+		"_postman_id": "sitetrack-api-collection-2026",
+		"name": "SiteTrack Production API Collection",
+		"description": "Complete API Collection for SiteTrack ERP live on Railway",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "https://alluring-gentleness-production-5fbd.up.railway.app/api/v1",
+			"type": "string"
+		},
+		{
+			"key": "authToken",
+			"value": "",
+			"type": "string"
+		}
+	],
+	"item": [
+		{
+			"name": "1. Auth - Login",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var jsonData = pm.response.json();",
+							"if (jsonData.token) {",
+							"    pm.collectionVariables.set('authToken', jsonData.token);",
+							"    console.log('Saved Token to Collection Variables');",
+							"}"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"email\": \"super_admin@sitetrack.ae\",\n  \"password\": \"Admin@1234\"\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/auth/login",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"auth",
+						"login"
+					]
+				}
+			}
+		},
+		{
+			"name": "2. Employees - List All",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{authToken}}"
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/employees",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"employees"
+					]
+				}
+			}
+		},
+		{
+			"name": "3. Employees - Create New",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{authToken}}"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"full_name\": \"Postman Engineer\",\n  \"mobile_number\": \"+971509988776\",\n  \"role_id\": 3\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/employees",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"employees"
+					]
+				}
+			}
+		},
+		{
+			"name": "4. Projects - List All",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{authToken}}"
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/projects",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"projects"
+					]
+				}
+			}
+		},
+		{
+			"name": "5. Materials - Catalog",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{authToken}}"
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/materials",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"materials"
+					]
+				}
+			}
+		},
+		{
+			"name": "6. Equipment - Machines",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{authToken}}"
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/equipment-machines",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"equipment-machines"
+					]
+				}
+			}
+		},
+		{
+			"name": "7. Reports - Dashboard Stats",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{authToken}}"
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/reports/dashboard",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"reports",
+						"dashboard"
+					]
+				}
+			}
+		}
+	]
+}
