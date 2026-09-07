@@ -71,6 +71,9 @@ const Layout = () => {
       '/main-store/materials': 'Manage Material',
       '/main-store/purchase-order': 'Manage Purchase Order',
       '/main-store/return-order': 'Manage Return Order',
+      '/my-profile': 'My Profile',
+      '/change-password': 'Change Password',
+      '/users/master': 'User Master',
     };
     return titles[p] || 'AK Construction ERP';
   };
@@ -155,6 +158,11 @@ const Layout = () => {
 
           <NavGroup label="👥 USERS">
             <SideLink to="/users/master" icon="👥" label="Users" onClick={closeSidebar} />
+          </NavGroup>
+
+          <NavGroup label="👤 MY ACCOUNT">
+            <SideLink to="/my-profile" icon="🙋" label="My Profile" onClick={closeSidebar} />
+            <SideLink to="/change-password" icon="🔑" label="Change Password" onClick={closeSidebar} />
           </NavGroup>
 
         </div>
