@@ -153,6 +153,10 @@ const Layout = () => {
             <SideLink to="/notifications" icon="🔔" label="Notifications" onClick={closeSidebar} />
           </NavGroup>
 
+          <NavGroup label="👥 USERS">
+            <SideLink to="/users/master" icon="👥" label="Users" onClick={closeSidebar} />
+          </NavGroup>
+
         </div>
 
         {/* Footer */}
