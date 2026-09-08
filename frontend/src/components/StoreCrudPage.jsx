@@ -52,10 +52,10 @@ const PagBtn = ({ label, active, disabled, onClick }) => (
     disabled={disabled}
     style={{
       minWidth: '34px', height: '34px', padding: '0 10px',
-      border: `1px solid ${active ? '#2b5876' : '#e2e8f0'}`,
+      border: `1px solid ${active || (typeof label === 'number' && label === currentPage) ? '#f5a623' : '#e2e8f0'}`,
       borderRadius: '6px',
-      background: active ? '#2b5876' : disabled ? '#f8fafc' : '#fff',
-      color: active ? '#fff' : disabled ? '#cbd5e1' : '#374151',
+      background: active || (typeof label === 'number' && label === currentPage) ? '#1a1f2e' : disabled ? '#f8fafc' : '#fff',
+      color: active || (typeof label === 'number' && label === currentPage) ? '#f5a623' : disabled ? '#cbd5e1' : '#374151',
       fontWeight: active ? '700' : '500',
       fontSize: '12px', cursor: disabled ? 'not-allowed' : 'pointer',
       transition: 'all 0.15s',
@@ -67,7 +67,7 @@ const PagBtn = ({ label, active, disabled, onClick }) => (
 const StoreCrudPage = ({
   title = 'Manage',
   icon = '🏷️',
-  accentColor = '#2b5876',
+  accentColor = '#1a1f2e',
   columns = [],
   rows = [],
   loading = false,
@@ -100,7 +100,7 @@ const StoreCrudPage = ({
         {/* Breadcrumb */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '18px' }}>
           <button onClick={onCancel}
-            style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '13px', color: accentColor, fontWeight: '600', padding: 0 }}>
+            style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '13px', color: '#f5a623', fontWeight: '700', padding: 0, fontFamily: 'inherit' }}>
             ← Back to {title}
           </button>
         </div>
@@ -112,21 +112,22 @@ const StoreCrudPage = ({
         }}>
           {/* Card header stripe */}
           <div style={{
-            background: `linear-gradient(90deg, ${accentColor}, #4e8098)`,
+            background: `linear-gradient(135deg, #1a1f2e, #2e3547)`,
+            borderBottom: '3px solid #f5a623',
             padding: '16px 24px', display: 'flex', alignItems: 'center', gap: '10px'
           }}>
             <span style={{ fontSize: '20px' }}>{icon}</span>
-            <span style={{ color: '#fff', fontWeight: '700', fontSize: '15px' }}>{formTitle}</span>
+            <span style={{ color: '#f5a623', fontWeight: '700', fontSize: '15px', fontFamily: "'Rajdhani',sans-serif", letterSpacing:'0.05em' }}>{formTitle}</span>
           </div>
 
           <form onSubmit={onSubmit} style={{ padding: '28px 32px' }}>
             {formContent}
             <div style={{ display: 'flex', gap: '10px', marginTop: '24px' }}>
               <button type="submit" style={{
-                background: `linear-gradient(135deg, ${accentColor}, #4e8098)`,
-                color: '#fff', padding: '9px 28px', borderRadius: '8px',
+                background: 'linear-gradient(135deg, #f5a623, #d4881c)',
+                color: '#1a1f2e', padding: '9px 28px', borderRadius: '8px',
                 border: 'none', fontWeight: '700', fontSize: '14px', cursor: 'pointer',
-                boxShadow: '0 2px 8px rgba(43,88,118,0.3)', transition: 'opacity 0.2s'
+                boxShadow: '0 2px 8px rgba(245,166,35,0.3)', transition: 'opacity 0.2s'
               }}>💾 Save</button>
               <button type="button" onClick={onCancel} style={{
                 background: '#f1f5f9', color: '#475569', padding: '9px 22px',
@@ -149,23 +150,23 @@ const StoreCrudPage = ({
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <div style={{
             width: '42px', height: '42px', borderRadius: '10px',
-            background: `linear-gradient(135deg, ${accentColor}, #4e8098)`,
+            background: 'linear-gradient(135deg, #1a1f2e, #2e3547)',
             display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px'
           }}>{icon}</div>
           <div>
-            <h2 style={{ margin: 0, fontSize: '20px', fontWeight: '800', color: '#0f172a' }}>{title}</h2>
-            <p style={{ margin: 0, fontSize: '12px', color: '#64748b' }}>{total} records found</p>
+            <h2 style={{ margin: 0, fontSize: '21px', fontWeight: '700', color: '#1a1f2e', fontFamily:"'Rajdhani',sans-serif", letterSpacing:'0.03em' }}>{title}</h2>
+            <p style={{ margin: 0, fontSize: '12px', color: '#6b7280' }}>{total} records found</p>
           </div>
         </div>
         <button onClick={onAdd} style={{
           display: 'flex', alignItems: 'center', gap: '7px',
-          background: `linear-gradient(135deg, ${accentColor}, #4e8098)`,
-          color: '#fff', padding: '9px 20px', borderRadius: '8px',
+          background: 'linear-gradient(135deg,#f5a623,#d4881c)',
+          color: '#1a1f2e', padding: '9px 20px', borderRadius: '8px',
           border: 'none', fontWeight: '700', fontSize: '13px', cursor: 'pointer',
-          boxShadow: '0 2px 10px rgba(43,88,118,0.3)', transition: 'transform 0.15s, box-shadow 0.15s'
+          boxShadow: '0 2px 10px rgba(245,166,35,0.3)', transition: 'transform 0.15s, box-shadow 0.15s'
         }}
-          onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 4px 16px rgba(43,88,118,0.4)'; }}
-          onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 2px 10px rgba(43,88,118,0.3)'; }}
+          onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 4px 16px rgba(245,166,35,0.45)'; }}
+          onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 2px 10px rgba(245,166,35,0.3)'; }}
         >
           ＋ Add New
         </button>
@@ -202,7 +203,7 @@ const StoreCrudPage = ({
                 outline: 'none', fontSize: '13px', width: '220px',
                 transition: 'border 0.2s', color: '#374151'
               }}
-              onFocus={e => e.target.style.borderColor = accentColor}
+              onFocus={e => e.target.style.borderColor = '#f5a623'}
               onBlur={e => e.target.style.borderColor = '#e2e8f0'}
             />
           </div>
@@ -213,18 +214,18 @@ const StoreCrudPage = ({
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
             <thead>
               <tr style={{ background: 'linear-gradient(90deg,#f8fafc,#f1f5f9)' }}>
-                <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: '700', color: '#475569', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.5px', whiteSpace: 'nowrap', borderBottom: '2px solid #e2e8f0', width: '50px' }}>#</th>
+                <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: '700', color: '#f5a623', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.08em', whiteSpace: 'nowrap', borderBottom: '2px solid #f5a623', width: '50px', background: '#1a1f2e', fontFamily:"'Rajdhani',sans-serif" }}>#</th>
                 {columns.map(col => (
-                  <th key={col.key} style={{ padding: '12px 16px', textAlign: 'left', fontWeight: '700', color: '#475569', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.5px', whiteSpace: 'nowrap', borderBottom: '2px solid #e2e8f0' }}>{col.label}</th>
+                  <th key={col.key} style={{ padding: '12px 16px', textAlign: 'left', fontWeight: '700', color: '#f5a623', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.08em', whiteSpace: 'nowrap', borderBottom: '2px solid #f5a623', background: '#1a1f2e', fontFamily:"'Rajdhani',sans-serif" }}>{col.label}</th>
                 ))}
-                <th style={{ padding: '12px 16px', textAlign: 'center', fontWeight: '700', color: '#475569', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.5px', whiteSpace: 'nowrap', borderBottom: '2px solid #e2e8f0', width: '100px' }}>Actions</th>
+                <th style={{ padding: '12px 16px', textAlign: 'center', fontWeight: '700', color: '#f5a623', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.08em', whiteSpace: 'nowrap', borderBottom: '2px solid #f5a623', width: '100px', background: '#1a1f2e', fontFamily:"'Rajdhani',sans-serif" }}>Actions</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
                 <tr><td colSpan={columns.length + 2} style={{ textAlign: 'center', padding: '40px', color: '#94a3b8' }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
-                    <div style={{ width: '18px', height: '18px', border: '2px solid #e2e8f0', borderTopColor: accentColor, borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+                    <div style={{ width: '18px', height: '18px', border: '2px solid #e2e8f0', borderTopColor: '#f5a623', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
                     Loading...
                   </div>
                 </td></tr>
@@ -236,10 +237,10 @@ const StoreCrudPage = ({
               ) : paged.map((row, i) => (
                 <tr key={row.id || i}
                   style={{ borderBottom: '1px solid #f1f5f9', transition: 'background 0.12s' }}
-                  onMouseEnter={e => e.currentTarget.style.background = '#f8fafc'}
+                  onMouseEnter={e => e.currentTarget.style.background = '#fef3dc'}
                   onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                 >
-                  <td style={{ padding: '12px 16px', color: '#94a3b8', fontWeight: '600', fontSize: '12px' }}>{start + i + 1}</td>
+                  <td style={{ padding: '12px 16px', color: '#94a3b8', fontWeight: '700', fontSize: '12px', fontFamily:"'Rajdhani',sans-serif" }}>{start + i + 1}</td>
                   {columns.map(col => (
                     <td key={col.key} style={{ padding: '12px 16px', color: '#374151' }}>
                       {col.render ? col.render(row[col.key], row) : (row[col.key] ?? '—')}
@@ -248,9 +249,9 @@ const StoreCrudPage = ({
                   <td style={{ padding: '12px 16px', textAlign: 'center' }}>
                     <div style={{ display: 'flex', gap: '6px', justifyContent: 'center' }}>
                       <button onClick={() => onEdit(row)} title="Edit"
-                        style={{ padding: '5px 10px', borderRadius: '6px', border: '1px solid #bfdbfe', background: '#eff6ff', color: '#1d4ed8', cursor: 'pointer', fontSize: '13px', fontWeight: '600', transition: 'all 0.15s' }}
-                        onMouseEnter={e => { e.currentTarget.style.background = '#1d4ed8'; e.currentTarget.style.color = '#fff'; }}
-                        onMouseLeave={e => { e.currentTarget.style.background = '#eff6ff'; e.currentTarget.style.color = '#1d4ed8'; }}>
+                        style={{ padding: '5px 10px', borderRadius: '6px', border: '1px solid #f5a623', background: '#fef3dc', color: '#1a1f2e', cursor: 'pointer', fontSize: '13px', fontWeight: '700', transition: 'all 0.15s' }}
+                        onMouseEnter={e => { e.currentTarget.style.background = '#f5a623'; e.currentTarget.style.color = '#1a1f2e'; }}
+                        onMouseLeave={e => { e.currentTarget.style.background = '#fef3dc'; e.currentTarget.style.color = '#1a1f2e'; }}>
                         ✏️
                       </button>
                       <button onClick={() => onDelete(row.id)} title="Delete"
