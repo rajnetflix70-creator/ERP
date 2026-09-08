@@ -1,328 +1,77 @@
 import React, { useState, useEffect } from 'react';
 import client from '../api/client';
+import StoreCrudPage, { FormRow, FormInput, FormRadioGroup } from '../components/StoreCrudPage';
+
+const EMPTY = { po_number: '', supplier_name: '', po_date: '', status: 'Pending' };
+
+const StatusBadgePO = ({ value }) => {
+  const map = {
+    Pending:   { bg: '#fff7ed', color: '#c2410c', border: '#fed7aa' },
+    Completed: { bg: '#f0fdf4', color: '#15803d', border: '#86efac' },
+    Cancelled: { bg: '#fef2f2', color: '#b91c1c', border: '#fca5a5' },
+  };
+  const s = map[value] || map.Pending;
+  return <span style={{ background: s.bg, color: s.color, border: `1px solid ${s.border}`, borderRadius: '20px', padding: '2px 12px', fontSize: '11px', fontWeight: '700' }}>{value}</span>;
+};
 
 const MainStorePurchaseOrder = () => {
-  const [orders, setOrders] = useState([]);
-  const [materials, setMaterials] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState('');
-  const [entriesPerPage, setEntriesPerPage] = useState(10);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [view, setView] = useState('list'); // 'list' | 'form'
+  const [rows, setRows]         = useState([]);
+  const [loading, setLoading]   = useState(true);
+  const [showForm, setShowForm] = useState(false);
+  const [editId, setEditId]     = useState(null);
+  const [form, setForm]         = useState(EMPTY);
 
-  const [formData, setFormData] = useState({
-    po_number: '',
-    supplier_name: '',
-    po_date: new Date().toISOString().split('T')[0],
-    mtc_file_url: '',
-    material_id: '',
-    quantity: ''
-  });
-
-  const fetchData = async () => {
+  const fetch = async () => {
     setLoading(true);
-    try {
-      const [poRes, matRes] = await Promise.all([
-        client.get('/main-store/purchase-orders'),
-        client.get('/main-store/materials')
-      ]);
-      setOrders(Array.isArray(poRes.data?.data) ? poRes.data.data : []);
-      setMaterials(Array.isArray(matRes.data?.data) ? matRes.data.data : []);
-    } catch (err) {
-      console.error(err);
-      setOrders([]);
-    } finally {
-      setLoading(false);
-    }
+    try { const r = await client.get('/main-store/purchase-orders'); setRows(r.data?.data || []); }
+    catch { setRows([]); } finally { setLoading(false); }
   };
+  useEffect(() => { fetch(); }, []);
 
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  const handleSave = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const payload = {
-        po_number: formData.po_number,
-        supplier_name: formData.supplier_name,
-        po_date: formData.po_date,
-        mtc_file_url: formData.mtc_file_url,
-        items: [
-          {
-            material_id: Number(formData.material_id),
-            quantity: Number(formData.quantity) || 1
-          }
-        ]
-      };
-
-      await client.post('/main-store/purchase-orders', payload);
-      setView('list');
-      fetchData();
-    } catch (err) {
-      alert('Error saving Purchase Order: ' + (err.response?.data?.message || err.message));
-    }
+      editId ? await client.put(`/main-store/purchase-orders/${editId}`, form)
+             : await client.post('/main-store/purchase-orders', form);
+      setShowForm(false); setEditId(null); setForm(EMPTY); fetch();
+    } catch (err) { alert(err.response?.data?.message || err.message); }
   };
 
+  const handleEdit = (row) => {
+    setEditId(row.id);
+    setForm({ po_number: row.po_number, supplier_name: row.supplier_name, po_date: row.po_date?.slice(0,10) || '', status: row.status });
+    setShowForm(true);
+  };
   const handleDelete = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this purchase order?')) return;
-    try {
-      await client.delete(`/main-store/purchase-orders/${id}`);
-      fetchData();
-    } catch (err) {
-      alert('Error deleting purchase order');
-    }
+    if (!window.confirm('Delete this purchase order?')) return;
+    try { await client.delete(`/main-store/purchase-orders/${id}`); fetch(); }
+    catch { alert('Delete failed'); }
   };
 
-  const filtered = Array.isArray(orders) ? orders.filter(o => 
-    (o.po_number || '').toLowerCase().includes(search.toLowerCase()) ||
-    (o.supplier_name || '').toLowerCase().includes(search.toLowerCase())
-  ) : [];
-
-  const totalEntries = filtered.length;
-  const totalPages = Math.ceil(totalEntries / entriesPerPage) || 1;
-  const startIndex = (currentPage - 1) * entriesPerPage;
-  const paginated = filtered.slice(startIndex, startIndex + entriesPerPage);
+  const columns = [
+    { key: 'po_number',      label: 'PO Number',    render: (v) => <b style={{ color: '#1e40af', fontFamily: 'monospace' }}>{v}</b> },
+    { key: 'supplier_name',  label: 'Supplier',      render: (v) => <span style={{ fontWeight: '600', color: '#1e293b' }}>{v}</span> },
+    { key: 'po_date',        label: 'PO Date',       render: (v) => v ? new Date(v).toLocaleDateString() : '—' },
+    { key: 'status',         label: 'Status',         render: (v) => <StatusBadgePO value={v} /> },
+  ];
 
   return (
-    <div style={{ padding: '20px', background: '#f4f6f9', minHeight: '100vh' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
-        <h2 style={{ fontSize: '24px', fontWeight: '600', color: '#333' }}>
-          {view === 'list' ? 'Manage Purchase Order' : 'New Purchase Order'}
-        </h2>
-      </div>
-
-      {view === 'list' ? (
-        <div style={{ background: '#fff', borderRadius: '4px', border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
-          <div style={{ padding: '12px 20px', background: '#fcfcfc', borderBottom: '1px solid #edf2f7', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontSize: '12px', fontWeight: '700', textTransform: 'uppercase', color: '#888', letterSpacing: '0.5px' }}>
-              PURCHASE ORDER LIST
-            </span>
-            <button 
-              onClick={() => { setFormData({ po_number: `PO-${Date.now().toString().slice(-6)}`, supplier_name: '', po_date: new Date().toISOString().split('T')[0], mtc_file_url: '', material_id: '', quantity: '' }); setView('form'); }}
-              style={{ background: 'none', border: 'none', color: '#3182ce', fontWeight: '600', cursor: 'pointer', fontSize: '13px' }}
-            >
-              ADD NEW
-            </button>
-          </div>
-
-          <div style={{ padding: '15px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
-            <div style={{ fontSize: '14px', color: '#555' }}>
-              Show {' '}
-              <select 
-                value={entriesPerPage} 
-                onChange={(e) => { setEntriesPerPage(Number(e.target.value)); setCurrentPage(1); }}
-                style={{ padding: '4px 8px', borderRadius: '4px', border: '1px solid #ccc' }}
-              >
-                <option value={10}>10</option>
-                <option value={25}>25</option>
-                <option value={50}>50</option>
-              </select>
-              {' '} entries
-            </div>
-            <div>
-              <span style={{ fontSize: '14px', color: '#555', marginRight: '8px' }}>Search:</span>
-              <input 
-                type="text"
-                value={search}
-                onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
-                style={{ padding: '5px 10px', borderRadius: '4px', border: '1px solid #ccc', outline: 'none' }}
-              />
-            </div>
-          </div>
-
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '14px' }}>
-              <thead>
-                <tr style={{ background: '#f8fafc', borderTop: '1px solid #e2e8f0', borderBottom: '2px solid #e2e8f0' }}>
-                  <th style={{ padding: '10px 15px', width: '50px' }}>#</th>
-                  <th style={{ padding: '10px 15px' }}>PO Number</th>
-                  <th style={{ padding: '10px 15px' }}>Supplier Name</th>
-                  <th style={{ padding: '10px 15px' }}>PO Date</th>
-                  <th style={{ padding: '10px 15px' }}>Items</th>
-                  <th style={{ padding: '10px 15px' }}>Status</th>
-                  <th style={{ padding: '10px 15px' }}>Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {loading ? (
-                  <tr><td colSpan="7" style={{ textAlign: 'center', padding: '20px' }}>Loading...</td></tr>
-                ) : paginated.length === 0 ? (
-                  <tr><td colSpan="7" style={{ textAlign: 'center', padding: '20px', color: '#777' }}>No purchase orders found</td></tr>
-                ) : (
-                  paginated.map((o, idx) => (
-                    <tr key={o.id || idx} style={{ borderBottom: '1px solid #edf2f7' }}>
-                      <td style={{ padding: '10px 15px', color: '#666' }}>{startIndex + idx + 1}</td>
-                      <td style={{ padding: '10px 15px', fontWeight: '600', color: '#3182ce' }}>{o.po_number}</td>
-                      <td style={{ padding: '10px 15px', color: '#2d3748' }}>{o.supplier_name}</td>
-                      <td style={{ padding: '10px 15px', color: '#718096' }}>{o.po_date ? new Date(o.po_date).toLocaleDateString() : '-'}</td>
-                      <td style={{ padding: '10px 15px', color: '#4a5568' }}>
-                        {Array.isArray(o.items) ? o.items.map(i => `${i.material_name || 'Material'} (${i.quantity})`).join(', ') : '-'}
-                      </td>
-                      <td style={{ padding: '10px 15px' }}>
-                        <span style={{ background: '#ebf8ff', color: '#2b6cb0', padding: '2px 8px', borderRadius: '4px', fontWeight: '600', fontSize: '12px' }}>
-                          {o.status || 'Pending'}
-                        </span>
-                      </td>
-                      <td style={{ padding: '10px 15px' }}>
-                        <button onClick={() => handleDelete(o.id)} title="Delete" style={{ background: 'none', border: 'none', color: '#e53e3e', cursor: 'pointer', fontSize: '15px' }}>🗑️</button>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-
-          <div style={{ padding: '15px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #e2e8f0', flexWrap: 'wrap', gap: '10px' }}>
-            <div style={{ fontSize: '13px', color: '#718096' }}>
-              Showing {totalEntries === 0 ? 0 : startIndex + 1} to {Math.min(startIndex + entriesPerPage, totalEntries)} of {totalEntries} entries
-            </div>
-
-            <div style={{ display: 'flex', gap: '2px' }}>
-              <button 
-                disabled={currentPage === 1}
-                onClick={() => setCurrentPage(p => p - 1)}
-                style={{ padding: '5px 12px', border: '1px solid #cbd5e0', background: currentPage === 1 ? '#edf2f7' : '#fff', cursor: currentPage === 1 ? 'not-allowed' : 'pointer', fontSize: '12px', color: '#4a5568', borderRadius: '3px 0 0 3px' }}
-              >
-                PREVIOUS
-              </button>
-              {Array.from({ length: totalPages }, (_, i) => i + 1).slice(0, 5).map(num => (
-                <button 
-                  key={num}
-                  onClick={() => setCurrentPage(num)}
-                  style={{ padding: '5px 12px', border: '1px solid #cbd5e0', background: currentPage === num ? '#3182ce' : '#fff', color: currentPage === num ? '#fff' : '#4a5568', cursor: 'pointer', fontSize: '12px' }}
-                >
-                  {num}
-                </button>
-              ))}
-              <button 
-                disabled={currentPage === totalPages || totalPages === 0}
-                onClick={() => setCurrentPage(p => p + 1)}
-                style={{ padding: '5px 12px', border: '1px solid #cbd5e0', background: (currentPage === totalPages || totalPages === 0) ? '#edf2f7' : '#fff', cursor: (currentPage === totalPages || totalPages === 0) ? 'not-allowed' : 'pointer', fontSize: '12px', color: '#4a5568', borderRadius: '0 3px 3px 0' }}
-              >
-                NEXT
-              </button>
-            </div>
-          </div>
-        </div>
-      ) : (
-        <div style={{ background: '#fff', borderRadius: '4px', border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
-          <div style={{ padding: '12px 20px', background: '#fcfcfc', borderBottom: '1px solid #edf2f7' }}>
-            <span style={{ fontSize: '12px', fontWeight: '700', textTransform: 'uppercase', color: '#888', letterSpacing: '0.5px' }}>
-              PURCHASE ORDER FIELDS
-            </span>
-          </div>
-
-          <form onSubmit={handleSave} style={{ padding: '30px 40px' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '30px', marginBottom: '20px' }}>
-              <div style={{ display: 'flex', alignItems: 'center' }}>
-                <label style={{ width: '130px', fontWeight: '700', fontSize: '14px', color: '#333' }}>
-                  PO Number<span style={{ color: 'red' }}>*</span>
-                </label>
-                <input 
-                  type="text"
-                  required
-                  value={formData.po_number}
-                  onChange={(e) => setFormData({ ...formData, po_number: e.target.value })}
-                  style={{ flex: 1, padding: '8px 12px', borderRadius: '4px', border: '1px solid #ccc', outline: 'none' }}
-                />
-              </div>
-
-              <div style={{ display: 'flex', alignItems: 'center' }}>
-                <label style={{ width: '130px', fontWeight: '700', fontSize: '14px', color: '#333' }}>
-                  Supplier Name<span style={{ color: 'red' }}>*</span>
-                </label>
-                <input 
-                  type="text"
-                  required
-                  value={formData.supplier_name}
-                  onChange={(e) => setFormData({ ...formData, supplier_name: e.target.value })}
-                  style={{ flex: 1, padding: '8px 12px', borderRadius: '4px', border: '1px solid #ccc', outline: 'none' }}
-                />
-              </div>
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '30px', marginBottom: '20px' }}>
-              <div style={{ display: 'flex', alignItems: 'center' }}>
-                <label style={{ width: '130px', fontWeight: '700', fontSize: '14px', color: '#333' }}>
-                  PO Date<span style={{ color: 'red' }}>*</span>
-                </label>
-                <input 
-                  type="date"
-                  required
-                  value={formData.po_date}
-                  onChange={(e) => setFormData({ ...formData, po_date: e.target.value })}
-                  style={{ flex: 1, padding: '8px 12px', borderRadius: '4px', border: '1px solid #ccc', outline: 'none' }}
-                />
-              </div>
-            </div>
-
-            <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '20px' }}>
-              <label style={{ width: '130px', fontWeight: '700', fontSize: '14px', color: '#333' }}>
-                Material 1<span style={{ color: 'red' }}>*</span>
-              </label>
-              <select
-                required
-                value={formData.material_id}
-                onChange={(e) => setFormData({ ...formData, material_id: e.target.value })}
-                style={{ width: '280px', padding: '8px 12px', borderRadius: '4px', border: '1px solid #ccc', outline: 'none' }}
-              >
-                <option value="">Select</option>
-                {materials.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
-              </select>
-
-              <input 
-                type="number"
-                placeholder="Quantity 1"
-                required
-                value={formData.quantity}
-                onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
-                style={{ width: '160px', padding: '8px 12px', borderRadius: '4px', border: '1px solid #ccc', outline: 'none' }}
-              />
-
-              <button 
-                type="button" 
-                style={{ background: '#70b62c', color: '#fff', border: 'none', borderRadius: '4px', width: '36px', height: '36px', fontSize: '20px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-              >
-                +
-              </button>
-            </div>
-
-            <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '30px' }}>
-              <label style={{ width: '130px', fontWeight: '700', fontSize: '14px', color: '#333' }}>
-                MTC 1
-              </label>
-              <div style={{ border: '1px solid #ccc', borderRadius: '4px', padding: '4px 8px', width: '280px', display: 'flex', alignItems: 'center' }}>
-                <input type="file" onChange={(e) => setFormData({ ...formData, mtc_file_url: e.target.files[0]?.name || '' })} style={{ fontSize: '13px' }} />
-              </div>
-              <button 
-                type="button" 
-                style={{ background: '#70b62c', color: '#fff', border: 'none', borderRadius: '4px', width: '36px', height: '36px', fontSize: '20px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-              >
-                +
-              </button>
-            </div>
-
-            <div style={{ display: 'flex', gap: '10px', marginLeft: '130px' }}>
-              <button 
-                type="submit" 
-                style={{ background: '#2b5876', color: '#fff', padding: '8px 24px', borderRadius: '4px', border: 'none', fontWeight: '600', cursor: 'pointer' }}
-              >
-                Submit
-              </button>
-              <button 
-                type="button" 
-                onClick={() => setView('list')}
-                style={{ background: '#e2e8f0', color: '#4a5568', padding: '8px 20px', borderRadius: '4px', border: 'none', fontWeight: '600', cursor: 'pointer' }}
-              >
-                Cancel
-              </button>
-            </div>
-          </form>
-        </div>
-      )}
-    </div>
+    <StoreCrudPage
+      title="Purchase Orders" icon="🛒" accentColor="#d97706"
+      columns={columns} rows={rows} loading={loading}
+      showForm={showForm} formTitle={editId ? 'Edit Purchase Order' : 'New Purchase Order'}
+      onAdd={() => { setEditId(null); setForm(EMPTY); setShowForm(true); }}
+      onEdit={handleEdit} onDelete={handleDelete}
+      onCancel={() => setShowForm(false)} onSubmit={handleSubmit}
+      formContent={<>
+        <FormRow label="PO Number" required><FormInput required value={form.po_number} onChange={e => setForm({ ...form, po_number: e.target.value })} placeholder="e.g. PO-2024-001" /></FormRow>
+        <FormRow label="Supplier Name" required><FormInput required value={form.supplier_name} onChange={e => setForm({ ...form, supplier_name: e.target.value })} placeholder="e.g. Al Habtoor Traders" /></FormRow>
+        <FormRow label="PO Date" required><FormInput required type="date" value={form.po_date} onChange={e => setForm({ ...form, po_date: e.target.value })} /></FormRow>
+        <FormRow label="Status" required>
+          <FormRadioGroup value={form.status} onChange={v => setForm({ ...form, status: v })} options={['Pending', 'Completed', 'Cancelled']} />
+        </FormRow>
+      </>}
+    />
   );
 };
 
