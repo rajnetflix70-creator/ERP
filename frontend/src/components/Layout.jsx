@@ -28,14 +28,7 @@ const SideLink = ({ to, icon, label, end = false, onClick }) => (
   </NavLink>
 );
 
-/* ── WEBREXLAB Diamond SVG Logo ── */
-const DiamondLogo = () => (
-  <svg width="38" height="38" viewBox="0 0 38 38" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <polygon points="19,2 36,19 19,36 2,19" fill="#1a2a4a" stroke="#f0a500" strokeWidth="2"/>
-    <polygon points="19,8 30,19 19,30 8,19" fill="#f0a500" opacity="0.85"/>
-    <polygon points="19,13 25,19 19,25 13,19" fill="#fff" opacity="0.95"/>
-  </svg>
-);
+
 
 /* ── User Dropdown ── */
 const UserDropdown = ({ user, onLogout }) => {
@@ -196,20 +189,16 @@ const Layout = () => {
       {/* ── Sidebar ── */}
       <aside className={`sidebar ${sidebarOpen ? 'open' : ''}`}>
 
-        {/* ── WEBREXLAB Logo — clicks to Dashboard ── */}
+        {/* ── SiteTrack Logo — clicks to Dashboard ── */}
         <div
           className="sidebar-logo"
           onClick={() => { navigate('/'); closeSidebar(); }}
           style={{ cursor: 'pointer' }}
         >
-          <DiamondLogo />
+          <div className="logo-icon">🏗️</div>
           <div className="logo-text">
-            <span className="logo-title" style={{ fontWeight: '800', letterSpacing: '1px', fontSize: '15px' }}>
-              WEBREXLAB
-            </span>
-            <span className="logo-subtitle" style={{ fontSize: '10px', color: '#f0a500', fontWeight: '600', letterSpacing: '0.5px' }}>
-              Software Company
-            </span>
+            <span className="logo-title">SiteTrack</span>
+            <span className="logo-subtitle">Site Management ERP</span>
           </div>
         </div>
 
