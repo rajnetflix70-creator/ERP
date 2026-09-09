@@ -18,6 +18,8 @@ const createWorkPackageSchema = Joi.object({
 });
 
 const updateWorkPackageSchema = Joi.object({
+  project_id: Joi.string().uuid().allow(null, '').optional(),
+  site_id: Joi.string().uuid().allow(null, '').optional(),
   title: Joi.string().min(2).max(200).optional(),
   description: Joi.string().allow('', null).optional(),
   status: Joi.string().valid(...VALID_STATUSES).optional(),
@@ -29,8 +31,7 @@ const updateWorkPackageSchema = Joi.object({
   actual_end: Joi.date().allow(null, '').optional(),
   completion_pct: Joi.number().min(0).max(100).optional(),
   blocked_reason: Joi.string().allow('', null).optional(),
-  site_id: Joi.string().uuid().allow(null, '').optional(),
-});
+}).unknown(true);
 
 const logProgressSchema = Joi.object({
   log_date: Joi.date().required().messages({ 'any.required': 'Log date is required' }),

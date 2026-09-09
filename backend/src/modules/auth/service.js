@@ -23,18 +23,20 @@ async function register(data) {
     throw err;
   }
 
-  const workerRole = await db('roles').where({ name: 'worker' }).first();
+  const adminRole = await db('roles').where({ name: 'super_admin' }).orWhere({ name: 'company_admin' }).first();
+  const roleId = adminRole ? adminRole.id : 1;
+  const roleName = adminRole ? adminRole.name : 'super_admin';
   const password_hash = await bcrypt.hash(data.password, 10);
 
   const [user] = await db('users').insert({
     full_name: data.full_name,
     email: data.email,
     password_hash,
-    role_id: workerRole.id
+    role_id: roleId
   }).returning('*');
 
-  const token = generateJwt(user.id, 'worker', user.email, user.full_name);
-  return { token, user: { id: user.id, email: user.email, role: 'worker', full_name: user.full_name } };
+  const token = generateJwt(user.id, roleName, user.email, user.full_name);
+  return { token, user: { id: user.id, email: user.email, role: roleName, full_name: user.full_name } };
 }
 
 async function login(email, password) {

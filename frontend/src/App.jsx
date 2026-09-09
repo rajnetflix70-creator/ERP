@@ -11,10 +11,10 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 
 /* Project Management */
-import ProjectMaster from './pages/ProjectMaster';
-import ProjectManagement from './pages/ProjectManagement';
 import ProjectsSites from './pages/ProjectsSites';
 import SiteDetails from './pages/SiteDetails';
+import ProjectMaster from './pages/ProjectMaster';
+import ProjectManagement from './pages/ProjectManagement';
 
 /* Materials */
 import MaterialMaster from './pages/MaterialMaster';
@@ -44,11 +44,17 @@ import MaterialConsumptionReport from './pages/MaterialConsumptionReport';
 /* HR & Attendance */
 import UserMaster from './pages/UserMaster';
 import EmployeeMaster from './pages/EmployeeMaster';
+import ManualAttendance from './pages/ManualAttendance';
 import BulkAttendance from './pages/BulkAttendance';
 import AttendanceHistory from './pages/AttendanceHistory';
 import PayrollSummary from './pages/PayrollSummary';
 
-/* Equipment */
+/* Settings */
+import CompanySettings from './pages/CompanySettings';
+import ApprovalWorkflowSettings from './pages/ApprovalWorkflowSettings';
+import NotificationSettings from './pages/NotificationSettings';
+
+/* Equipment (legacy) */
 import EquipmentMaster from './pages/EquipmentMaster';
 import SiteAllocation from './pages/SiteAllocation';
 import EquipmentMovement from './pages/EquipmentMovement';
@@ -131,7 +137,7 @@ function App() {
               {/* ── HR & ATTENDANCE ── */}
               <Route path="hr/users" element={<UserMaster />} />
               <Route path="hr/employees" element={<EmployeeMaster />} />
-              <Route path="hr/attendance" element={<BulkAttendance />} />
+              <Route path="hr/attendance" element={<ManualAttendance />} />
               <Route path="hr/attendance/reports" element={<AttendanceHistory />} />
               {/* Legacy */}
               <Route path="users/master" element={<UserMaster />} />
@@ -146,10 +152,11 @@ function App() {
               <Route path="purchase-register" element={<PurchaseRegister />} />
 
               {/* ── SETTINGS ── */}
-              <Route path="settings" element={<NotificationCenter />} />
+              <Route path="settings" element={<CompanySettings />} />
+              <Route path="settings/company" element={<CompanySettings />} />
               <Route path="settings/roles" element={<UserMaster />} />
-              <Route path="settings/workflows" element={<NotificationCenter />} />
-              <Route path="settings/notifications" element={<NotificationCenter />} />
+              <Route path="settings/workflows" element={<ApprovalWorkflowSettings />} />
+              <Route path="settings/notifications" element={<NotificationSettings />} />
 
               {/* ── EQUIPMENT (legacy - kept) ── */}
               <Route path="equipment/master" element={<EquipmentMaster />} />
@@ -174,7 +181,7 @@ function App() {
               <Route path="main-store/return-order" element={<MainStoreReturnOrder />} />
 
               {/* ── NOTIFICATIONS ── */}
-              <Route path="notifications" element={<NotificationCenter />} />
+              <Route path="notifications" element={<NotificationSettings />} />
 
               {/* ── ACCOUNT ── */}
               <Route path="my-profile" element={<MyProfile />} />

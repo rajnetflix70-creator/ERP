@@ -69,7 +69,7 @@ async function updateWorkPackage(id, data) {
   if (!existing) { const e = new Error('Work package not found'); e.statusCode = 404; throw e; }
 
   const update = {};
-  const allowed = ['title','description','status','priority','assigned_to','planned_start','planned_end','actual_start','actual_end','completion_pct','blocked_reason','site_id'];
+  const allowed = ['project_id','site_id','title','description','status','priority','assigned_to','planned_start','planned_end','actual_start','actual_end','completion_pct','blocked_reason'];
   allowed.forEach(k => { if (data[k] !== undefined) update[k] = data[k] || null; });
 
   // Auto-set actual_start when moving to in_progress

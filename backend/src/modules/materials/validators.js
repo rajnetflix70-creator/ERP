@@ -16,6 +16,7 @@ const createMaterialSchema = Joi.object({
 });
 
 const updateMaterialSchema = Joi.object({
+  material_code: Joi.string().max(50).optional(),
   name: Joi.string().min(2).max(200).optional(),
   unit_of_measure: Joi.string().valid(...UNITS).optional(),
   category: Joi.string().valid(...CATEGORIES).optional(),
@@ -23,7 +24,7 @@ const updateMaterialSchema = Joi.object({
   description: Joi.string().allow('', null).optional(),
   reorder_level: Joi.number().min(0).optional(),
   is_active: Joi.boolean().optional(),
-});
+}).unknown(true);
 
 const createRequestSchema = Joi.object({
   project_id: Joi.string().uuid().required().messages({ 'any.required': 'Project is required' }),

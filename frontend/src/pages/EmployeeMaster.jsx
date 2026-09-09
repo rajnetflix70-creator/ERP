@@ -165,16 +165,25 @@ const EmployeeMaster = () => {
     }
   };
 
-  const handleDeactivate = async (emp) => {
-    if (!window.confirm(`Deactivate ${emp.full_name}? They will not be able to log in.`)) return;
+  const handleToggleStatus = async (emp) => {
+    const newStatus = !emp.is_active;
+    const actionText = newStatus ? 'activate' : 'deactivate';
+    if (!window.confirm(`Are you sure you want to ${actionText} employee "${emp.full_name}"?`)) return;
     try {
-      await deactivateEmployee(emp.id);
-      setAlert({ type: 'success', message: `${emp.full_name} deactivated.` });
+      if (newStatus) {
+        await updateEmployee(emp.id, { is_active: true });
+        setAlert({ type: 'success', message: `✓ ${emp.full_name} has been activated successfully.` });
+      } else {
+        await deactivateEmployee(emp.id);
+        setAlert({ type: 'success', message: `✓ ${emp.full_name} has been deactivated.` });
+      }
       loadEmployees();
     } catch (err) {
-      setAlert({ type: 'error', message: err.response?.data?.message || 'Deactivation failed' });
+      setAlert({ type: 'error', message: err.response?.data?.message || `Failed to ${actionText} employee` });
     }
   };
+
+  const handleDeactivate = handleToggleStatus;
 
   const roleLabel = (name) => {
     const map = { super_admin: 'Super Admin', company_admin: 'Admin', site_supervisor: 'Supervisor', worker: 'Worker' };
@@ -223,9 +232,9 @@ const EmployeeMaster = () => {
           <div className="form-group" style={{ flex: '0 0 140px', marginBottom: 0 }}>
             <label className="form-label">Status</label>
             <select className="form-control" value={filterActive} onChange={e => setFilterActive(e.target.value)}>
-              <option value="">All</option>
-              <option value="true">Active</option>
-              <option value="false">Inactive</option>
+              <option value="">All Statuses</option>
+              <option value="true">🟢 Active Only</option>
+              <option value="false">🔴 Inactive Only</option>
             </select>
           </div>
           <button className="btn btn-secondary btn-sm" onClick={loadEmployees}>🔍 Filter</button>
@@ -281,18 +290,26 @@ const EmployeeMaster = () => {
                     {emp.preferred_language === 'ar' ? '🇦🇪 Arabic' : emp.preferred_language === 'hi' ? '🇮🇳 Hindi' : '🇬🇧 English'}
                   </td>
                   <td>
-                    <span className={`badge ${emp.is_active ? 'badge-present' : 'badge-absent'}`}>
+                    <button
+                      onClick={() => handleToggleStatus(emp)}
+                      className={`badge ${emp.is_active ? 'badge-present' : 'badge-absent'}`}
+                      style={{ cursor: 'pointer', border: 'none', padding: '4px 10px', fontSize: '0.75rem', fontWeight: '600' }}
+                      title={`Click to ${emp.is_active ? 'Deactivate' : 'Activate'}`}
+                    >
                       {emp.is_active ? '🟢 Active' : '🔴 Inactive'}
-                    </span>
+                    </button>
                   </td>
                   <td>
-                    <div style={{ display: 'flex', gap: 6 }}>
+                    <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
                       <button className="btn btn-sm btn-secondary" onClick={() => openEdit(emp)}>✏️ Edit</button>
-                      {emp.is_active && (
-                        <button className="btn btn-sm btn-danger" onClick={() => handleDeactivate(emp)} title="Deactivate">
-                          🚫
-                        </button>
-                      )}
+                      <button
+                        className={`btn btn-sm ${emp.is_active ? 'btn-danger' : 'btn-success'}`}
+                        onClick={() => handleToggleStatus(emp)}
+                        title={emp.is_active ? 'Deactivate Employee' : 'Activate Employee'}
+                        style={{ padding: '4px 8px', fontSize: '0.75rem' }}
+                      >
+                        {emp.is_active ? '🚫 Deactivate' : '✓ Activate'}
+                      </button>
                     </div>
                   </td>
                 </tr>

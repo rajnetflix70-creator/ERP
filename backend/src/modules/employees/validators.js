@@ -24,6 +24,6 @@ const updateEmployeeSchema = Joi.object({
   role_id: Joi.number().integer().optional(),
   preferred_language: Joi.string().valid('en', 'ar', 'hi').optional(),
   is_active: Joi.boolean().optional(),
-});
+}).unknown(true);
 
 module.exports = { createEmployeeSchema, updateEmployeeSchema };

@@ -11,6 +11,8 @@ const UserMaster = () => {
   const [view, setView] = useState('list'); // 'list' | 'form'
   const [editingId, setEditingId] = useState(null);
 
+  const [filterStatus, setFilterStatus] = useState('');
+
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -27,7 +29,8 @@ const UserMaster = () => {
     role_id: '',
     mobile: '',
     profile_image: '',
-    signature_image: ''
+    signature_image: '',
+    is_active: true
   });
 
   const fetchData = async () => {
@@ -73,7 +76,7 @@ const UserMaster = () => {
         country: formData.country,
         pin_code: formData.pin_code,
         role_id: formData.role_id ? Number(formData.role_id) : undefined,
-        is_active: true
+        is_active: formData.is_active
       };
 
       if (editingId) {
@@ -107,13 +110,30 @@ const UserMaster = () => {
       role_id: u.role_id || '',
       mobile: u.mobile_number || u.mobile || '',
       profile_image: '',
-      signature_image: ''
+      signature_image: '',
+      is_active: u.is_active !== false
     });
     setView('form');
   };
 
+  const handleToggleStatus = async (user) => {
+    const newStatus = user.is_active === false ? true : false;
+    const actionText = newStatus ? 'activate' : 'deactivate';
+    if (!window.confirm(`Are you sure you want to ${actionText} user account "${user.full_name}"?`)) return;
+    try {
+      if (newStatus) {
+        await client.put(`/employees/${user.id}`, { is_active: true });
+      } else {
+        await client.delete(`/employees/${user.id}`);
+      }
+      fetchData();
+    } catch (err) {
+      alert(`Error trying to ${actionText} user: ` + (err.response?.data?.message || err.message));
+    }
+  };
+
   const handleDelete = async (id) => {
-    if (!window.confirm('Are you sure you want to deactivate/delete this user?')) return;
+    if (!window.confirm('Are you sure you want to deactivate this user account?')) return;
     try {
       await client.delete(`/employees/${id}`);
       fetchData();
@@ -122,11 +142,13 @@ const UserMaster = () => {
     }
   };
 
-  const filtered = Array.isArray(users) ? users.filter(u => 
-    (u.full_name || '').toLowerCase().includes(search.toLowerCase()) ||
-    (u.email || '').toLowerCase().includes(search.toLowerCase()) ||
-    (u.mobile_number || '').toLowerCase().includes(search.toLowerCase())
-  ) : [];
+  const filtered = Array.isArray(users) ? users.filter(u => {
+    const matchSearch = (u.full_name || '').toLowerCase().includes(search.toLowerCase()) ||
+                        (u.email || '').toLowerCase().includes(search.toLowerCase()) ||
+                        (u.mobile_number || '').toLowerCase().includes(search.toLowerCase());
+    const matchStatus = filterStatus === '' ? true : filterStatus === 'true' ? u.is_active !== false : u.is_active === false;
+    return matchSearch && matchStatus;
+  }) : [];
 
   const totalEntries = filtered.length;
   const totalPages = Math.ceil(totalEntries / entriesPerPage) || 1;
@@ -156,23 +178,40 @@ const UserMaster = () => {
           </div>
 
           <div style={{ padding: '15px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
-            <div style={{ fontSize: '14px', color: '#555' }}>
-              Show {' '}
-              <select 
-                value={entriesPerPage} 
-                onChange={(e) => { setEntriesPerPage(Number(e.target.value)); setCurrentPage(1); }}
-                style={{ padding: '4px 8px', borderRadius: '4px', border: '1px solid #ccc' }}
-              >
-                <option value={10}>10</option>
-                <option value={25}>25</option>
-                <option value={50}>50</option>
-              </select>
-              {' '} entries
+            <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
+              <div style={{ fontSize: '14px', color: '#555' }}>
+                Show {' '}
+                <select 
+                  value={entriesPerPage} 
+                  onChange={(e) => { setEntriesPerPage(Number(e.target.value)); setCurrentPage(1); }}
+                  style={{ padding: '4px 8px', borderRadius: '4px', border: '1px solid #ccc' }}
+                >
+                  <option value={10}>10</option>
+                  <option value={25}>25</option>
+                  <option value={50}>50</option>
+                </select>
+                {' '} entries
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span style={{ fontSize: '13px', color: '#555' }}>Status:</span>
+                <select
+                  value={filterStatus}
+                  onChange={(e) => { setFilterStatus(e.target.value); setCurrentPage(1); }}
+                  style={{ padding: '4px 8px', borderRadius: '4px', border: '1px solid #ccc', fontSize: '13px' }}
+                >
+                  <option value="">All Statuses</option>
+                  <option value="true">🟢 Active Only</option>
+                  <option value="false">🔴 Inactive Only</option>
+                </select>
+              </div>
             </div>
+
             <div>
               <span style={{ fontSize: '14px', color: '#555', marginRight: '8px' }}>Search:</span>
               <input 
                 type="text"
+                placeholder="Name, email, mobile..."
                 value={search}
                 onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
                 style={{ padding: '5px 10px', borderRadius: '4px', border: '1px solid #ccc', outline: 'none' }}
@@ -190,7 +229,7 @@ const UserMaster = () => {
                   <th style={{ padding: '10px 15px' }}>Mobile</th>
                   <th style={{ padding: '10px 15px' }}>Role</th>
                   <th style={{ padding: '10px 15px' }}>Status</th>
-                  <th style={{ padding: '10px 15px' }}>Action</th>
+                  <th style={{ padding: '10px 15px', width: '180px' }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -207,13 +246,49 @@ const UserMaster = () => {
                       <td style={{ padding: '10px 15px', color: '#4a5568' }}>{u.mobile_number || u.mobile || '-'}</td>
                       <td style={{ padding: '10px 15px', color: '#4a5568' }}>{u.role || u.role_name || 'Worker'}</td>
                       <td style={{ padding: '10px 15px' }}>
-                        <span style={{ color: u.is_active !== false ? '#38a169' : '#e53e3e', fontWeight: '600' }}>
-                          {u.is_active !== false ? 'Active' : 'Inactive'}
-                        </span>
+                        <button
+                          onClick={() => handleToggleStatus(u)}
+                          style={{
+                            cursor: 'pointer',
+                            border: 'none',
+                            padding: '3px 10px',
+                            borderRadius: '12px',
+                            fontSize: '12px',
+                            fontWeight: '600',
+                            background: u.is_active !== false ? '#dcfce7' : '#fee2e2',
+                            color: u.is_active !== false ? '#15803d' : '#b91c1c'
+                          }}
+                          title={`Click to ${u.is_active !== false ? 'Deactivate' : 'Activate'}`}
+                        >
+                          {u.is_active !== false ? '🟢 Active' : '🔴 Inactive'}
+                        </button>
                       </td>
                       <td style={{ padding: '10px 15px' }}>
-                        <button onClick={() => handleEdit(u)} title="Edit" style={{ background: 'none', border: 'none', color: '#3182ce', cursor: 'pointer', marginRight: '10px', fontSize: '15px' }}>✏️</button>
-                        <button onClick={() => handleDelete(u.id)} title="Delete" style={{ background: 'none', border: 'none', color: '#e53e3e', cursor: 'pointer', fontSize: '15px' }}>🗑️</button>
+                        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                          <button
+                            onClick={() => handleEdit(u)}
+                            title="Edit User"
+                            style={{ background: '#eff6ff', border: '1px solid #bfdbfe', color: '#2563eb', borderRadius: '4px', padding: '4px 8px', cursor: 'pointer', fontSize: '12px', fontWeight: '600' }}
+                          >
+                            ✏️ Edit
+                          </button>
+                          <button
+                            onClick={() => handleToggleStatus(u)}
+                            title={u.is_active !== false ? 'Deactivate User' : 'Activate User'}
+                            style={{
+                              background: u.is_active !== false ? '#fef2f2' : '#f0fdf4',
+                              border: `1px solid ${u.is_active !== false ? '#fecaca' : '#bbf7d0'}`,
+                              color: u.is_active !== false ? '#dc2626' : '#16a34a',
+                              borderRadius: '4px',
+                              padding: '4px 8px',
+                              cursor: 'pointer',
+                              fontSize: '12px',
+                              fontWeight: '600'
+                            }}
+                          >
+                            {u.is_active !== false ? '🚫 Deactivate' : '✓ Activate'}
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))
@@ -504,6 +579,19 @@ const UserMaster = () => {
                   <input type="file" onChange={(e) => setFormData({ ...formData, signature_image: e.target.files[0]?.name || '' })} style={{ fontSize: '13px' }} />
                 </div>
               </div>
+            </div>
+
+            {/* Row 9: Active Status */}
+            <div style={{ marginBottom: '25px', padding: '12px 16px', background: '#f8fafc', borderRadius: '6px', border: '1px solid #e2e8f0' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontWeight: '600', fontSize: '14px', color: '#2d3748' }}>
+                <input
+                  type="checkbox"
+                  checked={formData.is_active}
+                  onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
+                  style={{ width: '18px', height: '18px', accentColor: '#2563eb', cursor: 'pointer' }}
+                />
+                <span>Account Status: <b style={{ color: formData.is_active ? '#15803d' : '#b91c1c' }}>{formData.is_active ? 'Active (Allowed to log in)' : 'Inactive / Deactivated (Login blocked)'}</b></span>
+              </label>
             </div>
 
             <div style={{ display: 'flex', justifyContent: 'center', gap: '15px' }}>

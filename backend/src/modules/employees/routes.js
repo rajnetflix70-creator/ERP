@@ -2,7 +2,7 @@ const router = require('express').Router();
 const ctrl = require('./controller');
 const requireRole = require('../../middleware/rbac');
 
-const SUPERVISOR_ROLES = ['super_admin', 'company_admin', 'project_manager', 'site_supervisor'];
+const SUPERVISOR_ROLES = ['super_admin', 'company_admin', 'project_manager', 'site_supervisor', 'worker', 'employee', 'admin'];
 
 // GET /api/v1/employees/roles — lookup for role dropdown (all authenticated)
 router.get('/roles', ctrl.listRoles);
