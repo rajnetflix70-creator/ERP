@@ -13,6 +13,8 @@ import Dashboard from './pages/Dashboard';
 /* Project Management */
 import ProjectMaster from './pages/ProjectMaster';
 import ProjectManagement from './pages/ProjectManagement';
+import ProjectsSites from './pages/ProjectsSites';
+import SiteDetails from './pages/SiteDetails';
 
 /* Materials */
 import MaterialMaster from './pages/MaterialMaster';
@@ -22,8 +24,11 @@ import MainStoreMaterial from './pages/MainStoreMaterial';
 
 /* Procurement */
 import MaterialRequest from './pages/MaterialRequest';
+import CreateMaterialRequest from './pages/CreateMaterialRequest';
+import ApprovalCenter from './pages/ApprovalCenter';
 import PurchaseRequest from './pages/PurchaseRequest';
 import PurchaseOrders from './pages/PurchaseOrders';
+import GRNList from './pages/GRNList';
 import MainStorePurchaseOrder from './pages/MainStorePurchaseOrder';
 import MainStoreReturnOrder from './pages/MainStoreReturnOrder';
 
@@ -31,6 +36,7 @@ import MainStoreReturnOrder from './pages/MainStoreReturnOrder';
 import VendorsMaster from './pages/VendorsMaster';
 
 /* Inventory */
+import InventoryDashboard from './pages/InventoryDashboard';
 import SiteStock from './pages/SiteStock';
 import MaterialConsumption from './pages/MaterialConsumption';
 import MaterialConsumptionReport from './pages/MaterialConsumptionReport';
@@ -58,6 +64,7 @@ import BillingInvoicing from './pages/BillingInvoicing';
 
 /* Reports & Misc */
 import ReportsModule from './pages/ReportsModule';
+import PurchaseRegister from './pages/PurchaseRegister';
 import NotificationCenter from './pages/NotificationCenter';
 
 /* Account */
@@ -77,8 +84,10 @@ function App() {
               <Route index element={<Dashboard />} />
 
               {/* ── PROJECT MANAGEMENT ── */}
-              <Route path="projects" element={<ProjectMaster />} />
-              <Route path="sites" element={<ProjectMaster />} />
+              <Route path="projects" element={<ProjectsSites initialTab="projects" />} />
+              <Route path="sites" element={<ProjectsSites initialTab="sites" />} />
+              <Route path="sites/:id" element={<SiteDetails />} />
+              <Route path="projects-sites" element={<ProjectsSites />} />
               <Route path="boq" element={<ProjectManagement />} />
               {/* Legacy routes (backward compat) */}
               <Route path="masters/projects" element={<ProjectMaster />} />
@@ -93,10 +102,11 @@ function App() {
 
               {/* ── PROCUREMENT ── */}
               <Route path="materials/requests" element={<MaterialRequest />} />
-              <Route path="approvals" element={<PurchaseRequest />} />
+              <Route path="materials/requests/new" element={<CreateMaterialRequest />} />
+              <Route path="approvals" element={<ApprovalCenter />} />
               <Route path="procurement/orders" element={<PurchaseOrders />} />
               <Route path="procurement/deliveries" element={<MainStorePurchaseOrder />} />
-              <Route path="procurement/grn" element={<MainStoreReturnOrder />} />
+              <Route path="procurement/grn" element={<GRNList />} />
               {/* Legacy */}
               <Route path="procurement/requests" element={<PurchaseRequest />} />
 
@@ -107,9 +117,9 @@ function App() {
               <Route path="masters/vendors" element={<VendorsMaster />} />
 
               {/* ── INVENTORY ── */}
-              <Route path="inventory" element={<SiteStock />} />
-              <Route path="inventory/stock" element={<SiteStock />} />
-              <Route path="inventory/issue" element={<MaterialConsumption />} />
+              <Route path="inventory" element={<InventoryDashboard />} />
+              <Route path="inventory/stock" element={<InventoryDashboard />} />
+              <Route path="inventory/issue" element={<InventoryDashboard defaultTab="issue" />} />
               <Route path="inventory/transfer" element={<MainStoreMaterial />} />
               <Route path="inventory/adjustment" element={<MainStoreMaterial />} />
               <Route path="inventory/ledger" element={<MaterialConsumptionReport />} />
@@ -132,6 +142,8 @@ function App() {
 
               {/* ── REPORTS ── */}
               <Route path="reports" element={<ReportsModule />} />
+              <Route path="reports/purchase-register" element={<PurchaseRegister />} />
+              <Route path="purchase-register" element={<PurchaseRegister />} />
 
               {/* ── SETTINGS ── */}
               <Route path="settings" element={<NotificationCenter />} />

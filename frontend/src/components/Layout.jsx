@@ -150,10 +150,11 @@ const Layout = () => {
       '/materials/categories': 'Material Categories',
       '/materials/units': 'Units',
       '/materials/requests': 'Material Requests',
+      '/materials/requests/new': 'New Material Request',
       '/approvals': 'Approval Center',
       '/procurement/orders': 'Purchase Orders',
       '/procurement/deliveries': 'Deliveries',
-      '/procurement/grn': 'GRN',
+      '/procurement/grn': 'Goods Receipt Note (GRN)',
       '/vendors': 'Vendor Master',
       '/vendors/performance': 'Vendor Performance',
       '/inventory': 'Inventory Dashboard',
@@ -166,7 +167,9 @@ const Layout = () => {
       '/hr/employees': 'Employee Master',
       '/hr/attendance': 'Manual Attendance',
       '/hr/attendance/reports': 'Attendance Reports',
-      '/reports': 'Reports & Analytics',
+      '/reports': 'Reports & Analytics Hub',
+      '/reports/purchase-register': 'Purchase Register',
+      '/purchase-register': 'Purchase Register',
       '/settings': 'Company Settings',
       '/settings/roles': 'Users & Roles',
       '/settings/workflows': 'Approval Workflow',
@@ -174,6 +177,7 @@ const Layout = () => {
       '/my-profile': 'My Profile',
       '/change-password': 'Change Password',
     };
+    if (p.startsWith('/sites/')) return 'Site Details';
     return titles[p] || 'SiteTrack ERP';
   };
 
@@ -240,7 +244,8 @@ const Layout = () => {
           </NavGroup>
 
           <NavGroup label="REPORTS">
-            <SideLink to="/reports" icon="📈" label="Reports & Analytics" onClick={closeSidebar} />
+            <SideLink to="/reports" icon="📈" label="Reports & Analytics" end onClick={closeSidebar} />
+            <SideLink to="/reports/purchase-register" icon="📑" label="Purchase Register" onClick={closeSidebar} />
           </NavGroup>
 
           <NavGroup label="SETTINGS">

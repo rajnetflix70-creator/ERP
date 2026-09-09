@@ -8,4 +8,5 @@ export const getPOs = () => apiClient.get('/procurement/po').then(res => res.dat
 export const createPO = (data) => apiClient.post('/procurement/po', data).then(res => res.data);
 export const updatePOStatus = (id, status) => apiClient.put(`/procurement/po/${id}/status`, { status }).then(res => res.data);
 
+export const getGRNs = () => apiClient.get('/procurement/grn').then(res => res.data);
 export const createGRN = (data) => apiClient.post('/procurement/grn', data).then(res => res.data);
