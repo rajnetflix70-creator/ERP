@@ -4,7 +4,14 @@ require('dotenv').config({ path: path.resolve(__dirname, '../../.env') });
 const isProduction = process.env.NODE_ENV === 'production';
 
 function getConnection() {
-  const dbUrl = process.env.DATABASE_URL || process.env.POSTGRES_URL || process.env.DATABASE_PUBLIC_URL;
+  let dbUrl = process.env.DATABASE_URL || process.env.POSTGRES_URL || process.env.DATABASE_PUBLIC_URL;
+  
+  if (!dbUrl && process.env.POSTGRES_HOST && process.env.POSTGRES_USER && process.env.POSTGRES_PASSWORD) {
+    const port = process.env.POSTGRES_PORT || 5432;
+    const db = process.env.POSTGRES_DB || 'railway';
+    dbUrl = `postgres://${process.env.POSTGRES_USER}:${encodeURIComponent(process.env.POSTGRES_PASSWORD)}@${process.env.POSTGRES_HOST}:${port}/${db}`;
+  }
+
   if (!dbUrl) {
     console.warn('⚠️ No DATABASE_URL found in environment variables. Set DATABASE_URL in Railway Variables tab.');
     return dbUrl;
