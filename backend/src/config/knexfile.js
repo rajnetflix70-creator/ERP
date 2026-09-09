@@ -4,14 +4,18 @@ require('dotenv').config({ path: path.resolve(__dirname, '../../.env') });
 const isProduction = process.env.NODE_ENV === 'production';
 
 function getConnection() {
-  if (!process.env.DATABASE_URL) return process.env.DATABASE_URL;
+  const dbUrl = process.env.DATABASE_URL || process.env.POSTGRES_URL || process.env.DATABASE_PUBLIC_URL;
+  if (!dbUrl) {
+    console.warn('⚠️ No DATABASE_URL found in environment variables. Set DATABASE_URL in Railway Variables tab.');
+    return dbUrl;
+  }
   if (isProduction) {
     return {
-      connectionString: process.env.DATABASE_URL,
+      connectionString: dbUrl,
       ssl: { rejectUnauthorized: false }
     };
   }
-  return process.env.DATABASE_URL;
+  return dbUrl;
 }
 
 const commonConfig = {
