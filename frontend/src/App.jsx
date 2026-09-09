@@ -4,40 +4,63 @@ import { AuthProvider } from './contexts/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import Layout from './components/Layout';
 
+/* Auth */
 import Login from './pages/Login';
+
+/* Dashboard */
 import Dashboard from './pages/Dashboard';
+
+/* Project Management */
+import ProjectMaster from './pages/ProjectMaster';
+import ProjectManagement from './pages/ProjectManagement';
+
+/* Materials */
+import MaterialMaster from './pages/MaterialMaster';
+import MainStoreCategory from './pages/MainStoreCategory';
+import MainStoreBrand from './pages/MainStoreBrand';
+import MainStoreMaterial from './pages/MainStoreMaterial';
+
+/* Procurement */
+import MaterialRequest from './pages/MaterialRequest';
+import PurchaseRequest from './pages/PurchaseRequest';
+import PurchaseOrders from './pages/PurchaseOrders';
+import MainStorePurchaseOrder from './pages/MainStorePurchaseOrder';
+import MainStoreReturnOrder from './pages/MainStoreReturnOrder';
+
+/* Vendors */
+import VendorsMaster from './pages/VendorsMaster';
+
+/* Inventory */
+import SiteStock from './pages/SiteStock';
+import MaterialConsumption from './pages/MaterialConsumption';
+import MaterialConsumptionReport from './pages/MaterialConsumptionReport';
+
+/* HR & Attendance */
+import UserMaster from './pages/UserMaster';
+import EmployeeMaster from './pages/EmployeeMaster';
+import BulkAttendance from './pages/BulkAttendance';
+import AttendanceHistory from './pages/AttendanceHistory';
+import PayrollSummary from './pages/PayrollSummary';
+
+/* Equipment */
 import EquipmentMaster from './pages/EquipmentMaster';
 import SiteAllocation from './pages/SiteAllocation';
 import EquipmentMovement from './pages/EquipmentMovement';
 import DailyLogModule from './pages/DailyLogModule';
-import BulkAttendance from './pages/BulkAttendance';
-import PayrollSummary from './pages/PayrollSummary';
-import AttendanceHistory from './pages/AttendanceHistory';
-import PurchaseRequest from './pages/PurchaseRequest';
-import PurchaseOrders from './pages/PurchaseOrders';
-import ClientMaster from './pages/ClientMaster';
-import BillingInvoicing from './pages/BillingInvoicing';
 import MaintenanceManagement from './pages/MaintenanceManagement';
 import BreakdownManagement from './pages/BreakdownManagement';
 import DocumentManagement from './pages/DocumentManagement';
 import OperatorsMaster from './pages/OperatorsMaster';
-import ProjectMaster from './pages/ProjectMaster';
-import VendorsMaster from './pages/VendorsMaster';
-import EmployeeMaster from './pages/EmployeeMaster';
+
+/* Billing */
+import ClientMaster from './pages/ClientMaster';
+import BillingInvoicing from './pages/BillingInvoicing';
+
+/* Reports & Misc */
 import ReportsModule from './pages/ReportsModule';
 import NotificationCenter from './pages/NotificationCenter';
-import ProjectManagement from './pages/ProjectManagement';
-import MaterialMaster from './pages/MaterialMaster';
-import MaterialRequest from './pages/MaterialRequest';
-import SiteStock from './pages/SiteStock';
-import MainStoreCategory from './pages/MainStoreCategory';
-import MainStoreBrand from './pages/MainStoreBrand';
-import MainStoreMaterial from './pages/MainStoreMaterial';
-import MainStorePurchaseOrder from './pages/MainStorePurchaseOrder';
-import MainStoreReturnOrder from './pages/MainStoreReturnOrder';
-import MaterialConsumption from './pages/MaterialConsumption';
-import MaterialConsumptionReport from './pages/MaterialConsumptionReport';
-import UserMaster from './pages/UserMaster';
+
+/* Account */
 import MyProfile from './pages/MyProfile';
 import ChangePassword from './pages/ChangePassword';
 
@@ -50,42 +73,98 @@ function App() {
 
           <Route path="/" element={<ProtectedRoute />}>
             <Route element={<Layout />}>
+              {/* Dashboard */}
               <Route index element={<Dashboard />} />
+
+              {/* ── PROJECT MANAGEMENT ── */}
+              <Route path="projects" element={<ProjectMaster />} />
+              <Route path="sites" element={<ProjectMaster />} />
+              <Route path="boq" element={<ProjectManagement />} />
+              {/* Legacy routes (backward compat) */}
+              <Route path="masters/projects" element={<ProjectMaster />} />
+              <Route path="project/work-packages" element={<ProjectManagement />} />
+
+              {/* ── MATERIALS ── */}
+              <Route path="materials/master" element={<MaterialMaster />} />
+              <Route path="materials/categories" element={<MainStoreCategory />} />
+              <Route path="materials/units" element={<MainStoreBrand />} />
+              {/* Legacy */}
+              <Route path="materials/catalog" element={<MaterialMaster />} />
+
+              {/* ── PROCUREMENT ── */}
+              <Route path="materials/requests" element={<MaterialRequest />} />
+              <Route path="approvals" element={<PurchaseRequest />} />
+              <Route path="procurement/orders" element={<PurchaseOrders />} />
+              <Route path="procurement/deliveries" element={<MainStorePurchaseOrder />} />
+              <Route path="procurement/grn" element={<MainStoreReturnOrder />} />
+              {/* Legacy */}
+              <Route path="procurement/requests" element={<PurchaseRequest />} />
+
+              {/* ── VENDORS ── */}
+              <Route path="vendors" element={<VendorsMaster />} />
+              <Route path="vendors/performance" element={<VendorsMaster />} />
+              {/* Legacy */}
+              <Route path="masters/vendors" element={<VendorsMaster />} />
+
+              {/* ── INVENTORY ── */}
+              <Route path="inventory" element={<SiteStock />} />
+              <Route path="inventory/stock" element={<SiteStock />} />
+              <Route path="inventory/issue" element={<MaterialConsumption />} />
+              <Route path="inventory/transfer" element={<MainStoreMaterial />} />
+              <Route path="inventory/adjustment" element={<MainStoreMaterial />} />
+              <Route path="inventory/ledger" element={<MaterialConsumptionReport />} />
+              {/* Legacy */}
+              <Route path="materials/stock" element={<SiteStock />} />
+              <Route path="materials/consumption" element={<MaterialConsumption />} />
+              <Route path="materials/consumption-report" element={<MaterialConsumptionReport />} />
+
+              {/* ── HR & ATTENDANCE ── */}
+              <Route path="hr/users" element={<UserMaster />} />
+              <Route path="hr/employees" element={<EmployeeMaster />} />
+              <Route path="hr/attendance" element={<BulkAttendance />} />
+              <Route path="hr/attendance/reports" element={<AttendanceHistory />} />
+              {/* Legacy */}
+              <Route path="users/master" element={<UserMaster />} />
+              <Route path="masters/employees" element={<EmployeeMaster />} />
+              <Route path="attendance/bulk" element={<BulkAttendance />} />
+              <Route path="attendance/history" element={<AttendanceHistory />} />
+              <Route path="attendance/payroll" element={<PayrollSummary />} />
+
+              {/* ── REPORTS ── */}
+              <Route path="reports" element={<ReportsModule />} />
+
+              {/* ── SETTINGS ── */}
+              <Route path="settings" element={<NotificationCenter />} />
+              <Route path="settings/roles" element={<UserMaster />} />
+              <Route path="settings/workflows" element={<NotificationCenter />} />
+              <Route path="settings/notifications" element={<NotificationCenter />} />
+
+              {/* ── EQUIPMENT (legacy - kept) ── */}
               <Route path="equipment/master" element={<EquipmentMaster />} />
               <Route path="equipment/allocation" element={<SiteAllocation />} />
               <Route path="equipment/movement" element={<EquipmentMovement />} />
               <Route path="equipment/daily-log" element={<DailyLogModule />} />
-              <Route path="attendance/bulk" element={<BulkAttendance />} />
-              <Route path="attendance/payroll" element={<PayrollSummary />} />
-              <Route path="attendance/history" element={<AttendanceHistory />} />
               <Route path="equipment/maintenance" element={<MaintenanceManagement />} />
               <Route path="equipment/breakdown" element={<BreakdownManagement />} />
               <Route path="equipment/documents" element={<DocumentManagement />} />
-              <Route path="masters/employees" element={<EmployeeMaster />} />
               <Route path="masters/operators" element={<OperatorsMaster />} />
-              <Route path="masters/projects" element={<ProjectMaster />} />
-              <Route path="masters/vendors" element={<VendorsMaster />} />
-              <Route path="project/work-packages" element={<ProjectManagement />} />
-              <Route path="materials/catalog" element={<MaterialMaster />} />
-              <Route path="materials/requests" element={<MaterialRequest />} />
-              <Route path="materials/stock" element={<SiteStock />} />
-              <Route path="procurement/requests" element={<PurchaseRequest />} />
-              <Route path="procurement/orders" element={<PurchaseOrders />} />
-              <Route path="billing/clients" element={<ClientMaster />} />
-              <Route path="billing/invoices" element={<BillingInvoicing />} />
-              <Route path="reports" element={<ReportsModule />} />
-              <Route path="notifications" element={<NotificationCenter />} />
               <Route path="masters/equipment" element={<EquipmentMaster />} />
 
-              {/* Main Store routes */}
+              {/* ── BILLING (legacy - kept) ── */}
+              <Route path="billing/clients" element={<ClientMaster />} />
+              <Route path="billing/invoices" element={<BillingInvoicing />} />
+
+              {/* ── MAIN STORE (legacy - kept) ── */}
               <Route path="main-store/category" element={<MainStoreCategory />} />
               <Route path="main-store/brand" element={<MainStoreBrand />} />
               <Route path="main-store/materials" element={<MainStoreMaterial />} />
               <Route path="main-store/purchase-order" element={<MainStorePurchaseOrder />} />
               <Route path="main-store/return-order" element={<MainStoreReturnOrder />} />
-              <Route path="materials/consumption" element={<MaterialConsumption />} />
-              <Route path="materials/consumption-report" element={<MaterialConsumptionReport />} />
-              <Route path="users/master" element={<UserMaster />} />
+
+              {/* ── NOTIFICATIONS ── */}
+              <Route path="notifications" element={<NotificationCenter />} />
+
+              {/* ── ACCOUNT ── */}
               <Route path="my-profile" element={<MyProfile />} />
               <Route path="change-password" element={<ChangePassword />} />
             </Route>
