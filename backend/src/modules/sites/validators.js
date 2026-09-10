@@ -2,7 +2,8 @@ const Joi = require('joi');
 
 const createSite = Joi.object({
   name: Joi.string().required().messages({ 'string.empty': 'Site name is required' }),
-  code: Joi.string().required().messages({ 'string.empty': 'Site code is required' }),
+  code: Joi.string().allow('', null).optional(),
+  site_code: Joi.string().allow('', null).optional(),
   emirate: Joi.string().allow('', null).optional(),
   address: Joi.string().allow('', null).optional(),
   location: Joi.string().allow('', null).optional(),

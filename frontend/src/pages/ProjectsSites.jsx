@@ -519,7 +519,9 @@ export default function ProjectsSites({ initialTab }) {
         try {
           const res = await client.post('/sites', {
             name: siteForm.name,
+            code: siteForm.code,
             site_code: siteForm.code,
+            location: siteForm.location || 'Chennai',
             emirate: siteForm.location || 'Chennai',
             status: (siteForm.status || 'Active').toLowerCase()
           });
@@ -537,8 +539,10 @@ export default function ProjectsSites({ initialTab }) {
         try {
           await client.put(`/sites/${editingId}`, {
             name: siteForm.name,
+            code: siteForm.code,
             site_code: siteForm.code,
-            emirate: siteForm.location,
+            location: siteForm.location || 'Chennai',
+            emirate: siteForm.location || 'Chennai',
             status: (siteForm.status || 'Active').toLowerCase()
           });
         } catch (apiErr) {

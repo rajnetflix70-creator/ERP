@@ -12,14 +12,35 @@ async function listSites(user) {
   }
 }
 
+function sanitizeSiteData(data) {
+  const allowed = [
+    'name', 'code', 'emirate', 'address', 'latitude', 'longitude',
+    'geofence_radius_meters', 'supervisor_id', 'is_active'
+  ];
+  const clean = {};
+  allowed.forEach(k => {
+    if (data[k] !== undefined) clean[k] = data[k] === '' ? null : data[k];
+  });
+  return clean;
+}
+
 async function createSite(data) {
-  const existing = await db('sites').where({ code: data.code }).first();
+  const siteCode = data.code || data.site_code || `S-${Date.now().toString().slice(-4)}`;
+  const cleanData = sanitizeSiteData({
+    ...data,
+    code: siteCode,
+    emirate: data.emirate || data.location || 'Dubai',
+    latitude: data.latitude !== undefined && data.latitude !== null && data.latitude !== '' ? parseFloat(data.latitude) : 0,
+    longitude: data.longitude !== undefined && data.longitude !== null && data.longitude !== '' ? parseFloat(data.longitude) : 0,
+    geofence_radius_meters: parseInt(data.geofence_radius_meters || 300, 10),
+  });
+
+  const existing = await db('sites').where({ code: cleanData.code }).first();
   if (existing) {
-    const err = new Error('Site code already exists');
-    err.statusCode = 409;
-    throw err;
+    cleanData.code = `${cleanData.code}-${Date.now().toString().slice(-3)}`;
   }
-  const [site] = await db('sites').insert(data).returning('*');
+
+  const [site] = await db('sites').insert(cleanData).returning('*');
   return site;
 }
 
@@ -37,7 +58,8 @@ async function getSite(id) {
 }
 
 async function updateSite(id, data) {
-  const [updated] = await db('sites').where({ id }).update(data).returning('*');
+  const cleanData = sanitizeSiteData(data);
+  const [updated] = await db('sites').where({ id }).update(cleanData).returning('*');
   if (!updated) {
     const err = new Error('Site not found');
     err.statusCode = 404;
