@@ -1,16 +1,34 @@
 const db = require('../../db');
 
+function sanitizeClientData(data) {
+  const allowed = ['name', 'contact_person', 'mobile', 'email', 'address', 'trn_number', 'is_active'];
+  const sanitized = {};
+  for (const key of allowed) {
+    if (data[key] !== undefined) {
+      sanitized[key] = data[key];
+    }
+  }
+  return sanitized;
+}
+
 async function getClients() {
   return db('clients').orderBy('name', 'asc');
 }
 
 async function createClient(data) {
-  const [client] = await db('clients').insert(data).returning('*');
+  if (!data.name || !data.name.trim()) {
+    const err = new Error('Client name is required');
+    err.statusCode = 400;
+    throw err;
+  }
+  const sanitized = sanitizeClientData(data);
+  const [client] = await db('clients').insert(sanitized).returning('*');
   return client;
 }
 
 async function updateClient(id, data) {
-  const [client] = await db('clients').where({ id }).update({ ...data, updated_at: db.fn.now() }).returning('*');
+  const sanitized = sanitizeClientData(data);
+  const [client] = await db('clients').where({ id }).update({ ...sanitized, updated_at: db.fn.now() }).returning('*');
   return client;
 }
 

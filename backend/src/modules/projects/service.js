@@ -17,13 +17,31 @@ async function getProject(id) {
   return p;
 }
 
+function sanitizeProjectData(data) {
+  const allowed = [
+    'folder_no', 'ak_job_no', 'project_name', 'area_sqft', 'emirate',
+    'supervisor_names', 'supervisors_assigned', 'supervisors_required',
+    'technicians_required', 'supervisors_available_march', 'status',
+    'has_stressing_machine', 'has_onion_machine', 'has_gun_machine',
+    'has_grouting_machine', 'notes', 'is_active'
+  ];
+  const clean = {};
+  allowed.forEach(k => {
+    if (data[k] !== undefined) clean[k] = data[k] === '' ? null : data[k];
+  });
+  return clean;
+}
+
 async function createProject(data) {
-  const [p] = await db('projects').insert(data).returning('*');
+  const cleanData = sanitizeProjectData(data);
+  if (!cleanData.project_name) cleanData.project_name = data.name || 'Untitled Project';
+  const [p] = await db('projects').insert(cleanData).returning('*');
   return p;
 }
 
 async function updateProject(id, data) {
-  const [p] = await db('projects').where({ id }).update(data).returning('*');
+  const cleanData = sanitizeProjectData(data);
+  const [p] = await db('projects').where({ id }).update(cleanData).returning('*');
   if (!p) { const e = new Error('Project not found'); e.statusCode = 404; throw e; }
   return p;
 }

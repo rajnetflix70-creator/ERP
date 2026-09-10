@@ -13,7 +13,7 @@ const createMaterialSchema = Joi.object({
   description: Joi.string().allow('', null).optional(),
   reorder_level: Joi.number().min(0).default(0),
   is_active: Joi.boolean().default(true),
-});
+}).unknown(true);
 
 const updateMaterialSchema = Joi.object({
   material_code: Joi.string().max(50).optional(),
@@ -34,17 +34,17 @@ const createRequestSchema = Joi.object({
   date_needed: Joi.date().allow(null, '').optional(),
   purpose: Joi.string().allow('', null).optional(),
   priority: Joi.string().valid(...PRIORITIES).default('normal'),
-});
+}).unknown(true);
 
 const approveRequestSchema = Joi.object({
   status: Joi.string().valid('approved', 'rejected', 'cancelled').required(),
   approval_notes: Joi.string().allow('', null).optional(),
-});
+}).unknown(true);
 
 const issueRequestSchema = Joi.object({
   qty_issued: Joi.number().positive().required(),
   notes: Joi.string().allow('', null).optional(),
-});
+}).unknown(true);
 
 const consumptionSchema = Joi.object({
   material_id: Joi.string().uuid().required(),
@@ -55,6 +55,6 @@ const consumptionSchema = Joi.object({
   qty_consumed: Joi.number().positive().required(),
   consumption_date: Joi.date().required(),
   notes: Joi.string().allow('', null).optional(),
-});
+}).unknown(true);
 
 module.exports = { createMaterialSchema, updateMaterialSchema, createRequestSchema, approveRequestSchema, issueRequestSchema, consumptionSchema };

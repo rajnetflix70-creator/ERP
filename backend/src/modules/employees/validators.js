@@ -12,7 +12,7 @@ const createEmployeeSchema = Joi.object({
     .messages({ 'any.required': 'Please select an employee role' }),
   preferred_language: Joi.string().valid('en', 'ar', 'hi').default('en'),
   is_active: Joi.boolean().default(true),
-});
+}).unknown(true);
 
 const updateEmployeeSchema = Joi.object({
   full_name: Joi.string().min(2).max(100).optional(),

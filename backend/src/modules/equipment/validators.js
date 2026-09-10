@@ -9,7 +9,7 @@ const createItem = Joi.object({
   reorder_level: Joi.number().min(0).default(0),
   total_quantity: Joi.number().min(0).default(0),
   notes: Joi.string().allow('', null)
-});
+}).unknown(true);
 
 const updateItem = Joi.object({
   name: Joi.string(),
@@ -20,7 +20,7 @@ const updateItem = Joi.object({
   reorder_level: Joi.number().min(0),
   total_quantity: Joi.number().min(0),
   notes: Joi.string().allow('', null)
-});
+}).unknown(true);
 
 const stockTransaction = Joi.object({
   equipment_item_id: Joi.string().uuid().required(),
@@ -30,7 +30,7 @@ const stockTransaction = Joi.object({
   quantity: Joi.number().greater(0).required(),
   issued_to_user_id: Joi.string().uuid().allow(null),
   remarks: Joi.string().allow('', null)
-});
+}).unknown(true);
 
 module.exports = {
   createItem,
