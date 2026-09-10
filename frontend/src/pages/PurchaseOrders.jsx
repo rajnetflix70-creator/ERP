@@ -15,176 +15,9 @@ const formatINR = (amount) => {
   }).format(num);
 };
 
-// Preset standard Indian construction materials for quick selection
-const CATALOG_MATERIALS = [
-  { id: 'mat-1', name: 'UltraTech 53 Grade Cement', defaultUnit: 'Bags', defaultPrice: 385, gstRate: 28, description: '50kg HDPE bags conforming to IS 269:2015' },
-  { id: 'mat-2', name: 'Tata Tiscon TMT Fe550D Rebar 12mm', defaultUnit: 'MT', defaultPrice: 62500, gstRate: 18, description: 'High ductile earthquake resistant TMT bar' },
-  { id: 'mat-3', name: 'Tata Tiscon TMT Fe550D Rebar 16mm', defaultUnit: 'MT', defaultPrice: 61800, gstRate: 18, description: 'Standard straight length 12m TMT' },
-  { id: 'mat-4', name: 'Ready Mix Concrete M25 Grade', defaultUnit: 'Cu.m', defaultPrice: 4200, gstRate: 18, description: 'Design mix with slump 120±25mm' },
-  { id: 'mat-5', name: 'Coarse River Sand (Zone II)', defaultUnit: 'Cu.m', defaultPrice: 1850, gstRate: 5, description: 'Clean washed river sand for structural concrete' },
-  { id: 'mat-6', name: '20mm Blue Metal Crushed Aggregate', defaultUnit: 'Cu.m', defaultPrice: 1450, gstRate: 5, description: 'Hard granite stone aggregate IS 383' },
-  { id: 'mat-7', name: 'Asian Paints Apex Ultima White', defaultUnit: 'Litres', defaultPrice: 340, gstRate: 18, description: 'Exterior weather defense emulsion 20L drum' },
-  { id: 'mat-8', name: 'Supreme PVC Electrical Conduit 25mm', defaultUnit: 'Meters', defaultPrice: 48, gstRate: 18, description: 'Medium grade rigid PVC conduit pipes' },
-  { id: 'mat-9', name: 'Red Clay Burnt Bricks (Class 7.5)', defaultUnit: 'Nos', defaultPrice: 9.5, gstRate: 12, description: 'Standard modular bricks 190x90x90 mm' },
-];
-
-const INITIAL_POS = [
-  {
-    id: 'po-101',
-    po_number: 'PO-2026-0841',
-    po_date: '2026-09-02',
-    delivery_date: '2026-09-12',
-    vendor_name: 'UltraTech Cement Ltd',
-    vendor_id: 'v-1',
-    site_name: 'Tower A - Expressway Project',
-    site_id: 's-1',
-    delivery_site_id: 's-1',
-    payment_terms: '30 Days Net',
-    mr_ref: 'MR-2026-041 - Foundation Concrete',
-    status: 'Approved',
-    total_amount: 485000,
-    subtotal: 378906,
-    tax_amount: 106094,
-    items: [
-      { material_name: 'UltraTech 53 Grade Cement', description: '50kg HDPE bags conforming to IS 269:2015', qty: 1000, unit: 'Bags', unit_price: 385, gst_percent: 28, total: 492800 },
-    ],
-    terms: 'Supply within 10 days to Site Gate 2. Inspection at unloading dock.'
-  },
-  {
-    id: 'po-102',
-    po_number: 'PO-2026-0842',
-    po_date: '2026-09-03',
-    delivery_date: '2026-09-15',
-    vendor_name: 'Tata Steel BSL Ltd',
-    vendor_id: 'v-2',
-    site_name: 'Metro Phase 2 - Station 4',
-    site_id: 's-2',
-    delivery_site_id: 's-2',
-    payment_terms: '50% Advance, 50% on Delivery',
-    mr_ref: 'MR-2026-055 - Pier Column Reinforcement',
-    status: 'Open',
-    total_amount: 1440000,
-    subtotal: 1220339,
-    tax_amount: 219661,
-    items: [
-      { material_name: 'Tata Tiscon TMT Fe550D Rebar 16mm', description: 'Standard straight length 12m TMT', qty: 20, unit: 'MT', unit_price: 61000, gst_percent: 18, total: 1439600 },
-    ],
-    terms: 'Mill Test Certificates (MTC) required along with weighbridge slip.'
-  },
-  {
-    id: 'po-103',
-    po_number: 'PO-2026-0843',
-    po_date: '2026-09-04',
-    delivery_date: '2026-09-09',
-    vendor_name: 'RMC Readymix India',
-    vendor_id: 'v-3',
-    site_name: 'Tower A - Expressway Project',
-    site_id: 's-1',
-    delivery_site_id: 's-1',
-    payment_terms: '15 Days Net',
-    mr_ref: 'MR-2026-062 - Slab Casting L2',
-    status: 'Partial',
-    total_amount: 320000,
-    subtotal: 271186,
-    tax_amount: 48814,
-    items: [
-      { material_name: 'Ready Mix Concrete M25 Grade', description: 'Design mix with slump 120±25mm', qty: 65, unit: 'Cu.m', unit_price: 4200, gst_percent: 18, total: 322140 },
-    ],
-    terms: 'Transit mixer delivery slot: 06:00 AM to 02:00 PM.'
-  },
-  {
-    id: 'po-104',
-    po_number: 'PO-2026-0844',
-    po_date: '2026-08-28',
-    delivery_date: '2026-09-05',
-    vendor_name: 'Asian Paints Ltd',
-    vendor_id: 'v-4',
-    site_name: 'Prestige Tech Park - Phase 1',
-    site_id: 's-3',
-    delivery_site_id: 's-3',
-    payment_terms: 'Immediate / Advance',
-    mr_ref: '-- Direct PO --',
-    status: 'Closed',
-    total_amount: 185000,
-    subtotal: 156780,
-    tax_amount: 28220,
-    items: [
-      { material_name: 'Asian Paints Apex Ultima White', description: 'Exterior weather defense emulsion 20L drum', qty: 450, unit: 'Litres', unit_price: 340, gst_percent: 18, total: 180540 },
-    ],
-    terms: 'Material fully received and verified on GRN-2026-012.'
-  },
-  {
-    id: 'po-105',
-    po_number: 'PO-2026-0845',
-    po_date: '2026-09-01',
-    delivery_date: '2026-09-20',
-    vendor_name: 'Jindal Steel & Power',
-    vendor_id: 'v-5',
-    site_name: 'Greenfield Highway Km 42',
-    site_id: 's-4',
-    delivery_site_id: 's-4',
-    payment_terms: '30 Days Net',
-    mr_ref: 'MR-2026-038 - Culvert Steel',
-    status: 'Approved',
-    total_amount: 875000,
-    subtotal: 741525,
-    tax_amount: 133475,
-    items: [
-      { material_name: 'Tata Tiscon TMT Fe550D Rebar 12mm', description: 'High ductile earthquake resistant TMT bar', qty: 12, unit: 'MT', unit_price: 62000, gst_percent: 18, total: 877920 },
-    ],
-    terms: 'Delivery at Site Store Km 42 yard.'
-  },
-  {
-    id: 'po-106',
-    po_number: 'PO-2026-0846',
-    po_date: '2026-08-20',
-    delivery_date: '2026-08-27',
-    vendor_name: 'Supreme Industries Ltd',
-    vendor_id: 'v-6',
-    site_name: 'CyberCity Commercial Complex',
-    site_id: 's-5',
-    delivery_site_id: 's-5',
-    payment_terms: 'Immediate',
-    mr_ref: '-- Direct PO --',
-    status: 'Cancelled',
-    total_amount: 95000,
-    subtotal: 80508,
-    tax_amount: 14492,
-    items: [
-      { material_name: 'Supreme PVC Electrical Conduit 25mm', description: 'Medium grade rigid PVC conduit pipes', qty: 1500, unit: 'Meters', unit_price: 48, gst_percent: 18, total: 84960 },
-    ],
-    terms: 'Cancelled due to project design revision.'
-  },
-];
-
-const DEFAULT_VENDORS = [
-  { id: 'v-1', vendor_name: 'UltraTech Cement Ltd', city: 'Mumbai', gstin: '27AAACU1234F1Z5' },
-  { id: 'v-2', vendor_name: 'Tata Steel BSL Ltd', city: 'Jamshedpur', gstin: '20AABCT5678G2Z1' },
-  { id: 'v-3', vendor_name: 'RMC Readymix India', city: 'Bengaluru', gstin: '29AAACR9012H1Z8' },
-  { id: 'v-4', vendor_name: 'Asian Paints Ltd', city: 'Mumbai', gstin: '27AAACA3456J1Z2' },
-  { id: 'v-5', vendor_name: 'Jindal Steel & Power', city: 'Raigarh', gstin: '22AAACJ7890K1Z9' },
-  { id: 'v-6', vendor_name: 'Supreme Industries Ltd', city: 'Pune', gstin: '27AAACS1122L1Z3' },
-  { id: 'v-7', vendor_name: 'Godrej Construction Aggregates', city: 'Mumbai', gstin: '27AAACG3344M1Z7' },
-];
-
-const DEFAULT_SITES = [
-  { id: 's-1', site_name: 'Tower A - Expressway Project', address: 'Plot 4, Sector 150, Noida Express Highway' },
-  { id: 's-2', site_name: 'Metro Phase 2 - Station 4', address: 'ITPL Main Road, Whitefield, Bengaluru' },
-  { id: 's-3', site_name: 'Prestige Tech Park - Phase 1', address: 'Marathahalli-Sarjapur Ring Rd, Bengaluru' },
-  { id: 's-4', site_name: 'Greenfield Highway Km 42', address: 'NH-60 Pune-Nashik Expressway Corridor' },
-  { id: 's-5', site_name: 'CyberCity Commercial Complex', address: 'DLF Phase 2, Gurugram, Haryana' },
-];
-
-const SAMPLE_PRS = [
-  { id: 'pr-1', pr_number: 'MR-2026-041', requested_by_name: 'Rajesh Sharma (Site Eng)', project_name: 'Tower A' },
-  { id: 'pr-2', pr_number: 'MR-2026-055', requested_by_name: 'Anand Verma (Project Mgr)', project_name: 'Metro Phase 2' },
-  { id: 'pr-3', pr_number: 'MR-2026-062', requested_by_name: 'Suresh Patil (Site Eng)', project_name: 'Tower A' },
-  { id: 'pr-4', pr_number: 'MR-2026-077', requested_by_name: 'Kavita Reddy (Store Keeper)', project_name: 'Prestige Tech Park' },
-];
-
 const PurchaseOrders = () => {
   const { user } = useAuth();
-  const [pos, setPOs] = useState(INITIAL_POS);
+  const [pos, setPOs] = useState([]);
   const [loading, setLoading] = useState(false);
   const [alert, setAlert] = useState(null);
 
@@ -200,37 +33,37 @@ const PurchaseOrders = () => {
   const [pdfPO, setPdfPO] = useState(null);
 
   // Master Data
-  const [vendors, setVendors] = useState(DEFAULT_VENDORS);
-  const [sites, setSites] = useState(DEFAULT_SITES);
-  const [prs, setPRs] = useState(SAMPLE_PRS);
-  const [materialCatalog, setMaterialCatalog] = useState(CATALOG_MATERIALS);
+  const [vendors, setVendors] = useState([]);
+  const [sites, setSites] = useState([]);
+  const [prs, setPRs] = useState([]);
+  const [materialCatalog, setMaterialCatalog] = useState([]);
 
   // Form Data for Create PO (Screen 9)
   const initialForm = {
-    po_number: `PO-2026-${Math.floor(1000 + Math.random() * 9000)}`,
+    po_number: `PO-${dayjs().format('YYYY')}-${Math.floor(1000 + Math.random() * 9000)}`,
     vendor_id: '',
     site_id: '',
     mr_ref: '',
     po_date: dayjs().format('YYYY-MM-DD'),
     delivery_date: dayjs().add(7, 'day').format('YYYY-MM-DD'),
     payment_terms: '30 Days Net',
-    terms: 'Materials must strictly adhere to IS specifications. Weighbridge slip mandatory at delivery.',
+    terms: 'Materials must strictly adhere to specifications. Delivery challan and invoice required on arrival.',
     items: [
       {
-        material_name: CATALOG_MATERIALS[0].name,
-        description: CATALOG_MATERIALS[0].description,
-        qty: 500,
-        unit: CATALOG_MATERIALS[0].defaultUnit,
-        unit_price: CATALOG_MATERIALS[0].defaultPrice,
-        gst_percent: CATALOG_MATERIALS[0].gstRate,
-        total: Math.round(500 * CATALOG_MATERIALS[0].defaultPrice * (1 + CATALOG_MATERIALS[0].gstRate / 100))
+        material_name: '',
+        description: '',
+        qty: 1,
+        unit: 'Nos',
+        unit_price: 0,
+        gst_percent: 18,
+        total: 0
       }
     ]
   };
 
   const [formData, setFormData] = useState(initialForm);
 
-  // Load from API with graceful fallback to realistic Indian data
+  // Load from API
   const loadData = async () => {
     setLoading(true);
     try {
@@ -242,41 +75,54 @@ const PurchaseOrders = () => {
         apiClient.get('/materials'),
       ]);
 
-      if (poRes.status === 'fulfilled' && Array.isArray(poRes.value) && poRes.value.length > 0) {
-        // Merge with our rich local schema
-        const merged = poRes.value.map(p => ({
-          ...p,
-          status: p.status ? (p.status.charAt(0).toUpperCase() + p.status.slice(1).toLowerCase()) : 'Open',
-          delivery_date: p.delivery_date || dayjs(p.po_date).add(7, 'day').format('YYYY-MM-DD'),
-          vendor_name: p.vendor_name || 'Vendor',
-          site_name: p.site_name || 'Main Site',
-          total_amount: parseFloat(p.total_amount) || 0,
-        }));
-        setPOs(merged);
+      if (poRes.status === 'fulfilled') {
+        const raw = poRes.value?.data?.data?.data || poRes.value?.data?.data || poRes.value?.data || poRes.value || [];
+        if (Array.isArray(raw)) {
+          const merged = raw.map(p => ({
+            ...p,
+            id: p.id,
+            po_number: p.po_number || `PO-${p.id?.slice(0, 6)}`,
+            status: p.status ? (p.status.charAt(0).toUpperCase() + p.status.slice(1).toLowerCase().replace('_', ' ')) : 'Open',
+            delivery_date: p.delivery_date || (p.po_date ? dayjs(p.po_date).add(7, 'day').format('YYYY-MM-DD') : '-'),
+            vendor_name: p.vendor_name || '-',
+            site_name: p.site_name || '-',
+            total_amount: parseFloat(p.total_amount) || 0,
+            items: Array.isArray(p.items) ? p.items : []
+          }));
+          setPOs(merged);
+        }
       }
 
-      if (prRes.status === 'fulfilled' && Array.isArray(prRes.value) && prRes.value.length > 0) {
-        setPRs(prRes.value);
+      if (prRes.status === 'fulfilled') {
+        const rawPr = prRes.value?.data?.data?.data || prRes.value?.data?.data || prRes.value?.data || prRes.value || [];
+        if (Array.isArray(rawPr)) setPRs(rawPr);
       }
-      if (vRes.status === 'fulfilled' && Array.isArray(vRes.value?.data) && vRes.value.data.length > 0) {
-        setVendors(vRes.value.data);
+      if (vRes.status === 'fulfilled') {
+        const rawV = vRes.value?.data?.data?.data || vRes.value?.data?.data || vRes.value?.data || [];
+        if (Array.isArray(rawV)) setVendors(rawV);
       }
-      if (sRes.status === 'fulfilled' && Array.isArray(sRes.value?.data) && sRes.value.data.length > 0) {
-        setSites(sRes.value.data.map(s => ({ id: s.id, site_name: s.name || s.site_name, address: s.location || s.address })));
+      if (sRes.status === 'fulfilled') {
+        const rawS = sRes.value?.data?.data?.data || sRes.value?.data?.data || sRes.value?.data || [];
+        if (Array.isArray(rawS)) {
+          setSites(rawS.map(s => ({ id: s.id, site_name: s.name || s.site_name, address: s.location || s.emirate || s.address })));
+        }
       }
-      if (mRes.status === 'fulfilled' && Array.isArray(mRes.value?.data) && mRes.value.data.length > 0) {
-        const mapped = mRes.value.data.map(m => ({
-          id: m.id,
-          name: m.name,
-          defaultUnit: m.unit_of_measure || 'Nos',
-          defaultPrice: parseFloat(m.standard_rate) || 100,
-          gstRate: 18,
-          description: m.description || m.category || ''
-        }));
-        setMaterialCatalog([...CATALOG_MATERIALS, ...mapped]);
+      if (mRes.status === 'fulfilled') {
+        const rawM = mRes.value?.data?.materials || mRes.value?.data?.data || mRes.value?.data || [];
+        if (Array.isArray(rawM)) {
+          const mapped = rawM.map(m => ({
+            id: m.id,
+            name: m.name || m.material_name,
+            defaultUnit: m.unit_of_measure || m.unit || 'Nos',
+            defaultPrice: parseFloat(m.standard_rate || m.unit_price) || 0,
+            gstRate: 18,
+            description: m.description || m.category || ''
+          }));
+          setMaterialCatalog(mapped);
+        }
       }
     } catch (e) {
-      console.warn('API fetch warning, using standard enterprise mock data:', e);
+      console.warn('API fetch warning:', e);
     } finally {
       setLoading(false);
     }

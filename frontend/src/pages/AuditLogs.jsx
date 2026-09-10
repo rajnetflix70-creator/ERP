@@ -5,100 +5,6 @@ import client from '../api/client';
 
 dayjs.extend(relativeTime);
 
-const SAMPLE_LOGS = [
-  {
-    id: 'log-1',
-    created_at: new Date(Date.now() - 4 * 60 * 1000).toISOString(),
-    user_name: 'Admin User',
-    user_role: 'company_admin',
-    module: 'AUTH',
-    action: 'LOGIN_SUCCESS',
-    entity_type: null,
-    entity_number: null,
-    details: 'User logged in successfully (admin@sitetrack.ae)',
-    ip_address: '127.0.0.1',
-    status: 'SUCCESS'
-  },
-  {
-    id: 'log-2',
-    created_at: new Date(Date.now() - 18 * 60 * 1000).toISOString(),
-    user_name: 'Suresh Kumar',
-    user_role: 'site_supervisor',
-    module: 'PROCUREMENT',
-    action: 'CREATE_PR',
-    entity_type: 'PurchaseRequest',
-    entity_number: 'PR-1024',
-    details: 'Created purchase request PR-1024 with 3 items for Tower A',
-    ip_address: '192.168.1.45',
-    status: 'SUCCESS'
-  },
-  {
-    id: 'log-3',
-    created_at: new Date(Date.now() - 35 * 60 * 1000).toISOString(),
-    user_name: 'Rajesh PM',
-    user_role: 'project_manager',
-    module: 'PROCUREMENT',
-    action: 'PR_APPROVED',
-    entity_type: 'PurchaseRequest',
-    entity_number: 'PR-1023',
-    details: 'Approved Material Request MR-1023 (TMT 12mm - 5 MT)',
-    ip_address: '192.168.1.12',
-    status: 'SUCCESS'
-  },
-  {
-    id: 'log-4',
-    created_at: new Date(Date.now() - 65 * 60 * 1000).toISOString(),
-    user_name: 'Store Incharge',
-    user_role: 'site_supervisor',
-    module: 'INVENTORY',
-    action: 'ISSUE_MATERIAL',
-    entity_type: 'StockIssue',
-    entity_number: 'ISS-401',
-    details: 'Issued 50 Bags OPC Cement for Tower A Slab Work',
-    ip_address: '192.168.1.80',
-    status: 'SUCCESS'
-  },
-  {
-    id: 'log-5',
-    created_at: new Date(Date.now() - 110 * 60 * 1000).toISOString(),
-    user_name: 'Admin User',
-    user_role: 'company_admin',
-    module: 'HR',
-    action: 'SUBMIT_ATTENDANCE',
-    entity_type: 'Attendance',
-    entity_number: null,
-    details: 'Submitted daily muster roll for Tower A (28 workers present)',
-    ip_address: '127.0.0.1',
-    status: 'SUCCESS'
-  },
-  {
-    id: 'log-6',
-    created_at: new Date(Date.now() - 180 * 60 * 1000).toISOString(),
-    user_name: 'Admin User',
-    user_role: 'company_admin',
-    module: 'HR',
-    action: 'UPDATE_EMPLOYEE',
-    entity_type: 'User',
-    entity_number: 'EMP-004',
-    details: 'Updated employee: Ramesh Patel (Status: Active)',
-    ip_address: '127.0.0.1',
-    status: 'SUCCESS'
-  },
-  {
-    id: 'log-7',
-    created_at: new Date(Date.now() - 240 * 60 * 1000).toISOString(),
-    user_name: 'Unknown',
-    user_role: 'N/A',
-    module: 'AUTH',
-    action: 'LOGIN_FAILED',
-    entity_type: null,
-    entity_number: null,
-    details: 'Failed login attempt with invalid credentials for user@example.com',
-    ip_address: '203.0.113.19',
-    status: 'FAILURE'
-  }
-];
-
 export default function AuditLogs() {
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -109,11 +15,11 @@ export default function AuditLogs() {
   const [toDate, setToDate] = useState('');
   const [selectedLog, setSelectedLog] = useState(null);
   const [summary, setSummary] = useState({
-    total_events: 142,
-    today_events: 28,
-    auth_events: 19,
-    procurement_events: 42,
-    inventory_events: 35
+    total_events: 0,
+    today_events: 0,
+    auth_events: 0,
+    procurement_events: 0,
+    inventory_events: 0
   });
 
   const fetchLogs = async () => {
@@ -126,14 +32,22 @@ export default function AuditLogs() {
         to_date: toDate || undefined,
       };
       const res = await client.get('/reports/audit-logs', { params });
-      if (res.data && res.data.logs && res.data.logs.length > 0) {
-        setLogs(res.data.logs);
-      } else {
-        setLogs(SAMPLE_LOGS);
-      }
+      const rawLogs = res.data?.logs || res.data?.data?.data || res.data?.data || [];
+      const list = Array.isArray(rawLogs) ? rawLogs : [];
+      setLogs(list);
+
+      // Compute dynamic summary if not supplied
+      const today = dayjs();
+      setSummary({
+        total_events: list.length,
+        today_events: list.filter(l => dayjs(l.created_at).isSame(today, 'day')).length,
+        auth_events: list.filter(l => l.module === 'AUTH').length,
+        procurement_events: list.filter(l => l.module === 'PROCUREMENT').length,
+        inventory_events: list.filter(l => l.module === 'INVENTORY').length
+      });
     } catch (err) {
-      console.warn('Using sample audit logs:', err.message);
-      setLogs(SAMPLE_LOGS);
+      console.warn('Could not fetch audit logs:', err.message);
+      setLogs([]);
     } finally {
       setLoading(false);
     }
@@ -145,8 +59,8 @@ export default function AuditLogs() {
       if (res.data && res.data.total_events > 0) {
         setSummary(res.data);
       }
-    } catch (e) {
-      // Use fallback summary
+    } catch {
+      // Ignored
     }
   };
 

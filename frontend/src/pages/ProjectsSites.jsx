@@ -3,230 +3,12 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import Modal from '../components/Modal';
 import client from '../api/client';
 
-// ── Realistic Indian Construction Initial Data ───────────────────
-const INITIAL_SITES = [
-  {
-    id: 'tower-a',
-    code: 'S-001',
-    name: 'Tower A',
-    project: 'Everest Heights',
-    location: 'Chennai',
-    area: 'OMR Sholinganallur',
-    manager: 'Kumar',
-    engineer: 'Rajesh Kannan',
-    startDate: '2025-01-01',
-    expectedCompletion: '2026-12-31',
-    budget: '₹5.2 Cr',
-    rawBudget: 52000000,
-    progress: 62,
-    status: 'Active',
-    floors: '2B + G + 18 Floors',
-    type: 'Residential High-Rise',
-  },
-  {
-    id: 'villa-project',
-    code: 'S-002',
-    name: 'Villa Project',
-    project: 'Green Valley',
-    location: 'OMR',
-    area: 'Navalur Junction',
-    manager: 'Raj',
-    engineer: 'S. Vignesh',
-    startDate: '2024-08-15',
-    expectedCompletion: '2025-11-30',
-    budget: '₹3.8 Cr',
-    rawBudget: 38000000,
-    progress: 75,
-    status: 'Active',
-    floors: '42 Luxury Villas',
-    type: 'Gated Villa Community',
-  },
-  {
-    id: 'warehouse',
-    code: 'S-003',
-    name: 'Warehouse',
-    project: 'Logistics Park',
-    location: 'Tambaram',
-    area: 'GST Road Corridor',
-    manager: 'Arun',
-    engineer: 'K. Balaji',
-    startDate: '2025-03-01',
-    expectedCompletion: '2025-10-31',
-    budget: '₹2.4 Cr',
-    rawBudget: 24000000,
-    progress: 35,
-    status: 'Hold',
-    floors: 'PEB Clear Height 12m',
-    type: 'Industrial Logistics Hub',
-  },
-  {
-    id: 'tower-b',
-    code: 'S-004',
-    name: 'Tower B',
-    project: 'Everest Heights',
-    location: 'Velachery',
-    area: 'Inner Ring Road',
-    manager: 'Prakash',
-    engineer: 'M. Senthil',
-    startDate: '2024-11-01',
-    expectedCompletion: '2026-06-30',
-    budget: '₹4.9 Cr',
-    rawBudget: 49000000,
-    progress: 48,
-    status: 'Active',
-    floors: '2B + G + 16 Floors',
-    type: 'Residential High-Rise',
-  },
-  {
-    id: 'commercial',
-    code: 'S-005',
-    name: 'Commercial',
-    project: 'City Center',
-    location: 'Coimbatore',
-    area: 'Avinashi Road',
-    manager: 'Suresh',
-    engineer: 'R. Karthikeyan',
-    startDate: '2024-02-01',
-    expectedCompletion: '2025-04-30',
-    budget: '₹6.5 Cr',
-    rawBudget: 65000000,
-    progress: 90,
-    status: 'Completed',
-    floors: '3B + G + 8 Floors',
-    type: 'Commercial Retail & Office',
-  },
-  {
-    id: 'tech-park',
-    code: 'S-006',
-    name: 'Tech Park Phase 2',
-    project: 'Cyber City',
-    location: 'Bangalore',
-    area: 'Whitefield EPIP',
-    manager: 'Raj',
-    engineer: 'Amit Patil',
-    startDate: '2024-10-15',
-    expectedCompletion: '2026-03-31',
-    budget: '₹8.2 Cr',
-    rawBudget: 82000000,
-    progress: 55,
-    status: 'Active',
-    floors: '2B + G + 14 Floors',
-    type: 'IT SEZ Office Complex',
-  },
-  {
-    id: 'coastal-enclave',
-    code: 'S-007',
-    name: 'Coastal Enclave',
-    project: 'Green Valley',
-    location: 'OMR',
-    area: 'Kovalam Coastal Road',
-    manager: 'Kumar',
-    engineer: 'D. Prabhakaran',
-    startDate: '2025-05-01',
-    expectedCompletion: '2027-01-31',
-    budget: '₹7.1 Cr',
-    rawBudget: 71000000,
-    progress: 20,
-    status: 'Active',
-    floors: '1B + G + 12 Floors',
-    type: 'Luxury Condominiums',
-  },
-];
-
-const INITIAL_PROJECTS = [
-  {
-    id: 'everest-heights',
-    code: 'PRJ-101',
-    name: 'Everest Heights',
-    client: 'Prestige Estates Group',
-    location: 'Chennai',
-    manager: 'Kumar',
-    engineer: 'Rajesh Kannan',
-    startDate: '2024-09-01',
-    expectedCompletion: '2026-12-31',
-    budget: '₹45.0 Cr',
-    rawBudget: 450000000,
-    progress: 58,
-    status: 'Active',
-    sitesCount: 2,
-    activeSites: ['Tower A', 'Tower B'],
-  },
-  {
-    id: 'green-valley',
-    code: 'PRJ-102',
-    name: 'Green Valley',
-    client: 'DLF Residential Limited',
-    location: 'OMR',
-    manager: 'Raj',
-    engineer: 'S. Vignesh',
-    startDate: '2024-06-01',
-    expectedCompletion: '2025-11-30',
-    budget: '₹28.5 Cr',
-    rawBudget: 285000000,
-    progress: 72,
-    status: 'Active',
-    sitesCount: 2,
-    activeSites: ['Villa Project', 'Coastal Enclave'],
-  },
-  {
-    id: 'logistics-park',
-    code: 'PRJ-103',
-    name: 'Logistics Park',
-    client: 'IndoSpace Logistics Parks',
-    location: 'Tambaram',
-    manager: 'Arun',
-    engineer: 'K. Balaji',
-    startDate: '2025-01-15',
-    expectedCompletion: '2025-10-31',
-    budget: '₹18.0 Cr',
-    rawBudget: 180000000,
-    progress: 35,
-    status: 'Hold',
-    sitesCount: 1,
-    activeSites: ['Warehouse'],
-  },
-  {
-    id: 'city-center',
-    code: 'PRJ-104',
-    name: 'City Center',
-    client: 'Godrej Properties Ltd',
-    location: 'Coimbatore',
-    manager: 'Suresh',
-    engineer: 'R. Karthikeyan',
-    startDate: '2023-11-01',
-    expectedCompletion: '2025-04-30',
-    budget: '₹62.0 Cr',
-    rawBudget: 620000000,
-    progress: 90,
-    status: 'Completed',
-    sitesCount: 1,
-    activeSites: ['Commercial'],
-  },
-  {
-    id: 'cyber-city',
-    code: 'PRJ-105',
-    name: 'Cyber City',
-    client: 'Brigade Enterprises',
-    location: 'Bangalore',
-    manager: 'Prakash',
-    engineer: 'Amit Patil',
-    startDate: '2024-08-01',
-    expectedCompletion: '2026-06-30',
-    budget: '₹34.0 Cr',
-    rawBudget: 340000000,
-    progress: 55,
-    status: 'Active',
-    sitesCount: 1,
-    activeSites: ['Tech Park Phase 2'],
-  },
-];
-
 const EMPTY_SITE_FORM = {
   code: '',
   name: '',
-  project: 'Everest Heights',
-  location: 'Chennai',
-  manager: 'Kumar',
+  project: '',
+  location: '',
+  manager: '',
   engineer: '',
   startDate: '',
   expectedCompletion: '',
@@ -239,8 +21,8 @@ const EMPTY_PROJECT_FORM = {
   code: '',
   name: '',
   client: '',
-  location: 'Chennai',
-  manager: 'Kumar',
+  location: '',
+  manager: '',
   engineer: '',
   startDate: '',
   expectedCompletion: '',
@@ -267,8 +49,8 @@ export default function ProjectsSites({ initialTab }) {
   }, [location.pathname]);
 
   // Main Data States
-  const [sites, setSites] = useState(INITIAL_SITES);
-  const [projects, setProjects] = useState(INITIAL_PROJECTS);
+  const [sites, setSites] = useState([]);
+  const [projects, setProjects] = useState([]);
 
   // Search & Filter States
   const [searchTerm, setSearchTerm] = useState('');
@@ -424,46 +206,52 @@ export default function ProjectsSites({ initialTab }) {
     setLoading(true);
     try {
       const [projRes, siteRes] = await Promise.allSettled([
-        client.get('/projects'),
-        client.get('/sites')
+        client.get('/projects?limit=200'),
+        client.get('/sites?limit=200')
       ]);
 
-      if (projRes.status === 'fulfilled' && Array.isArray(projRes.value.data)) {
-        const mappedProjects = projRes.value.data.map(p => ({
-          id: p.id,
-          code: p.folder_no || p.ak_job_no || 'PRJ-101',
-          name: p.project_name || 'Project',
-          client: p.client_name || 'Client',
-          location: p.emirate || 'Chennai',
-          manager: p.supervisor_names || 'Kumar',
-          engineer: p.supervisor_names || '',
-          startDate: p.start_date || '',
-          expectedCompletion: p.planned_end_date || '',
-          budget: p.area_sqft ? `₹${(p.area_sqft * 2500 / 10000000).toFixed(1)} Cr` : '₹4.5 Cr',
-          progress: Number(p.completion_pct) || 0,
-          status: p.status ? (p.status.charAt(0).toUpperCase() + p.status.slice(1)) : 'Active',
-          sitesCount: 1,
-          activeSites: [],
-        }));
-        setProjects(mappedProjects);
+      if (projRes.status === 'fulfilled') {
+        const rawProj = projRes.value?.data?.data?.data || projRes.value?.data?.data || projRes.value?.data || [];
+        if (Array.isArray(rawProj)) {
+          const mappedProjects = rawProj.map(p => ({
+            id: p.id,
+            code: p.folder_no || p.ak_job_no || p.code || 'PRJ',
+            name: p.project_name || p.name || 'Untitled Project',
+            client: p.client_name || p.client || '-',
+            location: p.location || p.emirate || '-',
+            manager: p.supervisor_names || p.manager || '-',
+            engineer: p.engineer || '',
+            startDate: p.start_date || '',
+            expectedCompletion: p.planned_end_date || p.expectedCompletion || '',
+            budget: p.budget ? (p.currency ? `${p.currency} ${Number(p.budget).toLocaleString()}` : `₹${Number(p.budget).toLocaleString()}`) : (p.area_sqft ? `₹${(p.area_sqft * 2500 / 10000000).toFixed(1)} Cr` : '-'),
+            progress: Number(p.completion_pct) || 0,
+            status: p.status ? (p.status.charAt(0).toUpperCase() + p.status.slice(1).replace('_', ' ')) : 'Active',
+            sitesCount: p.sites_count || 0,
+            activeSites: [],
+          }));
+          setProjects(mappedProjects);
+        }
       }
 
-      if (siteRes.status === 'fulfilled' && Array.isArray(siteRes.value.data)) {
-        const mappedSites = siteRes.value.data.map(s => ({
-          id: s.id,
-          code: s.code || s.site_code || 'S-001',
-          name: s.name || 'Site',
-          project: s.project_name || 'Project',
-          location: s.emirate || 'Chennai',
-          manager: 'Kumar',
-          engineer: '',
-          startDate: '',
-          expectedCompletion: '',
-          budget: '₹4.0 Cr',
-          progress: 50,
-          status: s.status ? (s.status.charAt(0).toUpperCase() + s.status.slice(1)) : 'Active',
-        }));
-        setSites(mappedSites);
+      if (siteRes.status === 'fulfilled') {
+        const rawSites = siteRes.value?.data?.data || siteRes.value?.data || [];
+        if (Array.isArray(rawSites)) {
+          const mappedSites = rawSites.map(s => ({
+            id: s.id,
+            code: s.site_code || s.code || 'SITE',
+            name: s.name || s.site_name || 'Site',
+            project: s.project_name || s.project || '-',
+            location: s.location || s.emirate || '-',
+            manager: s.manager || s.supervisor_names || '-',
+            engineer: s.engineer || '',
+            startDate: s.startDate || '',
+            expectedCompletion: s.expectedCompletion || '',
+            budget: s.budget ? (s.budget.toString().startsWith('₹') ? s.budget : `₹${s.budget}`) : '-',
+            progress: Number(s.progress || s.completion_pct) || 0,
+            status: s.status ? (s.status.charAt(0).toUpperCase() + s.status.slice(1).replace('_', ' ')) : 'Active',
+          }));
+          setSites(mappedSites);
+        }
       }
     } catch (err) {
       console.warn('API data fetch failed:', err);

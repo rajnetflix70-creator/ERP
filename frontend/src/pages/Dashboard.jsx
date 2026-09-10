@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import client from '../api/client';
 import dayjs from 'dayjs';
@@ -12,63 +12,147 @@ import {
 /* ─────────────────────────────────────────────
    STAT CARD
 ───────────────────────────────────────────── */
-const StatCard = ({ label, value, icon, bgClass }) => (
-  <div className={`card stat-card ${bgClass}`} style={{ display: 'flex', alignItems: 'center', padding: '20px', borderRadius: '10px', backgroundColor: '#fff', boxShadow: '0 1px 8px rgba(0,0,0,0.08)' }}>
-    <div style={{
-      width: '50px', height: '50px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px', marginRight: '16px',
-      backgroundColor: `var(${bgClass})`
-    }}>
-      {icon}
+const StatCard = ({ label, value, icon, bgClass, link }) => {
+  const content = (
+    <div className={`card stat-card ${bgClass}`} style={{ display: 'flex', alignItems: 'center', padding: '20px', borderRadius: '10px', backgroundColor: '#fff', boxShadow: '0 1px 8px rgba(0,0,0,0.08)', cursor: link ? 'pointer' : 'default', textDecoration: 'none' }}>
+      <div style={{
+        width: '50px', height: '50px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px', marginRight: '16px',
+        backgroundColor: `var(${bgClass}, #f1f5f9)`
+      }}>
+        {icon}
+      </div>
+      <div>
+        <div style={{ fontSize: '1.75rem', fontWeight: 'bold', color: 'var(--navy, #1e293b)' }}>{value}</div>
+        <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary, #64748b)' }}>{label}</div>
+      </div>
     </div>
-    <div>
-      <div style={{ fontSize: '1.75rem', fontWeight: 'bold', color: 'var(--navy, #1e293b)' }}>{value}</div>
-      <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary, #64748b)' }}>{label}</div>
-    </div>
-  </div>
-);
+  );
+
+  return link ? <Link to={link} style={{ textDecoration: 'none' }}>{content}</Link> : content;
+};
 
 const Dashboard = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  // API State (optional, using hardcoded as fallback)
-  const [mrCount, setMrCount] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState({
+    projectsCount: 0,
+    sitesCount: 0,
+    pendingMrCount: 0,
+    pendingApprovalsCount: 0,
+    openPoCount: 0,
+    lowStockCount: 0,
+    todayDeliveriesCount: 0,
+    employeesCount: 0
+  });
+
+  const [recentRequests, setRecentRequests] = useState([]);
+  const [lowStockItems, setLowStockItems] = useState([]);
+  const [recentActivities, setRecentActivities] = useState([]);
+  const [siteProgressList, setSiteProgressList] = useState([]);
 
   useEffect(() => {
-    const load = async () => {
+    let isMounted = true;
+
+    const fetchDashboardData = async () => {
+      setLoading(true);
       try {
-        const mrRes = await client.get('/material-requests?limit=100');
-        const mrData = mrRes.data?.data || mrRes.data || [];
-        setMrCount(mrData.length);
+        const [
+          projRes,
+          sitesRes,
+          mrRes,
+          poRes,
+          matRes,
+          lowStockRes,
+          empRes,
+          auditRes
+        ] = await Promise.allSettled([
+          client.get('/projects?limit=100'),
+          client.get('/sites?limit=100'),
+          client.get('/material-requests?limit=100'),
+          client.get('/procurement/orders?limit=100'),
+          client.get('/materials?limit=100'),
+          client.get('/materials/low-stock'),
+          client.get('/employees?limit=100'),
+          client.get('/audit-logs?limit=5')
+        ]);
+
+        if (!isMounted) return;
+
+        // Projects
+        const projects = projRes.status === 'fulfilled' ? (projRes.value?.data?.data || projRes.value?.data || []) : [];
+        const projectsCount = Array.isArray(projects) ? projects.length : (projRes.value?.data?.total || 0);
+
+        // Sites
+        const sites = sitesRes.status === 'fulfilled' ? (sitesRes.value?.data?.data || sitesRes.value?.data || []) : [];
+        const sitesCount = Array.isArray(sites) ? sites.length : (sitesRes.value?.data?.total || 0);
+
+        // Material Requests
+        const mrs = mrRes.status === 'fulfilled' ? (mrRes.value?.data?.data || mrRes.value?.data || []) : [];
+        const mrList = Array.isArray(mrs) ? mrs : [];
+        const pendingMrs = mrList.filter(m => (m.status || '').toLowerCase() === 'pending');
+
+        // Purchase Orders
+        const pos = poRes.status === 'fulfilled' ? (poRes.value?.data?.data || poRes.value?.data || []) : [];
+        const poList = Array.isArray(pos) ? pos : [];
+        const openPos = poList.filter(p => !['closed', 'completed', 'cancelled'].includes((p.status || '').toLowerCase()));
+
+        // Low stock & Materials
+        const lowStock = lowStockRes.status === 'fulfilled' ? (lowStockRes.value?.data?.materials || lowStockRes.value?.data || []) : [];
+        const lowStockList = Array.isArray(lowStock) ? lowStock : [];
+
+        // Employees
+        const emps = empRes.status === 'fulfilled' ? (empRes.value?.data?.data || empRes.value?.data || []) : [];
+        const empCount = Array.isArray(emps) ? emps.length : (empRes.value?.data?.total || 0);
+
+        // Audit logs for activities
+        const audits = auditRes.status === 'fulfilled' ? (auditRes.value?.data?.logs || auditRes.value?.data || []) : [];
+        const auditList = Array.isArray(audits) ? audits : [];
+
+        setStats({
+          projectsCount,
+          sitesCount,
+          pendingMrCount: pendingMrs.length,
+          pendingApprovalsCount: pendingMrs.length,
+          openPoCount: openPos.length,
+          lowStockCount: lowStockList.length,
+          todayDeliveriesCount: 0,
+          employeesCount: empCount
+        });
+
+        setRecentRequests(mrList.slice(0, 5));
+        setLowStockItems(lowStockList.slice(0, 5));
+        setRecentActivities(auditList.slice(0, 5));
+        setSiteProgressList(sites.slice(0, 4));
+
       } catch (err) {
-        console.error('API load error', err);
+        console.error('Error fetching dashboard metrics:', err);
+      } finally {
+        if (isMounted) setLoading(false);
       }
     };
-    load();
+
+    fetchDashboardData();
+    return () => { isMounted = false; };
   }, []);
 
   const todayDate = dayjs().format('DD MMMM YYYY, dddd');
 
-  // Chart Data
-  const pieData = [
-    { name: 'Pending', value: 24, color: '#3b82f6' },
-    { name: 'Approved', value: 18, color: '#22c55e' },
-    { name: 'Ordered', value: 12, color: '#f59e0b' },
-    { name: 'Delivered', value: 45, color: '#4f46e5' },
-    { name: 'Rejected', value: 5, color: '#ef4444' },
-  ];
+  // MR Status distribution
+  const statusCounts = recentRequests.reduce((acc, curr) => {
+    const s = (curr.status || 'pending').toLowerCase();
+    acc[s] = (acc[s] || 0) + 1;
+    return acc;
+  }, {});
 
-  const barData = [
-    { month: 'Jan', amount: 5 },
-    { month: 'Feb', amount: 8 },
-    { month: 'Mar', amount: 6 },
-    { month: 'Apr', amount: 12 },
-    { month: 'May', amount: 10 },
-    { month: 'Jun', amount: 15 },
-    { month: 'Jul', amount: 14 },
-    { month: 'Aug', amount: 9 },
-    { month: 'Sep', amount: 11 },
-  ];
+  const pieData = Object.keys(statusCounts).length > 0 ? [
+    { name: 'Pending', value: statusCounts.pending || 0, color: '#3b82f6' },
+    { name: 'Approved', value: statusCounts.approved || 0, color: '#22c55e' },
+    { name: 'Ordered', value: statusCounts.ordered || 0, color: '#f59e0b' },
+    { name: 'Delivered', value: statusCounts.delivered || 0, color: '#4f46e5' },
+    { name: 'Rejected', value: statusCounts.rejected || 0, color: '#ef4444' },
+  ].filter(d => d.value > 0) : [];
 
   return (
     <div style={{ padding: '24px', backgroundColor: '#F5F7FA', minHeight: '100vh', fontFamily: 'Inter, sans-serif' }}>
@@ -89,172 +173,197 @@ const Dashboard = () => {
       </div>
 
       {/* 2. KPI CARDS ROW */}
-      <div className="stats-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', marginBottom: '24px' }}>
-        <StatCard icon="📁" value="12" label="Total Projects" bgClass="--info-lt" />
-        <StatCard icon="🏗️" value="8" label="Active Sites" bgClass="--primary-lt" />
-        <StatCard icon="📋" value={mrCount > 24 ? mrCount : 24} label="Pending Material Requests" bgClass="--warning-lt" />
-        <StatCard icon="✅" value="7" label="Pending Approvals" bgClass="--info-lt" />
-        <StatCard icon="🛒" value="15" label="Open Purchase Orders" bgClass="--success-lt" />
-        <StatCard icon="⚠️" value="32" label="Low Stock Items" bgClass="--danger-lt" />
-        <StatCard icon="🚛" value="14" label="Today's Deliveries" bgClass="--primary-lt" />
-        <StatCard icon="👷" value="156" label="Total Employees" bgClass="--info-lt" />
+      <div className="stats-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px', marginBottom: '24px' }}>
+        <StatCard icon="📁" value={stats.projectsCount} label="Total Projects" bgClass="--info-lt" link="/projects" />
+        <StatCard icon="🏗️" value={stats.sitesCount} label="Active Sites" bgClass="--primary-lt" link="/sites" />
+        <StatCard icon="📋" value={stats.pendingMrCount} label="Pending Material Requests" bgClass="--warning-lt" link="/materials/requests" />
+        <StatCard icon="✅" value={stats.pendingApprovalsCount} label="Pending Approvals" bgClass="--info-lt" link="/approvals" />
+        <StatCard icon="🛒" value={stats.openPoCount} label="Open Purchase Orders" bgClass="--success-lt" link="/procurement/orders" />
+        <StatCard icon="⚠️" value={stats.lowStockCount} label="Low Stock Items" bgClass="--danger-lt" link="/inventory" />
+        <StatCard icon="🚛" value={stats.todayDeliveriesCount} label="Today's Deliveries" bgClass="--primary-lt" link="/procurement/deliveries" />
+        <StatCard icon="👷" value={stats.employeesCount} label="Total Employees" bgClass="--info-lt" link="/hr/employees" />
       </div>
 
-      {/* 3. TWO-COLUMN SECTION: Charts */}
-      <div style={{ display: 'flex', gap: '24px', marginBottom: '24px' }}>
-        <div className="card" style={{ flex: '0 0 60%', backgroundColor: '#fff', padding: '20px', borderRadius: '10px', boxShadow: '0 1px 8px rgba(0,0,0,0.08)' }}>
-          <h3 style={{ marginTop: 0, color: 'var(--navy, #1e293b)', fontSize: '1.1rem' }}>Material Request Status</h3>
-          <div style={{ height: '300px' }}>
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie data={pieData} cx="50%" cy="50%" innerRadius={60} outerRadius={100} paddingAngle={5} dataKey="value">
-                  {pieData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip />
-                <Legend verticalAlign="bottom" height={36} />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
+      {/* 3. TWO-COLUMN SECTION: Charts & Progress */}
+      <div style={{ display: 'grid', gridTemplateColumns: '60% 38%', gap: '2%', marginBottom: '24px' }}>
         
-        <div className="card" style={{ flex: '0 0 calc(40% - 24px)', backgroundColor: '#fff', padding: '20px', borderRadius: '10px', boxShadow: '0 1px 8px rgba(0,0,0,0.08)' }}>
-          <h3 style={{ marginTop: 0, color: 'var(--navy, #1e293b)', fontSize: '1.1rem' }}>Site Progress</h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', marginTop: '20px' }}>
-            {[
-              { name: 'Tower A', progress: 62 },
-              { name: 'Tower B', progress: 48 },
-              { name: 'Villa Project', progress: 75 },
-              { name: 'Warehouse', progress: 35 },
-            ].map(site => (
-              <div key={site.name}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '0.9rem', fontWeight: '600', color: 'var(--text-secondary, #64748b)' }}>
-                  <span>{site.name}</span>
-                  <span>{site.progress}%</span>
-                </div>
-                <div className="progress-bar" style={{ width: '100%', height: '8px', backgroundColor: '#e2e8f0', borderRadius: '4px', overflow: 'hidden' }}>
-                  <div style={{ width: `${site.progress}%`, height: '100%', backgroundColor: '#2563eb', borderRadius: '4px' }}></div>
-                </div>
-              </div>
-            ))}
-          </div>
+        {/* Material Request Status Distribution */}
+        <div className="card" style={{ padding: '20px', borderRadius: '10px', backgroundColor: '#fff', boxShadow: '0 1px 8px rgba(0,0,0,0.08)' }}>
+          <h2 style={{ fontSize: '1rem', fontWeight: '600', margin: '0 0 16px 0', color: 'var(--navy, #1e293b)' }}>
+            Material Request Status
+          </h2>
+          {pieData.length > 0 ? (
+            <div style={{ height: '240px' }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie data={pieData} cx="50%" cy="50%" innerRadius={60} outerRadius={85} paddingAngle={5} dataKey="value">
+                    {pieData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                  <Legend verticalAlign="bottom" height={36} />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+          ) : (
+            <div style={{ height: '240px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#94a3b8' }}>
+              <span style={{ fontSize: '36px', marginBottom: '8px' }}>📊</span>
+              <p style={{ margin: 0 }}>No material request data available yet</p>
+            </div>
+          )}
         </div>
+
+        {/* Site Progress */}
+        <div className="card" style={{ padding: '20px', borderRadius: '10px', backgroundColor: '#fff', boxShadow: '0 1px 8px rgba(0,0,0,0.08)' }}>
+          <h2 style={{ fontSize: '1rem', fontWeight: '600', margin: '0 0 16px 0', color: 'var(--navy, #1e293b)' }}>
+            Active Sites Overview
+          </h2>
+          {siteProgressList.length > 0 ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginTop: '8px' }}>
+              {siteProgressList.map((site) => {
+                const pct = site.progress || site.completion_pct || 0;
+                return (
+                  <div key={site.id}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px', fontSize: '0.85rem' }}>
+                      <span style={{ fontWeight: '600', color: 'var(--navy, #1e293b)' }}>{site.name || site.site_name}</span>
+                      <span style={{ color: 'var(--text-secondary, #64748b)' }}>{pct}%</span>
+                    </div>
+                    <div style={{ height: '8px', width: '100%', backgroundColor: '#e2e8f0', borderRadius: '4px', overflow: 'hidden' }}>
+                      <div style={{ width: `${pct}%`, height: '100%', backgroundColor: 'var(--primary, #2563eb)', borderRadius: '4px' }} />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div style={{ height: '200px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#94a3b8' }}>
+              <span style={{ fontSize: '36px', marginBottom: '8px' }}>🏗️</span>
+              <p style={{ margin: 0 }}>No active sites created yet</p>
+              <Link to="/sites" style={{ marginTop: '8px', color: '#2563eb', fontSize: '0.85rem', fontWeight: '600' }}>+ Add First Site</Link>
+            </div>
+          )}
+        </div>
+
       </div>
 
-      {/* 4. PURCHASE OVERVIEW */}
-      <div className="card" style={{ backgroundColor: '#fff', padding: '20px', borderRadius: '10px', marginBottom: '24px', boxShadow: '0 1px 8px rgba(0,0,0,0.08)' }}>
-        <h3 style={{ marginTop: 0, color: 'var(--navy, #1e293b)', fontSize: '1.1rem' }}>Monthly Purchase Overview (in Lakhs)</h3>
-        <div style={{ height: '300px' }}>
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={barData} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-              <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fill: '#64748b' }} />
-              <YAxis axisLine={false} tickLine={false} tick={{ fill: '#64748b' }} />
-              <Tooltip cursor={{ fill: '#f8fafc' }} />
-              <Bar dataKey="amount" fill="#2563eb" radius={[4, 4, 0, 0]} maxBarSize={50} />
-            </BarChart>
-          </ResponsiveContainer>
+      {/* 4. RECENT MATERIAL REQUESTS TABLE */}
+      <div className="card" style={{ padding: '20px', borderRadius: '10px', backgroundColor: '#fff', boxShadow: '0 1px 8px rgba(0,0,0,0.08)', marginBottom: '24px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+          <h2 style={{ fontSize: '1rem', fontWeight: '600', margin: 0, color: 'var(--navy, #1e293b)' }}>
+            Recent Material Requests
+          </h2>
+          <Link to="/materials/requests" style={{ fontSize: '0.85rem', color: '#2563eb', textDecoration: 'none', fontWeight: '600' }}>
+            View All Requests →
+          </Link>
         </div>
-      </div>
 
-      {/* 5. RECENT MATERIAL REQUESTS TABLE */}
-      <div className="card" style={{ backgroundColor: '#fff', padding: '20px', borderRadius: '10px', marginBottom: '24px', boxShadow: '0 1px 8px rgba(0,0,0,0.08)' }}>
-        <h3 style={{ marginTop: 0, color: 'var(--navy, #1e293b)', fontSize: '1.1rem', marginBottom: '16px' }}>Recent Material Requests</h3>
-        <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.9rem' }}>
-            <thead>
-              <tr style={{ borderBottom: '2px solid #e2e8f0', color: 'var(--text-muted, #94a3b8)' }}>
-                <th style={{ padding: '12px' }}>MR No</th>
-                <th style={{ padding: '12px' }}>Site</th>
-                <th style={{ padding: '12px' }}>Requested By</th>
-                <th style={{ padding: '12px' }}>Material</th>
-                <th style={{ padding: '12px' }}>Amount</th>
-                <th style={{ padding: '12px' }}>Date</th>
-                <th style={{ padding: '12px' }}>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {[
-                { mr: 'MR-1024', site: 'Tower A', by: 'Suresh Kumar', mat: 'OPC Cement', amt: '₹2,50,000', date: '09 Sep 2026', status: 'Pending', badge: 'badge-info' },
-                { mr: 'MR-1023', site: 'Tower B', by: 'Rajesh Babu', mat: 'TMT 12mm', amt: '₹5,80,000', date: '08 Sep 2026', status: 'Approved', badge: 'badge-success' },
-                { mr: 'MR-1022', site: 'Villa Project', by: 'Arun Kumar', mat: 'M-Sand', amt: '₹1,20,000', date: '08 Sep 2026', status: 'Ordered', badge: 'badge-warning' },
-                { mr: 'MR-1021', site: 'Warehouse', by: 'Prakash S', mat: 'Bricks', amt: '₹45,000', date: '07 Sep 2026', status: 'Delivered', badge: 'badge-success' },
-                { mr: 'MR-1020', site: 'Tower A', by: 'Suresh Kumar', mat: 'Paint', amt: '₹3,10,000', date: '06 Sep 2026', status: 'Rejected', badge: 'badge-danger' },
-              ].map((row, i) => (
-                <tr key={i} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                  <td style={{ padding: '12px', fontWeight: '600', color: '#2563eb' }}>{row.mr}</td>
-                  <td style={{ padding: '12px', color: 'var(--navy, #1e293b)' }}>{row.site}</td>
-                  <td style={{ padding: '12px', color: 'var(--text-secondary, #64748b)' }}>{row.by}</td>
-                  <td style={{ padding: '12px', color: 'var(--text-secondary, #64748b)' }}>{row.mat}</td>
-                  <td style={{ padding: '12px', fontWeight: '500', color: 'var(--navy, #1e293b)' }}>{row.amt}</td>
-                  <td style={{ padding: '12px', color: 'var(--text-muted, #94a3b8)' }}>{row.date}</td>
-                  <td style={{ padding: '12px' }}>
-                    <span className={`badge ${row.badge}`} style={{ padding: '4px 8px', borderRadius: '4px', fontSize: '0.8rem', fontWeight: '600' }}>
-                      {row.status}
-                    </span>
-                  </td>
+        {recentRequests.length > 0 ? (
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.9rem' }}>
+              <thead>
+                <tr style={{ borderBottom: '2px solid #e2e8f0', color: 'var(--text-secondary, #64748b)' }}>
+                  <th style={{ padding: '10px' }}>MR No</th>
+                  <th style={{ padding: '10px' }}>Site</th>
+                  <th style={{ padding: '10px' }}>Requested By</th>
+                  <th style={{ padding: '10px' }}>Material</th>
+                  <th style={{ padding: '10px' }}>Date</th>
+                  <th style={{ padding: '10px' }}>Status</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* 6. TWO-COLUMN: Recent Activities + Low Stock */}
-      <div style={{ display: 'flex', gap: '24px' }}>
-        <div className="card" style={{ flex: '1', backgroundColor: '#fff', padding: '20px', borderRadius: '10px', boxShadow: '0 1px 8px rgba(0,0,0,0.08)' }}>
-          <h3 style={{ marginTop: 0, color: 'var(--navy, #1e293b)', fontSize: '1.1rem', marginBottom: '16px' }}>Recent Activities</h3>
-          <div className="timeline" style={{ position: 'relative', paddingLeft: '20px', borderLeft: '2px solid #e2e8f0' }}>
-            {[
-              'MR-1024 submitted by Suresh Kumar',
-              'PO-2045 approved by Project Manager',
-              'GRN-501 received at Tower A',
-              'Material issued to Tower B',
-              'Attendance submitted for Tower A'
-            ].map((activity, i) => (
-              <div key={i} style={{ position: 'relative', marginBottom: '16px' }}>
-                <span style={{ position: 'absolute', left: '-25px', top: '4px', width: '10px', height: '10px', borderRadius: '50%', backgroundColor: '#2563eb', border: '2px solid #fff' }}></span>
-                <p style={{ margin: 0, color: 'var(--text-secondary, #64748b)', fontSize: '0.9rem' }}>{activity}</p>
-                <small style={{ color: 'var(--text-muted, #94a3b8)', fontSize: '0.8rem' }}>{i + 1} hour{i > 0 ? 's' : ''} ago</small>
-              </div>
-            ))}
+              </thead>
+              <tbody>
+                {recentRequests.map((row) => (
+                  <tr key={row.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                    <td style={{ padding: '12px 10px', fontWeight: '600', color: '#2563eb' }}>{row.mr_number || row.pr_number || row.id.slice(0, 8)}</td>
+                    <td style={{ padding: '12px 10px' }}>{row.site_name || row.site || '-'}</td>
+                    <td style={{ padding: '12px 10px' }}>{row.requester_name || row.requested_by || 'Staff'}</td>
+                    <td style={{ padding: '12px 10px' }}>{row.material_summary || row.notes || 'Items'}</td>
+                    <td style={{ padding: '12px 10px' }}>{row.created_at ? dayjs(row.created_at).format('DD MMM YYYY') : '-'}</td>
+                    <td style={{ padding: '12px 10px' }}>
+                      <span className={`badge ${row.status === 'approved' ? 'badge-success' : (row.status === 'rejected' ? 'badge-danger' : 'badge-info')}`} style={{ textTransform: 'capitalize' }}>
+                        {row.status || 'Pending'}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
+        ) : (
+          <div style={{ padding: '32px', textAlign: 'center', color: '#94a3b8' }}>
+            <p style={{ margin: '0 0 8px 0', fontSize: '1rem' }}>No material requests recorded yet</p>
+            <Link to="/materials/requests/new" style={{ color: '#2563eb', fontSize: '0.85rem', fontWeight: '600' }}>+ Create First Material Request</Link>
+          </div>
+        )}
+      </div>
+
+      {/* 5. TWO-COLUMN: Recent Activities + Low Stock */}
+      <div style={{ display: 'grid', gridTemplateColumns: '50% 48%', gap: '2%' }}>
+        
+        {/* Recent Activities */}
+        <div className="card" style={{ padding: '20px', borderRadius: '10px', backgroundColor: '#fff', boxShadow: '0 1px 8px rgba(0,0,0,0.08)' }}>
+          <h2 style={{ fontSize: '1rem', fontWeight: '600', margin: '0 0 16px 0', color: 'var(--navy, #1e293b)' }}>
+            Recent Activity Trail
+          </h2>
+          {recentActivities.length > 0 ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {recentActivities.map((act, i) => (
+                <div key={act.id || i} style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', fontSize: '0.85rem' }}>
+                  <span style={{ backgroundColor: '#eff6ff', padding: '6px', borderRadius: '50%', color: '#2563eb' }}>⚡</span>
+                  <div>
+                    <div style={{ color: 'var(--navy, #1e293b)', fontWeight: '500' }}>{act.action || act.description}</div>
+                    <div style={{ color: '#94a3b8', fontSize: '0.75rem' }}>
+                      {act.user_name || act.user_email || 'System'} • {act.created_at ? dayjs(act.created_at).format('DD MMM, HH:mm') : 'Just now'}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div style={{ padding: '24px', textAlign: 'center', color: '#94a3b8' }}>
+              <p style={{ margin: 0 }}>No recent activities logged</p>
+            </div>
+          )}
         </div>
 
-        <div className="card" style={{ flex: '1', backgroundColor: '#fff', padding: '20px', borderRadius: '10px', boxShadow: '0 1px 8px rgba(0,0,0,0.08)' }}>
-          <h3 style={{ marginTop: 0, color: 'var(--navy, #1e293b)', fontSize: '1.1rem', marginBottom: '16px' }}>Low Stock Alerts</h3>
-          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.9rem' }}>
-            <thead>
-              <tr style={{ borderBottom: '2px solid #e2e8f0', color: 'var(--text-muted, #94a3b8)' }}>
-                <th style={{ padding: '8px' }}>Material</th>
-                <th style={{ padding: '8px' }}>Current</th>
-                <th style={{ padding: '8px' }}>Minimum</th>
-                <th style={{ padding: '8px' }}>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {[
-                { mat: 'OPC Cement', cur: '50 Bags', min: '200 Bags', status: 'Critical', badge: 'badge-danger' },
-                { mat: 'TMT 12mm', cur: '2 MT', min: '5 MT', status: 'Low', badge: 'badge-warning' },
-                { mat: 'M-Sand', cur: '8 Ton', min: '15 Ton', status: 'Low', badge: 'badge-warning' },
-                { mat: 'PVC Pipe', cur: '20 Nos', min: '50 Nos', status: 'Critical', badge: 'badge-danger' },
-              ].map((row, i) => (
-                <tr key={i} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                  <td style={{ padding: '12px 8px', fontWeight: '500', color: 'var(--navy, #1e293b)' }}>{row.mat}</td>
-                  <td style={{ padding: '12px 8px', color: 'var(--text-secondary, #64748b)' }}>{row.cur}</td>
-                  <td style={{ padding: '12px 8px', color: 'var(--text-secondary, #64748b)' }}>{row.min}</td>
-                  <td style={{ padding: '12px 8px' }}>
-                    <span className={`badge ${row.badge}`} style={{ padding: '4px 8px', borderRadius: '4px', fontSize: '0.8rem', fontWeight: '600' }}>
-                      {row.status}
-                    </span>
-                  </td>
+        {/* Low Stock Alerts */}
+        <div className="card" style={{ padding: '20px', borderRadius: '10px', backgroundColor: '#fff', boxShadow: '0 1px 8px rgba(0,0,0,0.08)' }}>
+          <h2 style={{ fontSize: '1rem', fontWeight: '600', margin: '0 0 16px 0', color: 'var(--navy, #1e293b)' }}>
+            Low Stock Alerts
+          </h2>
+          {lowStockItems.length > 0 ? (
+            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.85rem' }}>
+              <thead>
+                <tr style={{ borderBottom: '2px solid #e2e8f0', color: 'var(--text-secondary, #64748b)' }}>
+                  <th style={{ padding: '8px' }}>Material</th>
+                  <th style={{ padding: '8px' }}>Current</th>
+                  <th style={{ padding: '8px' }}>Minimum</th>
+                  <th style={{ padding: '8px' }}>Status</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {lowStockItems.map((item, idx) => (
+                  <tr key={item.id || idx} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                    <td style={{ padding: '8px', fontWeight: '500' }}>{item.material_name || item.name}</td>
+                    <td style={{ padding: '8px' }}>{item.current_stock || item.stock || 0} {item.unit}</td>
+                    <td style={{ padding: '8px' }}>{item.minimum_stock || item.min_stock || 0} {item.unit}</td>
+                    <td style={{ padding: '8px' }}>
+                      <span className="badge badge-danger">Low</span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ) : (
+            <div style={{ padding: '24px', textAlign: 'center', color: '#94a3b8' }}>
+              <span style={{ fontSize: '28px', display: 'block', marginBottom: '6px' }}>✅</span>
+              <p style={{ margin: 0 }}>All inventory stock levels are healthy</p>
+            </div>
+          )}
         </div>
+
       </div>
+
     </div>
   );
 };

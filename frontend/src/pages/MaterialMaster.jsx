@@ -1,22 +1,9 @@
-import React, { useState } from 'react';
-
-const INITIAL_MATERIALS = [
-  { id: 1, code: 'MAT-001', name: 'OPC Cement 53 Grade', category: 'Cement', subcategory: 'Portland', unit: 'Bag', brand: 'UltraTech', spec: 'IS 12269:2013', gst: 28, min_stock: 200, current_rate: 380, status: 'Active' },
-  { id: 2, code: 'MAT-002', name: 'TMT Steel 12mm Fe550D', category: 'Steel', subcategory: 'Reinforcement', unit: 'MT', brand: 'Tata Tiscon', spec: 'IS 1786:2008', gst: 18, min_stock: 10, current_rate: 64000, status: 'Active' },
-  { id: 3, code: 'MAT-003', name: 'TMT Steel 16mm Fe550D', category: 'Steel', subcategory: 'Reinforcement', unit: 'MT', brand: 'JSW Neosteel', spec: 'IS 1786:2008', gst: 18, min_stock: 8, current_rate: 63500, status: 'Active' },
-  { id: 4, code: 'MAT-004', name: 'Manufactured Sand (M-Sand)', category: 'Sand', subcategory: 'Fine Aggregate', unit: 'Ton', brand: 'RoboSilicon', spec: 'Zone II Graded', gst: 5, min_stock: 30, current_rate: 1100, status: 'Active' },
-  { id: 5, code: 'MAT-005', name: 'Plastering Sand (P-Sand)', category: 'Sand', subcategory: 'Fine Aggregate', unit: 'Ton', brand: 'RoboSilicon', spec: 'Zone IV', gst: 5, min_stock: 20, current_rate: 1250, status: 'Active' },
-  { id: 6, code: 'MAT-006', name: '20mm Blue Metal Aggregate', category: 'Aggregate', subcategory: 'Coarse', unit: 'Ton', brand: 'Local Quarry', spec: 'Crushed Granite', gst: 5, min_stock: 40, current_rate: 850, status: 'Active' },
-  { id: 7, code: 'MAT-007', name: 'Wire Cut Red Clay Bricks', category: 'Masonry', subcategory: 'Bricks', unit: 'Nos', brand: 'Standard', spec: 'Class 7.5', gst: 12, min_stock: 5000, current_rate: 11, status: 'Active' },
-  { id: 8, code: 'MAT-008', name: 'AAC Blocks 600x200x150mm', category: 'Masonry', subcategory: 'Blocks', unit: 'Nos', brand: 'Magicrete', spec: 'Grade 1 Autoclaved', gst: 18, min_stock: 800, current_rate: 72, status: 'Active' },
-  { id: 9, code: 'MAT-009', name: 'Vitrified Floor Tiles 600x600', category: 'Flooring', subcategory: 'Tiles', unit: 'Sq.Ft', brand: 'Kajaria', spec: 'Double Charged GVT', gst: 18, min_stock: 1500, current_rate: 58, status: 'Active' },
-  { id: 10, code: 'MAT-010', name: 'Exterior Emulsion Paint', category: 'Paint', subcategory: 'Exterior', unit: 'Litre', brand: 'Asian Paints', spec: 'Apex Ultima Protek', gst: 18, min_stock: 100, current_rate: 420, status: 'Active' },
-  { id: 11, code: 'MAT-011', name: 'PVC Conduit Pipe 25mm', category: 'Electrical', subcategory: 'Conduits', unit: 'Mtr', brand: 'Finolex', spec: 'Heavy Gauge FRLS', gst: 18, min_stock: 500, current_rate: 45, status: 'Active' },
-  { id: 12, code: 'MAT-012', name: 'CPVC Pipe 1 Inch SDR 11', category: 'Plumbing', subcategory: 'Pipes', unit: 'Mtr', brand: 'Astral', spec: 'ASTM D2846', gst: 18, min_stock: 250, current_rate: 115, status: 'Active' }
-];
+import React, { useState, useEffect } from 'react';
+import client from '../api/client';
 
 const MaterialMaster = () => {
-  const [materials, setMaterials] = useState(INITIAL_MATERIALS);
+  const [materials, setMaterials] = useState([]);
+  const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [page, setPage] = useState(1);
@@ -27,21 +14,54 @@ const MaterialMaster = () => {
   const [formData, setFormData] = useState({
     code: '',
     name: '',
-    category: 'Cement',
+    category: 'General',
     subcategory: '',
-    unit: 'Bag',
+    unit: 'Nos',
     brand: '',
     spec: '',
     gst: 18,
-    min_stock: 100,
+    min_stock: 10,
     current_rate: '',
     status: 'Active'
   });
 
-  const categories = ['All', ...new Set(materials.map(m => m.category))];
+  const fetchMaterials = async () => {
+    setLoading(true);
+    try {
+      const res = await client.get('/materials?limit=200');
+      const raw = res.data?.data?.materials || res.data?.materials || res.data?.data || res.data || [];
+      if (Array.isArray(raw)) {
+        const mapped = raw.map(m => ({
+          id: m.id,
+          code: m.code || m.material_code || `MAT-${m.id?.slice(0, 6)}`,
+          name: m.name || m.material_name,
+          category: m.category || 'General',
+          subcategory: m.subcategory || '',
+          unit: m.unit || m.unit_of_measure || 'Nos',
+          brand: m.brand || '',
+          spec: m.spec || m.specification || '',
+          gst: m.gst_rate || m.gst || 18,
+          min_stock: m.min_stock || m.minimum_stock || 0,
+          current_rate: m.standard_rate || m.current_rate || m.unit_price || 0,
+          status: m.is_active !== false ? 'Active' : 'Inactive'
+        }));
+        setMaterials(mapped);
+      }
+    } catch (err) {
+      console.warn('Error fetching materials:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchMaterials();
+  }, []);
+
+  const categories = ['All', ...new Set(materials.map(m => m.category).filter(Boolean))];
 
   const filtered = materials.filter(m => {
-    const matchSearch = m.name.toLowerCase().includes(search.toLowerCase()) || m.code.toLowerCase().includes(search.toLowerCase());
+    const matchSearch = (m.name || '').toLowerCase().includes(search.toLowerCase()) || (m.code || '').toLowerCase().includes(search.toLowerCase());
     const matchCat = selectedCategory === 'All' || m.category === selectedCategory;
     return matchSearch && matchCat;
   });
@@ -52,15 +72,15 @@ const MaterialMaster = () => {
   const handleOpenAdd = () => {
     setEditingItem(null);
     setFormData({
-      code: `MAT-0${materials.length + 1}`.padStart(7, '0'),
+      code: `MAT-${Math.floor(1000 + Math.random() * 9000)}`,
       name: '',
-      category: 'Cement',
+      category: 'General',
       subcategory: '',
-      unit: 'Bag',
+      unit: 'Nos',
       brand: '',
       spec: '',
       gst: 18,
-      min_stock: 50,
+      min_stock: 10,
       current_rate: '',
       status: 'Active'
     });
@@ -73,18 +93,47 @@ const MaterialMaster = () => {
     setModalOpen(true);
   };
 
-  const handleSave = (e) => {
+  const handleSave = async (e) => {
     e.preventDefault();
-    if (editingItem) {
-      setMaterials(materials.map(m => m.id === editingItem.id ? { ...formData, id: editingItem.id } : m));
-    } else {
-      setMaterials([{ ...formData, id: Date.now() }, ...materials]);
+    try {
+      if (editingItem) {
+        await client.put(`/materials/${editingItem.id}`, {
+          name: formData.name,
+          code: formData.code,
+          category: formData.category,
+          unit_of_measure: formData.unit,
+          standard_rate: Number(formData.current_rate) || 0,
+          minimum_stock: Number(formData.min_stock) || 0
+        });
+      } else {
+        await client.post('/materials', {
+          name: formData.name,
+          code: formData.code,
+          category: formData.category,
+          unit_of_measure: formData.unit,
+          standard_rate: Number(formData.current_rate) || 0,
+          minimum_stock: Number(formData.min_stock) || 0
+        });
+      }
+      fetchMaterials();
+    } catch (apiErr) {
+      console.warn('Save material error:', apiErr);
+      if (editingItem) {
+        setMaterials(materials.map(m => m.id === editingItem.id ? { ...formData, id: editingItem.id } : m));
+      } else {
+        setMaterials([{ ...formData, id: Date.now() }, ...materials]);
+      }
     }
     setModalOpen(false);
   };
 
-  const handleDelete = (id) => {
+  const handleDelete = async (id) => {
     if (window.confirm('Are you sure you want to remove this material from catalog?')) {
+      try {
+        await client.delete(`/materials/${id}`);
+      } catch (e) {
+        console.warn('Delete material error:', e);
+      }
       setMaterials(materials.filter(m => m.id !== id));
     }
   };

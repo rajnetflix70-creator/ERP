@@ -5,113 +5,9 @@ import Modal from '../components/Modal';
 import { useAuth } from '../contexts/AuthContext';
 import dayjs from 'dayjs';
 
-// Initial realistic Indian construction GRN records
-const INITIAL_GRNS = [
-  {
-    id: 'grn-1',
-    grn_no: 'GRN-2026-0031',
-    po_no: 'PO-2026-0841',
-    po_id: 'po-101',
-    vendor_name: 'UltraTech Cement Ltd',
-    site_name: 'Tower A - Expressway Project',
-    site_id: 's-1',
-    receipt_date: '2026-09-08',
-    status: 'Accepted',
-    vehicle_no: 'MH-14-BT-8921',
-    driver_name: 'Harish Yadav',
-    invoice_no: 'INV-UTC-9042',
-    challan_no: 'DC-UTC-8821',
-    qc_checks: {
-      quantity_checked: true,
-      quality_checked: true,
-      packaging_checked: true,
-      documents_checked: true
-    },
-    remarks: 'Weighbridge slip matches DC. Bag count 1000 nos intact without moisture damage.',
-    items: [
-      { material_name: 'UltraTech 53 Grade Cement', ordered_qty: 1000, received_qty: 1000, accepted_qty: 1000, rejected_qty: 0, unit: 'Bags' }
-    ]
-  },
-  {
-    id: 'grn-2',
-    grn_no: 'GRN-2026-0030',
-    po_no: 'PO-2026-0843',
-    po_id: 'po-103',
-    vendor_name: 'RMC Readymix India',
-    site_name: 'Tower A - Expressway Project',
-    site_id: 's-1',
-    receipt_date: '2026-09-07',
-    status: 'Partial',
-    vehicle_no: 'KA-01-MJ-3312',
-    driver_name: 'Suresh Naik',
-    invoice_no: 'INV-RMC-4412',
-    challan_no: 'DC-RMC-1092',
-    qc_checks: {
-      quantity_checked: true,
-      quality_checked: true,
-      packaging_checked: true,
-      documents_checked: true
-    },
-    remarks: 'Transit mixer batch 1 received. Slump test 125mm passed. Cube samples cast.',
-    items: [
-      { material_name: 'Ready Mix Concrete M25 Grade', ordered_qty: 65, received_qty: 35, accepted_qty: 35, rejected_qty: 0, unit: 'Cu.m' }
-    ]
-  },
-  {
-    id: 'grn-3',
-    grn_no: 'GRN-2026-0029',
-    po_no: 'PO-2026-0842',
-    po_id: 'po-102',
-    vendor_name: 'Tata Steel BSL Ltd',
-    site_name: 'Metro Phase 2 - Station 4',
-    site_id: 's-2',
-    receipt_date: '2026-09-06',
-    status: 'Accepted',
-    vehicle_no: 'WB-02-AK-7711',
-    driver_name: 'Dilip Singh',
-    invoice_no: 'INV-TSL-7819',
-    challan_no: 'DC-TSL-3341',
-    qc_checks: {
-      quantity_checked: true,
-      quality_checked: true,
-      packaging_checked: true,
-      documents_checked: true
-    },
-    remarks: 'MTC certificate verified. Gross weighbridge weight verified at site scales.',
-    items: [
-      { material_name: 'Tata Tiscon TMT Fe550D Rebar 16mm', ordered_qty: 20, received_qty: 20, accepted_qty: 20, rejected_qty: 0, unit: 'MT' }
-    ]
-  },
-  {
-    id: 'grn-4',
-    grn_no: 'GRN-2026-0028',
-    po_no: 'PO-2026-0845',
-    po_id: 'po-105',
-    vendor_name: 'Jindal Steel & Power',
-    site_name: 'Greenfield Highway Km 42',
-    site_id: 's-4',
-    receipt_date: '2026-09-05',
-    status: 'Rejected',
-    vehicle_no: 'CG-04-XY-1290',
-    driver_name: 'Ram Lal',
-    invoice_no: 'INV-JSP-1102',
-    challan_no: 'DC-JSP-9921',
-    qc_checks: {
-      quantity_checked: true,
-      quality_checked: false,
-      packaging_checked: false,
-      documents_checked: true
-    },
-    remarks: 'Excessive surface pitting and rust found due to open rain transit. MTC heat numbers mismatched. Material rejected at gate.',
-    items: [
-      { material_name: 'Tata Tiscon TMT Fe550D Rebar 12mm', ordered_qty: 12, received_qty: 12, accepted_qty: 0, rejected_qty: 12, unit: 'MT' }
-    ]
-  },
-];
-
 const GRNList = () => {
   const { user } = useAuth();
-  const [grns, setGrns] = useState(INITIAL_GRNS);
+  const [grns, setGrns] = useState([]);
   const [loading, setLoading] = useState(false);
   const [alert, setAlert] = useState(null);
 
@@ -130,7 +26,7 @@ const GRNList = () => {
 
   // Form State for Screen 12 (Create GRN)
   const initialCreateForm = {
-    grn_no: `GRN-2026-${Math.floor(100 + Math.random() * 900)}`,
+    grn_no: `GRN-${dayjs().format('YYYY')}-${Math.floor(100 + Math.random() * 900)}`,
     po_no: '',
     vendor_name: '',
     site_name: '',
@@ -145,85 +41,61 @@ const GRNList = () => {
       packaging_checked: true,
       documents_checked: true
     },
-    remarks: 'All packages inspected at unloading yard. Material verified against delivery challan.',
+    remarks: '',
     items: [
       {
-        material_name: 'UltraTech 53 Grade Cement',
-        ordered_qty: 500,
-        received_qty: 500,
-        accepted_qty: 500,
+        material_name: '',
+        ordered_qty: 0,
+        received_qty: 0,
+        accepted_qty: 0,
         rejected_qty: 0,
-        unit: 'Bags'
+        unit: 'Nos'
       }
     ]
   };
 
   const [formData, setFormData] = useState(initialCreateForm);
 
-  // Load POs from backend or fallback
+  // Load GRNs and POs from backend
   const loadData = async () => {
     setLoading(true);
     try {
-      const poData = await getPOs();
-      if (Array.isArray(poData) && poData.length > 0) {
-        setAvailablePOs(poData);
-      } else {
-        // Fallback default PO options
-        setAvailablePOs([
-          {
-            po_number: 'PO-2026-0841',
-            vendor_name: 'UltraTech Cement Ltd',
-            site_name: 'Tower A - Expressway Project',
-            items: [{ material_name: 'UltraTech 53 Grade Cement', qty_ordered: 1000, unit: 'Bags' }]
-          },
-          {
-            po_number: 'PO-2026-0842',
-            vendor_name: 'Tata Steel BSL Ltd',
-            site_name: 'Metro Phase 2 - Station 4',
-            items: [{ material_name: 'Tata Tiscon TMT Fe550D Rebar 16mm', qty_ordered: 20, unit: 'MT' }]
-          },
-          {
-            po_number: 'PO-2026-0843',
-            vendor_name: 'RMC Readymix India',
-            site_name: 'Tower A - Expressway Project',
-            items: [{ material_name: 'Ready Mix Concrete M25 Grade', qty_ordered: 65, unit: 'Cu.m' }]
-          },
-          {
-            po_number: 'PO-2026-0845',
-            vendor_name: 'Jindal Steel & Power',
-            site_name: 'Greenfield Highway Km 42',
-            items: [{ material_name: 'Tata Tiscon TMT Fe550D Rebar 12mm', qty_ordered: 12, unit: 'MT' }]
-          },
-          {
-            po_number: 'PO-2026-0847',
-            vendor_name: 'Asian Paints Ltd',
-            site_name: 'Prestige Tech Park - Phase 1',
-            items: [{ material_name: 'Asian Paints Apex Ultima White', qty_ordered: 400, unit: 'Litres' }]
-          }
-        ]);
+      const [grnRes, poData] = await Promise.allSettled([
+        apiClient.get('/procurement/grn?limit=200'),
+        getPOs()
+      ]);
+
+      if (grnRes.status === 'fulfilled') {
+        const raw = grnRes.value?.data?.data?.data || grnRes.value?.data?.data || grnRes.value?.data || [];
+        if (Array.isArray(raw)) {
+          const mapped = raw.map(g => ({
+            id: g.id,
+            grn_no: g.grn_number || g.grn_no || `GRN-${g.id?.slice(0, 6)}`,
+            po_no: g.po_number || g.po_no || '-',
+            vendor_name: g.vendor_name || '-',
+            site_name: g.site_name || '-',
+            receipt_date: g.received_at || g.receipt_date || (g.created_at ? dayjs(g.created_at).format('YYYY-MM-DD') : '-'),
+            status: g.status ? (g.status.charAt(0).toUpperCase() + g.status.slice(1)) : 'Accepted',
+            vehicle_no: g.vehicle_no || '-',
+            driver_name: g.driver_name || '-',
+            invoice_no: g.invoice_no || '-',
+            challan_no: g.challan_no || '-',
+            qc_checks: g.qc_checks || { quantity_checked: true, quality_checked: true, packaging_checked: true, documents_checked: true },
+            remarks: g.remarks || '',
+            items: Array.isArray(g.items) ? g.items : []
+          }));
+          setGrns(mapped);
+        }
+      }
+
+      if (poData.status === 'fulfilled') {
+        const rawPos = poData.value?.data?.data?.data || poData.value?.data?.data || poData.value?.data || poData.value || [];
+        if (Array.isArray(rawPos)) {
+          setAvailablePOs(rawPos);
+        }
       }
     } catch (e) {
-      // Use fallback
-      setAvailablePOs([
-        {
-          po_number: 'PO-2026-0841',
-          vendor_name: 'UltraTech Cement Ltd',
-          site_name: 'Tower A - Expressway Project',
-          items: [{ material_name: 'UltraTech 53 Grade Cement', qty_ordered: 1000, unit: 'Bags' }]
-        },
-        {
-          po_number: 'PO-2026-0842',
-          vendor_name: 'Tata Steel BSL Ltd',
-          site_name: 'Metro Phase 2 - Station 4',
-          items: [{ material_name: 'Tata Tiscon TMT Fe550D Rebar 16mm', qty_ordered: 20, unit: 'MT' }]
-        },
-        {
-          po_number: 'PO-2026-0843',
-          vendor_name: 'RMC Readymix India',
-          site_name: 'Tower A - Expressway Project',
-          items: [{ material_name: 'Ready Mix Concrete M25 Grade', qty_ordered: 65, unit: 'Cu.m' }]
-        },
-      ]);
+      console.warn('Error loading GRN data:', e);
     } finally {
       setLoading(false);
     }

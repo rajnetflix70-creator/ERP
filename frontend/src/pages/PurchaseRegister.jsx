@@ -1,5 +1,6 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import client from '../api/client';
 import dayjs from 'dayjs';
 
 // Indian currency formatter
@@ -12,131 +13,58 @@ const formatINR = (amount) => {
   }).format(num);
 };
 
-// Initial realistic Indian construction Purchase Register data
-// Designed to have totals like ₹14,40,000 when filtered or as key total
-const INITIAL_PURCHASE_RECORDS = [
-  {
-    id: 'pr-1',
-    po_no: 'PO-2026-0842',
-    po_date: '2026-09-03',
-    site_name: 'Metro Phase 2 - Station 4',
-    vendor_name: 'Tata Steel BSL Ltd',
-    material_summary: 'Tata Tiscon TMT Fe550D Rebar 16mm (20 MT)',
-    category: 'Steel & Rebar',
-    base_amount: 1220339,
-    gst_amount: 219661,
-    amount: 1440000, // Exact ₹14,40,000
-    status: 'Open',
-    payment_terms: '50% Adv, 50% Del',
-  },
-  {
-    id: 'pr-2',
-    po_no: 'PO-2026-0841',
-    po_date: '2026-09-02',
-    site_name: 'Tower A - Expressway Project',
-    vendor_name: 'UltraTech Cement Ltd',
-    material_summary: 'UltraTech 53 Grade Cement (1,000 Bags)',
-    category: 'Cement',
-    base_amount: 378906,
-    gst_amount: 106094,
-    amount: 485000,
-    status: 'Approved',
-    payment_terms: '30 Days Net',
-  },
-  {
-    id: 'pr-3',
-    po_no: 'PO-2026-0843',
-    po_date: '2026-09-04',
-    site_name: 'Tower A - Expressway Project',
-    vendor_name: 'RMC Readymix India',
-    material_summary: 'Ready Mix Concrete M25 Grade (65 Cu.m)',
-    category: 'Concrete',
-    base_amount: 271186,
-    gst_amount: 48814,
-    amount: 320000,
-    status: 'Partial',
-    payment_terms: '15 Days Net',
-  },
-  {
-    id: 'pr-4',
-    po_no: 'PO-2026-0845',
-    po_date: '2026-09-01',
-    site_name: 'Greenfield Highway Km 42',
-    vendor_name: 'Jindal Steel & Power',
-    material_summary: 'Tata Tiscon TMT Fe550D Rebar 12mm (12 MT)',
-    category: 'Steel & Rebar',
-    base_amount: 741525,
-    gst_amount: 133475,
-    amount: 875000,
-    status: 'Approved',
-    payment_terms: '30 Days Net',
-  },
-  {
-    id: 'pr-5',
-    po_no: 'PO-2026-0844',
-    po_date: '2026-08-28',
-    site_name: 'Prestige Tech Park - Phase 1',
-    vendor_name: 'Asian Paints Ltd',
-    material_summary: 'Asian Paints Apex Ultima White (450 Litres)',
-    category: 'Paints & Finishes',
-    base_amount: 156780,
-    gst_amount: 28220,
-    amount: 185000,
-    status: 'Closed',
-    payment_terms: 'Immediate',
-  },
-  {
-    id: 'pr-6',
-    po_no: 'PO-2026-0847',
-    po_date: '2026-08-22',
-    site_name: 'Tower A - Expressway Project',
-    vendor_name: 'Godrej Construction Aggregates',
-    material_summary: 'Coarse River Sand Zone II (150 Cu.m)',
-    category: 'Aggregates & Sand',
-    base_amount: 264285,
-    gst_amount: 13215,
-    amount: 277500,
-    status: 'Closed',
-    payment_terms: '30 Days Net',
-  },
-  {
-    id: 'pr-7',
-    po_no: 'PO-2026-0846',
-    po_date: '2026-08-20',
-    site_name: 'CyberCity Commercial Complex',
-    vendor_name: 'Supreme Industries Ltd',
-    material_summary: 'Supreme PVC Conduit Pipe 25mm (1,500 M)',
-    category: 'Piping & Electrical',
-    base_amount: 80508,
-    gst_amount: 14492,
-    amount: 95000,
-    status: 'Cancelled',
-    payment_terms: 'Immediate',
-  },
-];
-
 const PurchaseRegister = () => {
   const navigate = useNavigate();
 
   // Screen 16 Filters: Date Range (From - To), Site, Vendor, Material
-  const [fromDate, setFromDate] = useState('2026-08-01');
+  const [fromDate, setFromDate] = useState(dayjs().subtract(30, 'day').format('YYYY-MM-DD'));
   const [toDate, setToDate] = useState(dayjs().format('YYYY-MM-DD'));
   const [siteFilter, setSiteFilter] = useState('');
   const [vendorFilter, setVendorFilter] = useState('');
   const [materialFilter, setMaterialFilter] = useState('');
-  const [records, setRecords] = useState(INITIAL_PURCHASE_RECORDS);
+  const [records, setRecords] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    let isMounted = true;
+    const fetchPurchaseOrders = async () => {
+      setLoading(true);
+      try {
+        const res = await client.get('/procurement/orders?limit=200');
+        const raw = res.data?.data?.data || res.data?.data || res.data || [];
+        if (!isMounted) return;
+        if (Array.isArray(raw)) {
+          const mapped = raw.map(p => ({
+            id: p.id,
+            po_no: p.po_number || `PO-${p.id?.slice(0, 6)}`,
+            po_date: p.po_date || (p.created_at ? dayjs(p.created_at).format('YYYY-MM-DD') : '-'),
+            site_name: p.site_name || '-',
+            vendor_name: p.vendor_name || '-',
+            material_summary: p.notes || (p.items?.length ? `${p.items.length} items` : 'Materials'),
+            category: 'General',
+            base_amount: Math.round((Number(p.total_amount) || 0) * 0.85),
+            gst_amount: Math.round((Number(p.total_amount) || 0) * 0.15),
+            amount: Number(p.total_amount) || 0,
+            status: p.status ? (p.status.charAt(0).toUpperCase() + p.status.slice(1)) : 'Open',
+            payment_terms: p.payment_terms || '30 Days Net'
+          }));
+          setRecords(mapped);
+        }
+      } catch (err) {
+        console.warn('Error fetching purchase records:', err);
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+
+    fetchPurchaseOrders();
+    return () => { isMounted = false; };
+  }, []);
 
   // Available options for dropdowns
-  const sites = useMemo(() => Array.from(new Set(INITIAL_PURCHASE_RECORDS.map(r => r.site_name))), []);
-  const vendors = useMemo(() => Array.from(new Set(INITIAL_PURCHASE_RECORDS.map(r => r.vendor_name))), []);
-  const materials = useMemo(() => [
-    'Cement',
-    'Steel & Rebar',
-    'Concrete',
-    'Aggregates & Sand',
-    'Paints & Finishes',
-    'Piping & Electrical'
-  ], []);
+  const sites = useMemo(() => Array.from(new Set(records.map(r => r.site_name).filter(Boolean))), [records]);
+  const vendors = useMemo(() => Array.from(new Set(records.map(r => r.vendor_name).filter(Boolean))), [records]);
+  const materials = useMemo(() => Array.from(new Set(records.map(r => r.category).filter(Boolean))), [records]);
 
   // Filtered dataset
   const filteredRecords = useMemo(() => {

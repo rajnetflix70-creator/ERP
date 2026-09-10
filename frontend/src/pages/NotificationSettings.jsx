@@ -1,74 +1,4 @@
 import React, { useState } from 'react';
-import dayjs from 'dayjs';
-
-const INITIAL_NOTIFICATIONS = [
-  {
-    id: 1,
-    title: 'New Material Request Requires Approval',
-    message: 'MR-1024 for Tower A (500 Bags OPC Cement) submitted by Rajesh Kumar.',
-    type: 'approval',
-    icon: '📤',
-    time: '10 minutes ago',
-    date: '2026-09-09 21:30',
-    unread: true,
-    link: '/approvals'
-  },
-  {
-    id: 2,
-    title: 'Purchase Order PO-2045 Approved',
-    message: 'PO-2045 for ABC Traders (₹5,90,000) approved by Purchase Manager.',
-    type: 'po',
-    icon: '🛒',
-    time: '45 minutes ago',
-    date: '2026-09-09 20:55',
-    unread: true,
-    link: '/procurement/orders'
-  },
-  {
-    id: 3,
-    title: 'GRN-501 Goods Received at Tower A',
-    message: '475 Bags Cement received via vehicle TN-09-AB-1234. Stock updated.',
-    type: 'grn',
-    icon: '📥',
-    time: '2 hours ago',
-    date: '2026-09-09 19:40',
-    unread: true,
-    link: '/procurement/grn'
-  },
-  {
-    id: 4,
-    title: 'Critical Low Stock Alert: OPC Cement 53 Grade',
-    message: 'Tower A stock is at 50 Bags (Threshold: 200 Bags). Reorder indent recommended.',
-    type: 'alert',
-    icon: '⚠️',
-    time: '4 hours ago',
-    date: '2026-09-09 17:30',
-    unread: false,
-    link: '/inventory'
-  },
-  {
-    id: 5,
-    title: 'Daily Attendance Pending Review: Tower A',
-    message: 'Muster roll for 10 workforce personnel submitted by Suresh Babu.',
-    type: 'attendance',
-    icon: '👷',
-    time: '6 hours ago',
-    date: '2026-09-09 15:15',
-    unread: false,
-    link: '/hr/attendance'
-  },
-  {
-    id: 6,
-    title: 'Equipment Maintenance Work Order Scheduled',
-    message: 'Tower Crane #TC-01 preventive monthly greasing due on 12-Sep-2026.',
-    type: 'equipment',
-    icon: '🔧',
-    time: '1 day ago',
-    date: '2026-09-08 11:45',
-    unread: false,
-    link: '/equipment/maintenance'
-  }
-];
 
 const INITIAL_CHANNELS = [
   { id: 'mr_approval', label: 'Material Request Approval Triggers', email: true, sms: true, inapp: true },
@@ -81,7 +11,7 @@ const INITIAL_CHANNELS = [
 
 const NotificationSettings = () => {
   const [activeTab, setActiveTab] = useState('feed');
-  const [notifications, setNotifications] = useState(INITIAL_NOTIFICATIONS);
+  const [notifications, setNotifications] = useState([]);
   const [channels, setChannels] = useState(INITIAL_CHANNELS);
   const [saved, setSaved] = useState(false);
 
@@ -157,58 +87,66 @@ const NotificationSettings = () => {
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column' }}>
-            {notifications.map((item, idx) => (
-              <div
-                key={item.id}
-                style={{
-                  display: 'flex',
-                  alignItems: 'flex-start',
-                  gap: '14px',
-                  padding: '16px 20px',
-                  borderBottom: idx < notifications.length - 1 ? '1px solid var(--border)' : 'none',
-                  background: item.unread ? 'var(--primary-50)' : '#fff',
-                  transition: 'background 0.15s'
-                }}
-              >
-                <div style={{
-                  width: '38px', height: '38px', borderRadius: '8px',
-                  background: item.type === 'alert' ? 'var(--danger-lt)' : item.type === 'approval' ? 'var(--info-lt)' : item.type === 'po' ? 'var(--warning-lt)' : 'var(--success-lt)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem', flexShrink: 0
-                }}>
-                  {item.icon}
-                </div>
-
-                <div style={{ flex: 1 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
-                    <div style={{ fontSize: '0.9rem', fontWeight: '600', color: 'var(--navy)' }}>
-                      {item.title}
-                    </div>
-                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                      {item.time}
-                    </span>
-                  </div>
-
-                  <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', margin: '0 0 8px' }}>
-                    {item.message}
-                  </p>
-
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <a
-                      href={item.link}
-                      className="btn btn-sm btn-outline"
-                      style={{ padding: '3px 10px', fontSize: '0.75rem', textDecoration: 'none' }}
-                    >
-                      View Details →
-                    </a>
-                    {item.unread && (
-                      <span className="badge badge-info" style={{ fontSize: '0.65rem' }}>
-                        NEW
-                      </span>
-                    )}
-                  </div>
-                </div>
+            {notifications.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '40px 20px', color: '#94a3b8' }}>
+                <div style={{ fontSize: '2rem', marginBottom: '8px' }}>🔔</div>
+                <div style={{ fontWeight: 600, color: '#475569' }}>No Unread Notifications</div>
+                <div style={{ fontSize: '0.8rem', marginTop: '4px' }}>All caught up! System alerts and approval triggers will appear here.</div>
               </div>
-            ))}
+            ) : (
+              notifications.map((item, idx) => (
+                <div
+                  key={item.id}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    gap: '14px',
+                    padding: '16px 20px',
+                    borderBottom: idx < notifications.length - 1 ? '1px solid var(--border)' : 'none',
+                    background: item.unread ? 'var(--primary-50)' : '#fff',
+                    transition: 'background 0.15s'
+                  }}
+                >
+                  <div style={{
+                    width: '38px', height: '38px', borderRadius: '8px',
+                    background: item.type === 'alert' ? 'var(--danger-lt)' : item.type === 'approval' ? 'var(--info-lt)' : item.type === 'po' ? 'var(--warning-lt)' : 'var(--success-lt)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem', flexShrink: 0
+                  }}>
+                    {item.icon}
+                  </div>
+
+                  <div style={{ flex: 1 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                      <div style={{ fontSize: '0.9rem', fontWeight: '600', color: 'var(--navy)' }}>
+                        {item.title}
+                      </div>
+                      <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                        {item.time}
+                      </span>
+                    </div>
+
+                    <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', margin: '0 0 8px' }}>
+                      {item.message}
+                    </p>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <a
+                        href={item.link}
+                        className="btn btn-sm btn-outline"
+                        style={{ padding: '3px 10px', fontSize: '0.75rem', textDecoration: 'none' }}
+                      >
+                        View Details →
+                      </a>
+                      {item.unread && (
+                        <span className="badge badge-info" style={{ fontSize: '0.65rem' }}>
+                          NEW
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </div>
       )}

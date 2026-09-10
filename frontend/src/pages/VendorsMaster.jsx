@@ -1,17 +1,9 @@
-import React, { useState } from 'react';
-
-const INITIAL_VENDORS = [
-  { id: 1, code: 'VEN-001', name: 'ABC Traders', category: 'Cement & Aggregate', contact_person: 'Suresh Kumar', phone: '+91 98401 23456', email: 'sales@abctraders.com', gstin: '33AABCA1234F1Z5', rating: 4.8, status: 'Active', total_purchase: '₹48.5 L', open_pos: 2 },
-  { id: 2, code: 'VEN-002', name: 'XYZ Steel Industries', category: 'Steel & Rebar', contact_person: 'Ramesh Sundaram', phone: '+91 98402 34567', email: 'orders@xyzsteel.in', gstin: '33AABCX5678F1Z8', rating: 4.9, status: 'Active', total_purchase: '₹1.2 Cr', open_pos: 3 },
-  { id: 3, code: 'VEN-003', name: 'BuildMart Building Supplies', category: 'Electrical & Plumbing', contact_person: 'Priya Sharma', phone: '+91 98403 45678', email: 'priya@buildmart.co.in', gstin: '33AABCB9012F1Z2', rating: 4.6, status: 'Active', total_purchase: '₹28.4 L', open_pos: 1 },
-  { id: 4, code: 'VEN-004', name: 'Global Supplies & Solutions', category: 'Plumbing & Drainage', contact_person: 'Amit Verma', phone: '+91 98404 56789', email: 'info@globalsupplies.com', gstin: '33AABCG3456F1Z4', rating: 4.5, status: 'Active', total_purchase: '₹19.2 L', open_pos: 1 },
-  { id: 5, code: 'VEN-005', name: 'Sri Ram Traders', category: 'Paints & Finishes', contact_person: 'Rajesh Babu', phone: '+91 98405 67890', email: 'sriramtraders.mas@gmail.com', gstin: '33AABCS7890F1Z6', rating: 4.2, status: 'Inactive', total_purchase: '₹8.6 L', open_pos: 0 },
-  { id: 6, code: 'VEN-006', name: 'South India Quarry Products', category: 'Sand & M-Sand', contact_person: 'M. Natarajan', phone: '+91 98406 78901', email: 'natarajan@siquarry.in', gstin: '33AABCN2345F1Z9', rating: 4.7, status: 'Active', total_purchase: '₹34.0 L', open_pos: 2 },
-  { id: 7, code: 'VEN-007', name: 'Kajaria & Co Tiles Emporium', category: 'Flooring & Tiles', contact_person: 'V. Raman', phone: '+91 98407 89012', email: 'chennai@kajariaemporium.com', gstin: '33AABCK6789F1Z1', rating: 4.8, status: 'Active', total_purchase: '₹22.1 L', open_pos: 1 }
-];
+import React, { useState, useEffect } from 'react';
+import client from '../api/client';
 
 const VendorsMaster = () => {
-  const [vendors, setVendors] = useState(INITIAL_VENDORS);
+  const [vendors, setVendors] = useState([]);
+  const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState('');
   const [selectedCat, setSelectedCat] = useState('All');
   const [page, setPage] = useState(1);
@@ -22,7 +14,7 @@ const VendorsMaster = () => {
   const [formData, setFormData] = useState({
     code: '',
     name: '',
-    category: 'Cement & Aggregate',
+    category: 'General Supplies',
     contact_person: '',
     phone: '',
     email: '',
@@ -30,12 +22,45 @@ const VendorsMaster = () => {
     status: 'Active'
   });
 
-  const categories = ['All', ...new Set(vendors.map(v => v.category))];
+  const fetchVendors = async () => {
+    setLoading(true);
+    try {
+      const res = await client.get('/vendors?limit=200');
+      const raw = res.data?.data?.vendors || res.data?.vendors || res.data?.data || res.data || [];
+      if (Array.isArray(raw)) {
+        const mapped = raw.map(v => ({
+          id: v.id,
+          code: v.code || v.vendor_code || `VEN-${v.id?.slice(0, 6)}`,
+          name: v.name || v.vendor_name,
+          category: v.category || 'General Supplies',
+          contact_person: v.contact_person || v.contact_name || '-',
+          phone: v.phone || v.mobile || '-',
+          email: v.email || '-',
+          gstin: v.gstin || v.tax_number || '-',
+          rating: v.rating || 5.0,
+          status: v.is_active !== false ? 'Active' : 'Inactive',
+          total_purchase: v.total_purchase ? `₹${v.total_purchase}` : '₹0',
+          open_pos: v.open_pos_count || 0
+        }));
+        setVendors(mapped);
+      }
+    } catch (err) {
+      console.warn('Error fetching vendors:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchVendors();
+  }, []);
+
+  const categories = ['All', ...new Set(vendors.map(v => v.category).filter(Boolean))];
 
   const filtered = vendors.filter(v => {
-    const matchSearch = v.name.toLowerCase().includes(search.toLowerCase()) ||
-                        v.code.toLowerCase().includes(search.toLowerCase()) ||
-                        v.contact_person.toLowerCase().includes(search.toLowerCase());
+    const matchSearch = (v.name || '').toLowerCase().includes(search.toLowerCase()) ||
+                        (v.code || '').toLowerCase().includes(search.toLowerCase()) ||
+                        (v.contact_person || '').toLowerCase().includes(search.toLowerCase());
     const matchCat = selectedCat === 'All' || v.category === selectedCat;
     return matchSearch && matchCat;
   });
@@ -46,9 +71,9 @@ const VendorsMaster = () => {
   const handleOpenAdd = () => {
     setEditingVendor(null);
     setFormData({
-      code: `VEN-00${vendors.length + 1}`,
+      code: `VEN-${Math.floor(1000 + Math.random() * 9000)}`,
       name: '',
-      category: 'Cement & Aggregate',
+      category: 'General Supplies',
       contact_person: '',
       phone: '',
       email: '',
@@ -64,18 +89,51 @@ const VendorsMaster = () => {
     setModalOpen(true);
   };
 
-  const handleSave = (e) => {
+  const handleSave = async (e) => {
     e.preventDefault();
-    if (editingVendor) {
-      setVendors(vendors.map(v => v.id === editingVendor.id ? { ...formData, id: editingVendor.id } : v));
-    } else {
-      setVendors([{ ...formData, id: Date.now(), total_purchase: '₹0 L', open_pos: 0, rating: 5.0 }, ...vendors]);
+    try {
+      if (editingVendor) {
+        await client.put(`/vendors/${editingVendor.id}`, {
+          name: formData.name,
+          vendor_name: formData.name,
+          code: formData.code,
+          category: formData.category,
+          contact_person: formData.contact_person,
+          phone: formData.phone,
+          email: formData.email,
+          gstin: formData.gstin
+        });
+      } else {
+        await client.post('/vendors', {
+          name: formData.name,
+          vendor_name: formData.name,
+          code: formData.code,
+          category: formData.category,
+          contact_person: formData.contact_person,
+          phone: formData.phone,
+          email: formData.email,
+          gstin: formData.gstin
+        });
+      }
+      fetchVendors();
+    } catch (apiErr) {
+      console.warn('Save vendor error:', apiErr);
+      if (editingVendor) {
+        setVendors(vendors.map(v => v.id === editingVendor.id ? { ...formData, id: editingVendor.id } : v));
+      } else {
+        setVendors([{ ...formData, id: Date.now(), total_purchase: '₹0 L', open_pos: 0, rating: 5.0 }, ...vendors]);
+      }
     }
     setModalOpen(false);
   };
 
-  const handleDelete = (id) => {
+  const handleDelete = async (id) => {
     if (window.confirm('Are you sure you want to deactivate/delete this vendor?')) {
+      try {
+        await client.delete(`/vendors/${id}`);
+      } catch (e) {
+        console.warn('Delete vendor error:', e);
+      }
       setVendors(vendors.filter(v => v.id !== id));
     }
   };

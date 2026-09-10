@@ -3,60 +3,31 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import client from '../api/client';
 
-// Pre-defined construction material catalog for quick selection
-const CATALOG_MATERIALS = [
-  { id: 'mat-1', name: 'TMT Steel Rebar 16mm (Fe550D)', category: 'Steel', unit: 'MT', estRate: 58000 },
-  { id: 'mat-2', name: 'TMT Steel Rebar 12mm (Fe550D)', category: 'Steel', unit: 'MT', estRate: 58500 },
-  { id: 'mat-3', name: 'TMT Steel Rebar 10mm (Fe550D)', category: 'Steel', unit: 'MT', estRate: 59000 },
-  { id: 'mat-4', name: 'OPC 53 Grade Cement (50kg Bag)', category: 'Cement', unit: 'Bags', estRate: 380 },
-  { id: 'mat-5', name: 'PPC Cement (50kg Bag)', category: 'Cement', unit: 'Bags', estRate: 345 },
-  { id: 'mat-6', name: 'Ready Mix Concrete (RMC) M30', category: 'Concrete', unit: 'Cu.m', estRate: 4600 },
-  { id: 'mat-7', name: 'Ready Mix Concrete (RMC) M25', category: 'Concrete', unit: 'Cu.m', estRate: 4200 },
-  { id: 'mat-8', name: 'River Sand (Coarse / Plastering)', category: 'Aggregates', unit: 'Cu.ft', estRate: 65 },
-  { id: 'mat-9', name: '20mm Crushed Blue Stone Aggregate', category: 'Aggregates', unit: 'Cu.ft', estRate: 48 },
-  { id: 'mat-10', name: '10mm Crushed Stone Aggregate', category: 'Aggregates', unit: 'Cu.ft', estRate: 52 },
-  { id: 'mat-11', name: 'AAC Lightweight Blocks (600x200x150mm)', category: 'Masonry', unit: 'Nos', estRate: 62 },
-  { id: 'mat-12', name: 'Standard Red Clay Kiln Bricks', category: 'Masonry', unit: 'Nos', estRate: 9 },
-  { id: 'mat-13', name: 'CPVC Pipes 1 inch (SDR 11)', category: 'Plumbing', unit: 'Meter', estRate: 140 },
-  { id: 'mat-14', name: 'Finolex FRLS Copper Wire 2.5 sq.mm', category: 'Electrical', unit: 'Bundle', estRate: 2450 },
-  { id: 'mat-15', name: 'Asian Paints Apex Ultima Exterior', category: 'Finishing', unit: 'Liters', estRate: 385 },
-  { id: 'mat-16', name: 'Shuttering Plywood 12mm (Marine Grade)', category: 'Formwork', unit: 'Sheet', estRate: 1450 },
-  { id: 'mat-17', name: 'Safety Helmets & Harness Kits', category: 'Safety', unit: 'Sets', estRate: 1250 },
-];
-
-const SITES_LIST = [
-  { id: 'site-1', name: 'Tower A', project: 'High Rise Luxury Towers', location: 'Sector 62, Gurgaon' },
-  { id: 'site-2', name: 'Tower B', project: 'High Rise Luxury Towers', location: 'Sector 62, Gurgaon' },
-  { id: 'site-3', name: 'Villa Project', project: 'Palm Grove Gated Community', location: 'Sohna Road, Gurugram' },
-  { id: 'site-4', name: 'Warehouse', project: 'Central Logistics Facility', location: 'Manesar Industrial Area' },
-  { id: 'site-5', name: 'Tower C', project: 'High Rise Luxury Towers', location: 'Sector 62, Gurgaon' },
-  { id: 'site-6', name: 'Commercial', project: 'Metro Hub Business Park', location: 'Golf Course Extension' },
-];
-
 const COMMON_PURPOSES = [
-  'Slab Casting - 8th Floor (Grid A to D)',
+  'Slab Casting Work',
   'Columns & Shear Wall Reinforcement Pour',
   'External Brick Masonry & Plastering',
   'Basement Retaining Wall Waterproofing',
   'Internal Electrical Conduiting & Wiring',
   'Plumbing Shaft Risers & Drainage Pipes',
   'Site Safety & Shuttering Formwork',
-  'Flooring & Tiling Work - 4th Floor',
+  'Flooring & Tiling Work',
 ];
 
 const CreateMaterialRequest = ({ isModal = false, onClose = null, onSuccess = null }) => {
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  // Helper for default required date: 7 days from now
   const getDefaultRequiredDate = () => {
     const d = new Date();
     d.setDate(d.getDate() + 7);
     return d.toISOString().split('T')[0];
   };
 
-  const [site, setSite] = useState(SITES_LIST[0].name);
-  const [requestedBy, setRequestedBy] = useState(user?.full_name || 'Rajesh Kumar (Site Engineer)');
+  const [sitesList, setSitesList] = useState([]);
+  const [materialsCatalog, setMaterialsCatalog] = useState([]);
+  const [site, setSite] = useState('');
+  const [requestedBy, setRequestedBy] = useState(user?.full_name || 'Site Engineer');
   const [requiredDate, setRequiredDate] = useState(getDefaultRequiredDate());
   const [priority, setPriority] = useState('Normal');
   const [purpose, setPurpose] = useState('');
@@ -65,49 +36,75 @@ const CreateMaterialRequest = ({ isModal = false, onClose = null, onSuccess = nu
   const [attachments, setAttachments] = useState([]);
 
   // Dynamic materials rows
-  const [materials, setMaterials] = useState([
-    {
-      id: 1,
-      material_id: 'mat-1',
-      name: 'TMT Steel Rebar 16mm (Fe550D)',
-      quantity: 20,
-      unit: 'MT',
-      estRate: 58000,
-      required_date: getDefaultRequiredDate(),
-      remarks: 'Grade Fe550D primary producer only (Tata/JSW)',
-    },
-    {
-      id: 2,
-      material_id: 'mat-4',
-      name: 'OPC 53 Grade Cement (50kg Bag)',
-      quantity: 500,
-      unit: 'Bags',
-      estRate: 380,
-      required_date: getDefaultRequiredDate(),
-      remarks: 'Fresh stock not older than 30 days from mfg',
-    }
-  ]);
-
+  const [materials, setMaterials] = useState([]);
   const [submitting, setSubmitting] = useState(false);
   const [notification, setNotification] = useState(null);
 
+  // Load live sites and materials
+  useEffect(() => {
+    const loadMasters = async () => {
+      try {
+        const [sitesRes, matRes] = await Promise.allSettled([
+          client.get('/sites'),
+          client.get('/materials'),
+        ]);
+
+        let loadedSites = [];
+        if (sitesRes.status === 'fulfilled') {
+          const rawS = sitesRes.value.data?.data?.data || sitesRes.value.data?.data || sitesRes.value.data || [];
+          if (Array.isArray(rawS)) loadedSites = rawS;
+        }
+        setSitesList(loadedSites);
+        if (loadedSites.length > 0 && !site) {
+          setSite(loadedSites[0].name);
+        }
+
+        let loadedMats = [];
+        if (matRes.status === 'fulfilled') {
+          const rawM = matRes.value.data?.data?.data || matRes.value.data?.data || matRes.value.data || [];
+          if (Array.isArray(rawM)) loadedMats = rawM;
+        }
+        setMaterialsCatalog(loadedMats);
+
+        if (loadedMats.length > 0 && materials.length === 0) {
+          const first = loadedMats[0];
+          setMaterials([
+            {
+              id: Date.now(),
+              material_id: first.id,
+              name: first.name,
+              quantity: 1,
+              unit: first.unit_of_measure || first.unit || 'Nos',
+              estRate: Number(first.unit_price || first.cost_price || 100),
+              required_date: getDefaultRequiredDate(),
+              remarks: '',
+            }
+          ]);
+        }
+      } catch (e) {
+        console.warn('Could not load master materials/sites', e);
+      }
+    };
+    loadMasters();
+  }, []);
+
   // Auto-set delivery location when site changes
   useEffect(() => {
-    const s = SITES_LIST.find(item => item.name === site);
+    const s = sitesList.find(item => item.name === site);
     if (s) {
-      setDeliveryLocation(`${s.name} - Gate 2 Unloading Bay, ${s.location}`);
+      setDeliveryLocation(`${s.name} - Gate Unloading Bay, ${s.location || ''}`);
     }
-  }, [site]);
+  }, [site, sitesList]);
 
   const handleAddRow = () => {
-    const defaultMat = CATALOG_MATERIALS[0];
+    const defaultMat = materialsCatalog[0] || { id: `mat-${Date.now()}`, name: 'New Material', unit: 'Nos', estRate: 100 };
     const newRow = {
       id: Date.now(),
       material_id: defaultMat.id,
       name: defaultMat.name,
-      quantity: 10,
-      unit: defaultMat.unit,
-      estRate: defaultMat.estRate,
+      quantity: 1,
+      unit: defaultMat.unit_of_measure || defaultMat.unit || 'Nos',
+      estRate: Number(defaultMat.unit_price || defaultMat.cost_price || 100),
       required_date: requiredDate,
       remarks: '',
     };
@@ -123,7 +120,7 @@ const CreateMaterialRequest = ({ isModal = false, onClose = null, onSuccess = nu
   };
 
   const handleMaterialChange = (id, matId) => {
-    const selected = CATALOG_MATERIALS.find(m => m.id === matId);
+    const selected = materialsCatalog.find(m => String(m.id) === String(matId));
     if (!selected) return;
 
     setMaterials(prev => prev.map(row => {
@@ -132,8 +129,8 @@ const CreateMaterialRequest = ({ isModal = false, onClose = null, onSuccess = nu
           ...row,
           material_id: selected.id,
           name: selected.name,
-          unit: selected.unit,
-          estRate: selected.estRate,
+          unit: selected.unit_of_measure || selected.unit || 'Nos',
+          estRate: Number(selected.unit_price || selected.cost_price || 100),
         };
       }
       return row;
@@ -203,14 +200,18 @@ const CreateMaterialRequest = ({ isModal = false, onClose = null, onSuccess = nu
 
     const mrNumber = `MR-${Math.floor(1025 + Math.random() * 900)}`;
     const todayStr = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+    const matchedSite = sitesList.find(s => s.name === site);
 
     const newRequestData = {
       id: 'mr_' + Date.now(),
       mr_number: mrNumber,
+      request_number: mrNumber,
       request_no: mrNumber,
       site: site,
-      project_name: SITES_LIST.find(s => s.name === site)?.project || 'Project ' + site,
+      site_id: matchedSite?.id || null,
+      project_name: matchedSite?.project_name || matchedSite?.project || 'Project ' + site,
       requested_by: requestedBy,
+      requested_by_name: requestedBy,
       requested_by_role: 'Site Engineer',
       required_date: requiredDate,
       date: todayStr,
@@ -233,557 +234,376 @@ const CreateMaterialRequest = ({ isModal = false, onClose = null, onSuccess = nu
         line_total: parseFloat(m.quantity) * (m.estRate || 0),
         required_date: m.required_date,
         remarks: m.remarks,
-        available_stock: Math.floor(Math.random() * 15) + 2,
-        boq_allowance: 'Within Limit (68% utilized)'
       }))
     };
 
     try {
-      // 1. Persist to localStorage so all tabs & pages see it immediately
-      const existingStored = JSON.parse(localStorage.getItem('sitetrack_material_requests') || '[]');
-      localStorage.setItem('sitetrack_material_requests', JSON.stringify([newRequestData, ...existingStored]));
-
-      // 2. Also save to pending approvals if not draft
-      if (!isDraft) {
-        const existingApprovals = JSON.parse(localStorage.getItem('sitetrack_pending_approvals') || '[]');
-        localStorage.setItem('sitetrack_pending_approvals', JSON.stringify([newRequestData, ...existingApprovals]));
-      }
-
-      // 3. Attempt backend API call gracefully
-      try {
-        await client.post('/materials/requests', {
-          job_no: mrNumber,
-          project_name: newRequestData.project_name,
-          site: site,
-          engineer: requestedBy,
-          items: materials.map(m => ({
-            material_id: m.material_id,
-            qty_requested: parseFloat(m.quantity),
-            unit: m.unit
-          })),
-          priority: priority.toLowerCase(),
-          date_needed: requiredDate,
-          purpose: purpose
-        });
-      } catch (apiErr) {
-        // Safe fallback: local storage already persisted
-        console.warn('API endpoint unavailable, stored locally:', apiErr.message);
-      }
-
-      setNotification({
-        type: 'success',
-        message: isDraft 
-          ? `Material Request ${mrNumber} saved as draft successfully.`
-          : `Material Request ${mrNumber} submitted for approval!`
+      await client.post('/material-requests', {
+        site_id: matchedSite?.id,
+        required_date: requiredDate,
+        priority: priority.toLowerCase(),
+        notes: purpose,
+        items: materials.map(m => ({
+          material_id: m.material_id,
+          quantity: parseFloat(m.quantity),
+          remarks: m.remarks,
+        })),
       });
+    } catch {
+      // Local fallback
+    }
 
+    // Persist to localStorage
+    const existingStored = JSON.parse(localStorage.getItem('sitetrack_material_requests') || '[]');
+    localStorage.setItem('sitetrack_material_requests', JSON.stringify([newRequestData, ...existingStored]));
+
+    setSubmitting(false);
+    setNotification({
+      type: 'success',
+      message: `Material Request ${mrNumber} submitted successfully!`
+    });
+
+    if (onSuccess) {
+      onSuccess(newRequestData);
+    } else {
       setTimeout(() => {
-        if (onSuccess) onSuccess(newRequestData);
-        if (isModal && onClose) {
-          onClose();
-        } else {
-          navigate('/materials/requests');
-        }
-      }, 1000);
-
-    } catch (err) {
-      console.error(err);
-      alert('Error saving material request. Please try again.');
-    } finally {
-      setSubmitting(false);
+        navigate('/materials/requests');
+      }, 1200);
     }
   };
 
   return (
-    <div className="page-container" style={{ maxWidth: '1100px', margin: '0 auto', paddingBottom: '40px' }}>
-      {/* Breadcrumb navigation */}
+    <div style={{ maxWidth: '1200px', margin: '0 auto', paddingBottom: '40px' }}>
+      {/* Breadcrumb */}
       {!isModal && (
-        <div className="breadcrumb" style={{ marginBottom: '16px' }}>
-          <Link to="/">Dashboard</Link>
-          <span className="breadcrumb-sep">/</span>
-          <Link to="/materials/requests">Material Requests</Link>
-          <span className="breadcrumb-sep">/</span>
-          <span style={{ color: 'var(--navy)', fontWeight: '600' }}>New Material Request</span>
+        <div className="breadcrumb" style={{ marginBottom: '14px', fontSize: '0.82rem' }}>
+          <Link to="/materials/requests" style={{ textDecoration: 'none', color: '#2563eb' }}>
+            Material Requests
+          </Link>
+          <span className="breadcrumb-sep"> / </span>
+          <span style={{ color: '#1e293b', fontWeight: 600 }}>Create New Request (Indent)</span>
         </div>
       )}
 
-      {/* Header Banner */}
-      <div style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: '20px',
-        background: '#fff',
-        padding: '18px 24px',
-        borderRadius: 'var(--radius)',
-        border: '1px solid var(--border)',
-        boxShadow: 'var(--shadow-xs)'
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-          <div style={{
-            width: '42px',
-            height: '42px',
-            borderRadius: '10px',
-            background: 'var(--primary-lt)',
-            color: 'var(--primary)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: '1.3rem'
-          }}>
-            📝
-          </div>
-          <div>
-            <h1 style={{ fontSize: '1.25rem', fontWeight: '700', color: 'var(--navy)', margin: 0 }}>
-              New Material Request
-            </h1>
-            <p style={{ fontSize: '0.83rem', color: 'var(--text-secondary)', margin: '2px 0 0 0' }}>
-              Screen 6 • Raise a site material indent for review & approval workflow
-            </p>
-          </div>
+      {/* Header */}
+      <div className="card" style={{ marginBottom: '20px', padding: '18px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
+        <div>
+          <h1 style={{ fontSize: '1.4rem', fontWeight: 700, color: '#1e293b', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span>📝</span> Create Material Request (Screen 6)
+          </h1>
+          <p style={{ color: '#64748b', fontSize: '0.84rem', margin: '4px 0 0 0' }}>
+            Raise on-site material requisition indent for Project Manager & Purchase team approval.
+          </p>
         </div>
-
         <div style={{ display: 'flex', gap: '10px' }}>
+          {isModal ? (
+            <button type="button" className="btn btn-secondary" onClick={onClose}>
+              Cancel
+            </button>
+          ) : (
+            <Link to="/materials/requests" className="btn btn-secondary">
+              Cancel & Return
+            </Link>
+          )}
           <button
             type="button"
-            className="btn btn-secondary btn-sm"
-            onClick={() => {
-              if (isModal && onClose) onClose();
-              else navigate('/materials/requests');
-            }}
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            className="btn btn-primary btn-sm"
+            className="btn btn-primary"
             onClick={(e) => handleSubmit(e, false)}
             disabled={submitting}
+            style={{ fontWeight: 600 }}
           >
-            {submitting ? 'Submitting...' : '✓ Submit Request'}
+            {submitting ? 'Submitting...' : '🚀 Submit Request'}
           </button>
         </div>
       </div>
 
       {notification && (
-        <div className={`alert alert-${notification.type}`} style={{ marginBottom: '20px' }}>
-          <span>{notification.type === 'success' ? '✓' : 'ℹ️'}</span>
-          <span>{notification.message}</span>
+        <div className="alert alert-success" style={{ marginBottom: '18px' }}>
+          {notification.message}
         </div>
       )}
 
       <form onSubmit={(e) => handleSubmit(e, false)}>
-        {/* Section 1: Requisition Details */}
+        {/* Section 1: General Requisition Details */}
         <div className="card" style={{ marginBottom: '20px' }}>
-          <div className="card-header" style={{ paddingBottom: '10px', marginBottom: '16px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span style={{ fontSize: '1rem' }}>🏗️</span>
-              <h2 className="card-title" style={{ fontSize: '0.95rem' }}>1. Request & Site Information</h2>
-            </div>
-            <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
-              Fields marked with <span style={{ color: 'var(--danger)' }}>*</span> are required
-            </span>
+          <div className="card-header" style={{ marginBottom: '14px', paddingBottom: '8px' }}>
+            <h3 className="card-title" style={{ fontSize: '0.95rem' }}>
+              📍 1. Requisition & Site Assignment
+            </h3>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px' }}>
-            {/* Site Select */}
-            <div className="form-group" style={{ marginBottom: '12px' }}>
-              <label className="form-label">
-                Site / Location <span style={{ color: 'var(--danger)' }}>*</span>
-              </label>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '16px' }}>
+            <div>
+              <label className="form-label">Target Site / Location *</label>
               <select
                 className="form-control"
                 value={site}
-                onChange={(e) => setSite(e.target.value)}
+                onChange={e => setSite(e.target.value)}
                 required
               >
-                {SITES_LIST.map(s => (
-                  <option key={s.id} value={s.name}>
-                    {s.name} ({s.project})
-                  </option>
-                ))}
+                {sitesList.length === 0 ? (
+                  <option value="">No sites available (Create a site first)</option>
+                ) : (
+                  sitesList.map(s => (
+                    <option key={s.id} value={s.name}>
+                      {s.name} ({s.location || 'Site'})
+                    </option>
+                  ))
+                )}
               </select>
-              <span style={{ fontSize: '0.74rem', color: 'var(--text-muted)', marginTop: '3px', display: 'block' }}>
-                Associated Project: {SITES_LIST.find(s => s.name === site)?.project}
-              </span>
             </div>
 
-            {/* Requested By */}
-            <div className="form-group" style={{ marginBottom: '12px' }}>
-              <label className="form-label">
-                Requested By <span style={{ color: 'var(--danger)' }}>*</span>
-              </label>
+            <div>
+              <label className="form-label">Requested By *</label>
               <input
                 type="text"
                 className="form-control"
                 value={requestedBy}
-                onChange={(e) => setRequestedBy(e.target.value)}
-                placeholder="e.g. Rajesh Kumar (Site Engineer)"
+                onChange={e => setRequestedBy(e.target.value)}
                 required
               />
-              <span style={{ fontSize: '0.74rem', color: 'var(--text-muted)', marginTop: '3px', display: 'block' }}>
-                Role: Site Engineer / In-Charge
-              </span>
             </div>
 
-            {/* Required Date */}
-            <div className="form-group" style={{ marginBottom: '12px' }}>
-              <label className="form-label">
-                Required By Date <span style={{ color: 'var(--danger)' }}>*</span>
-              </label>
+            <div>
+              <label className="form-label">Required by Date *</label>
               <input
                 type="date"
                 className="form-control"
                 value={requiredDate}
-                min={new Date().toISOString().split('T')[0]}
-                onChange={(e) => {
-                  setRequiredDate(e.target.value);
-                  // Update rows that don't have custom date
-                  setMaterials(prev => prev.map(m => ({ ...m, required_date: e.target.value })));
-                }}
+                onChange={e => setRequiredDate(e.target.value)}
                 required
               />
-              <span style={{ fontSize: '0.74rem', color: 'var(--text-muted)', marginTop: '3px', display: 'block' }}>
-                Site target delivery date
-              </span>
             </div>
 
-            {/* Priority */}
-            <div className="form-group" style={{ marginBottom: '12px' }}>
-              <label className="form-label">
-                Priority Level <span style={{ color: 'var(--danger)' }}>*</span>
-              </label>
-              <div style={{ display: 'flex', gap: '8px', marginTop: '2px' }}>
-                {[
-                  { label: 'Normal', color: '#2563eb', bg: '#eff6ff', desc: '5-7 days' },
-                  { label: 'High',   color: '#d97706', bg: '#fffbeb', desc: '2-3 days' },
-                  { label: 'Urgent', color: '#dc2626', bg: '#fef2f2', desc: 'Immediate' },
-                ].map(p => (
-                  <button
-                    type="button"
-                    key={p.label}
-                    onClick={() => setPriority(p.label)}
-                    style={{
-                      flex: 1,
-                      padding: '7px 10px',
-                      borderRadius: '6px',
-                      border: priority === p.label ? `2px solid ${p.color}` : '1px solid var(--border)',
-                      background: priority === p.label ? p.bg : '#fff',
-                      color: priority === p.label ? p.color : 'var(--text-secondary)',
-                      fontWeight: priority === p.label ? '700' : '500',
-                      fontSize: '0.82rem',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      transition: 'all 0.15s'
-                    }}
-                  >
-                    <span>{p.label === 'Urgent' ? '🔥 ' : p.label === 'High' ? '⚡ ' : '⏱️ '}{p.label}</span>
-                    <span style={{ fontSize: '0.68rem', opacity: 0.8 }}>{p.desc}</span>
-                  </button>
-                ))}
-              </div>
+            <div>
+              <label className="form-label">Priority Level *</label>
+              <select
+                className="form-control"
+                value={priority}
+                onChange={e => setPriority(e.target.value)}
+              >
+                <option value="Normal">Normal</option>
+                <option value="High">High</option>
+                <option value="Urgent">Urgent (Emergency pour/safety)</option>
+              </select>
             </div>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginTop: '4px' }}>
-            {/* Purpose / Work Package */}
-            <div className="form-group" style={{ marginBottom: '0' }}>
-              <label className="form-label">
-                Purpose / Activity <span style={{ color: 'var(--danger)' }}>*</span>
-              </label>
+          <div style={{ marginTop: '16px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '16px' }}>
+            <div>
+              <label className="form-label">Activity / Purpose of Requirement</label>
               <input
                 type="text"
-                list="purpose-presets"
                 className="form-control"
+                placeholder="e.g. 5th Floor Slab Casting"
                 value={purpose}
-                onChange={(e) => setPurpose(e.target.value)}
-                placeholder="e.g. Slab Casting 8th Floor (Grid A to D)"
-                required
+                onChange={e => setPurpose(e.target.value)}
+                list="purpose-suggestions"
               />
-              <datalist id="purpose-presets">
-                {COMMON_PURPOSES.map((item, idx) => (
-                  <option key={idx} value={item} />
-                ))}
+              <datalist id="purpose-suggestions">
+                {COMMON_PURPOSES.map(p => <option key={p} value={p} />)}
               </datalist>
             </div>
 
-            {/* Delivery Location / Unloading Point */}
-            <div className="form-group" style={{ marginBottom: '0' }}>
-              <label className="form-label">
-                Delivery Location / Gate
-              </label>
+            <div>
+              <label className="form-label">Delivery Unloading Point</label>
               <input
                 type="text"
                 className="form-control"
                 value={deliveryLocation}
-                onChange={(e) => setDeliveryLocation(e.target.value)}
-                placeholder="e.g. Tower A - Gate 2 Unloading Bay"
+                onChange={e => setDeliveryLocation(e.target.value)}
+                placeholder="e.g. Gate 2 Yard, Tower A"
               />
             </div>
           </div>
         </div>
 
         {/* Section 2: Materials Dynamic Table */}
-        <div className="card" style={{ marginBottom: '20px' }}>
-          <div className="card-header" style={{ paddingBottom: '12px', marginBottom: '14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span style={{ fontSize: '1rem' }}>📦</span>
-              <div>
-                <h2 className="card-title" style={{ fontSize: '0.95rem', margin: 0 }}>
-                  2. Materials Required ({materials.length} {materials.length === 1 ? 'item' : 'items'})
-                </h2>
-                <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
-                  Specify materials, quantities, required date and site specifications
-                </span>
-              </div>
+        <div className="card" style={{ marginBottom: '20px', padding: 0, overflow: 'hidden' }}>
+          <div style={{ padding: '16px 20px', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
+            <div>
+              <h3 style={{ margin: 0, fontSize: '0.98rem', fontWeight: 600, color: '#1e293b' }}>
+                📦 2. Materials List ({totalItemsCount} {totalItemsCount === 1 ? 'Item' : 'Items'})
+              </h3>
+              <span style={{ fontSize: '0.78rem', color: '#64748b' }}>
+                Specify item description, quantity required on site, and target delivery date.
+              </span>
             </div>
-
             <button
               type="button"
-              className="btn btn-outline btn-sm"
+              className="btn btn-secondary btn-sm"
               onClick={handleAddRow}
-              style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
+              style={{ fontWeight: 600 }}
             >
-              <span style={{ fontSize: '1rem', fontWeight: 'bold' }}>+</span>
-              <span>Add Material Row</span>
+              ➕ Add Material Row
             </button>
           </div>
 
-          <div className="table-responsive" style={{ border: '1px solid var(--border)', borderRadius: '6px', overflowX: 'auto' }}>
-            <table style={{ width: '100%', minWidth: '850px' }}>
+          <div className="table-responsive">
+            <table style={{ margin: 0, fontSize: '0.84rem' }}>
               <thead>
                 <tr>
-                  <th style={{ width: '38px', textAlign: 'center' }}>#</th>
-                  <th style={{ width: '28%' }}>Material Description</th>
-                  <th style={{ width: '13%' }}>Quantity</th>
-                  <th style={{ width: '10%' }}>Unit</th>
-                  <th style={{ width: '15%' }}>Required Date</th>
-                  <th style={{ width: '25%' }}>Remarks / Specification</th>
-                  <th style={{ width: '50px', textAlign: 'center' }}>Action</th>
+                  <th style={{ width: '40px' }}>#</th>
+                  <th style={{ minWidth: '240px' }}>Material Item *</th>
+                  <th style={{ width: '120px' }}>Quantity *</th>
+                  <th style={{ width: '100px' }}>Unit</th>
+                  <th style={{ width: '130px' }}>Est. Rate (₹)</th>
+                  <th style={{ width: '130px' }}>Total (₹)</th>
+                  <th style={{ minWidth: '180px' }}>Remarks / Specs</th>
+                  <th style={{ width: '50px' }}>Action</th>
                 </tr>
               </thead>
               <tbody>
-                {materials.map((row, index) => (
-                  <tr key={row.id}>
-                    <td style={{ textAlign: 'center', fontWeight: '600', color: 'var(--text-muted)' }}>
-                      {index + 1}
-                    </td>
-
-                    {/* Material Select */}
-                    <td>
-                      <select
-                        className="form-control"
-                        value={row.material_id}
-                        onChange={(e) => handleMaterialChange(row.id, e.target.value)}
-                        style={{ fontSize: '0.82rem', padding: '6px 8px' }}
-                      >
-                        {CATALOG_MATERIALS.map(cat => (
-                          <option key={cat.id} value={cat.id}>
-                            {cat.name} ({cat.category})
-                          </option>
-                        ))}
-                      </select>
-                    </td>
-
-                    {/* Quantity */}
-                    <td>
-                      <input
-                        type="number"
-                        min="0.1"
-                        step="any"
-                        className="form-control"
-                        value={row.quantity}
-                        onChange={(e) => handleRowFieldChange(row.id, 'quantity', e.target.value)}
-                        placeholder="Qty"
-                        style={{ fontSize: '0.82rem', padding: '6px 8px', fontWeight: '600' }}
-                        required
-                      />
-                    </td>
-
-                    {/* Unit */}
-                    <td>
-                      <select
-                        className="form-control"
-                        value={row.unit}
-                        onChange={(e) => handleRowFieldChange(row.id, 'unit', e.target.value)}
-                        style={{ fontSize: '0.82rem', padding: '6px 8px' }}
-                      >
-                        {['MT', 'Bags', 'Cu.m', 'Cu.ft', 'Nos', 'Meter', 'Bundle', 'Sheet', 'Liters', 'Sets', 'Kg'].map(u => (
-                          <option key={u} value={u}>{u}</option>
-                        ))}
-                      </select>
-                    </td>
-
-                    {/* Required Date */}
-                    <td>
-                      <input
-                        type="date"
-                        className="form-control"
-                        value={row.required_date || requiredDate}
-                        onChange={(e) => handleRowFieldChange(row.id, 'required_date', e.target.value)}
-                        style={{ fontSize: '0.82rem', padding: '6px 8px' }}
-                      />
-                    </td>
-
-                    {/* Remarks */}
-                    <td>
-                      <input
-                        type="text"
-                        className="form-control"
-                        value={row.remarks}
-                        onChange={(e) => handleRowFieldChange(row.id, 'remarks', e.target.value)}
-                        placeholder="e.g. Primary producer, test report reqd"
-                        style={{ fontSize: '0.82rem', padding: '6px 8px' }}
-                      />
-                    </td>
-
-                    {/* Delete button */}
-                    <td style={{ textAlign: 'center' }}>
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveRow(row.id)}
-                        title="Remove line"
-                        style={{
-                          background: 'transparent',
-                          border: 'none',
-                          color: 'var(--danger)',
-                          cursor: 'pointer',
-                          padding: '4px 6px',
-                          borderRadius: '4px',
-                          fontSize: '1rem',
-                          transition: 'background 0.15s'
-                        }}
-                        onMouseEnter={(e) => e.currentTarget.style.background = 'var(--danger-lt)'}
-                        onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
-                      >
-                        🗑️
-                      </button>
+                {materials.length === 0 ? (
+                  <tr>
+                    <td colSpan="8" style={{ textAlign: 'center', padding: '30px', color: '#94a3b8' }}>
+                      No materials added yet. Click "+ Add Material Row" above.
                     </td>
                   </tr>
-                ))}
+                ) : (
+                  materials.map((row, index) => {
+                    const rowTotal = (parseFloat(row.quantity) || 0) * (parseFloat(row.estRate) || 0);
+                    return (
+                      <tr key={row.id}>
+                        <td style={{ color: '#64748b', fontWeight: 600 }}>{index + 1}</td>
+                        <td>
+                          <select
+                            className="form-control"
+                            value={row.material_id}
+                            onChange={e => handleMaterialChange(row.id, e.target.value)}
+                            style={{ fontSize: '0.82rem', padding: '6px 8px' }}
+                          >
+                            {materialsCatalog.length === 0 ? (
+                              <option value={row.material_id}>{row.name}</option>
+                            ) : (
+                              materialsCatalog.map(m => (
+                                <option key={m.id} value={m.id}>
+                                  {m.name}
+                                </option>
+                              ))
+                            )}
+                          </select>
+                        </td>
+                        <td>
+                          <input
+                            type="number"
+                            step="any"
+                            min="0.1"
+                            className="form-control"
+                            value={row.quantity}
+                            onChange={e => handleRowFieldChange(row.id, 'quantity', e.target.value)}
+                            style={{ fontSize: '0.82rem', padding: '6px 8px', fontWeight: 600 }}
+                            required
+                          />
+                        </td>
+                        <td>
+                          <span style={{ fontSize: '0.82rem', color: '#475569', fontWeight: 600 }}>
+                            {row.unit}
+                          </span>
+                        </td>
+                        <td>
+                          <input
+                            type="number"
+                            className="form-control"
+                            value={row.estRate}
+                            onChange={e => handleRowFieldChange(row.id, 'estRate', e.target.value)}
+                            style={{ fontSize: '0.82rem', padding: '6px 8px' }}
+                          />
+                        </td>
+                        <td style={{ fontWeight: 700, color: '#1e293b' }}>
+                          ₹{rowTotal.toLocaleString('en-IN')}
+                        </td>
+                        <td>
+                          <input
+                            type="text"
+                            className="form-control"
+                            placeholder="e.g. Brand / grade spec"
+                            value={row.remarks}
+                            onChange={e => handleRowFieldChange(row.id, 'remarks', e.target.value)}
+                            style={{ fontSize: '0.82rem', padding: '6px 8px' }}
+                          />
+                        </td>
+                        <td>
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveRow(row.id)}
+                            className="btn btn-ghost btn-sm"
+                            style={{ color: '#ef4444', padding: '4px 6px' }}
+                            title="Remove Row"
+                          >
+                            🗑️
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
               </tbody>
             </table>
           </div>
 
-          {/* Table summary bar */}
-          <div style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            marginTop: '12px',
-            padding: '10px 16px',
-            background: 'var(--navy-50)',
-            borderRadius: '6px',
-            border: '1px solid var(--border)',
-            flexWrap: 'wrap',
-            gap: '10px'
-          }}>
-            <div style={{ fontSize: '0.83rem', color: 'var(--text-secondary)' }}>
-              Total Line Items: <strong style={{ color: 'var(--navy)' }}>{totalItemsCount}</strong>
-            </div>
-
-            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-              <span style={{ fontSize: '0.83rem', color: 'var(--text-secondary)' }}>
-                Estimated Request Total:
-              </span>
-              <span style={{ fontSize: '1.05rem', fontWeight: '700', color: 'var(--primary)' }}>
-                {formatCurrency(totalEstimatedCost)}
-              </span>
+          <div style={{ padding: '14px 20px', background: '#f8fafc', borderTop: '1px solid #e2e8f0', display: 'flex', justifyContent: 'flex-end', gap: '24px' }}>
+            <div>
+              <span style={{ fontSize: '0.82rem', color: '#64748b' }}>Total Estimated Amount: </span>
+              <strong style={{ fontSize: '1.05rem', color: '#2563eb' }}>{formatCurrency(totalEstimatedCost)}</strong>
             </div>
           </div>
         </div>
 
-        {/* Section 3: Remarks & Attachments */}
+        {/* Section 3: Notes & Attachments */}
         <div className="card" style={{ marginBottom: '24px' }}>
-          <div className="card-header" style={{ paddingBottom: '10px', marginBottom: '14px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span style={{ fontSize: '1rem' }}>📎</span>
-              <h2 className="card-title" style={{ fontSize: '0.95rem' }}>3. Remarks & Attachments</h2>
-            </div>
+          <div className="card-header" style={{ marginBottom: '14px', paddingBottom: '8px' }}>
+            <h3 className="card-title" style={{ fontSize: '0.95rem' }}>
+              📎 3. Additional Site Notes & Attachments
+            </h3>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px' }}>
-            {/* Remarks textarea */}
-            <div className="form-group" style={{ marginBottom: 0 }}>
-              <label className="form-label">Special Instructions / Site Constraints</label>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+            <div>
+              <label className="form-label">Special Instructions / Justification</label>
               <textarea
                 className="form-control"
-                rows="4"
+                rows="3"
+                placeholder="Provide reasoning for urgency, specific testing requirements, or delivery time slot constraints..."
                 value={remarks}
-                onChange={(e) => setRemarks(e.target.value)}
-                placeholder="e.g. Unloading only allowed after 8 PM due to traffic restrictions. Crane required for offloading rebar bundles at North bay."
-                style={{ fontSize: '0.85rem' }}
+                onChange={e => setRemarks(e.target.value)}
               />
             </div>
 
-            {/* Attachments File Input */}
-            <div className="form-group" style={{ marginBottom: 0 }}>
-              <label className="form-label">Attach Supporting Documents (BOQ, Drawing, Photo)</label>
-              <div style={{
-                border: '2px dashed var(--border-strong)',
-                borderRadius: '8px',
-                padding: '16px',
-                textAlign: 'center',
-                background: '#fafafa',
-                cursor: 'pointer',
-                position: 'relative',
-                transition: 'border-color 0.15s'
-              }}>
-                <input
-                  type="file"
-                  multiple
-                  onChange={handleFileUpload}
-                  style={{
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    width: '100%',
-                    height: '100%',
-                    opacity: 0,
-                    cursor: 'pointer'
-                  }}
-                />
-                <div style={{ fontSize: '1.5rem', marginBottom: '4px' }}>📁</div>
-                <div style={{ fontSize: '0.85rem', fontWeight: '600', color: 'var(--navy)' }}>
-                  Click or drag files here to upload
-                </div>
-                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '2px' }}>
-                  PDF, DWG, PNG, JPG or XLSX (Max 10 MB per file)
-                </div>
-              </div>
-
-              {/* Uploaded files list */}
+            <div>
+              <label className="form-label">Upload Site Documents / BOQ Excerpts</label>
+              <input
+                type="file"
+                multiple
+                className="form-control"
+                onChange={handleFileUpload}
+                style={{ fontSize: '0.82rem' }}
+              />
               {attachments.length > 0 && (
-                <div style={{ marginTop: '10px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                  {attachments.map(file => (
-                    <div
-                      key={file.id}
+                <div style={{ marginTop: '8px', display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                  {attachments.map(f => (
+                    <span
+                      key={f.id}
                       style={{
+                        background: '#eff6ff',
+                        color: '#1e40af',
+                        padding: '3px 8px',
+                        borderRadius: '4px',
+                        fontSize: '0.75rem',
                         display: 'flex',
                         alignItems: 'center',
-                        justifyContent: 'space-between',
-                        padding: '6px 10px',
-                        background: '#fff',
-                        border: '1px solid var(--border)',
-                        borderRadius: '4px',
-                        fontSize: '0.8rem'
+                        gap: '4px'
                       }}
                     >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <span>📄</span>
-                        <span style={{ fontWeight: '500', color: 'var(--navy)' }}>{file.name}</span>
-                        <span style={{ color: 'var(--text-muted)', fontSize: '0.72rem' }}>({file.size})</span>
-                      </div>
+                      📄 {f.name}
                       <button
                         type="button"
-                        onClick={() => handleRemoveFile(file.id)}
-                        style={{ background: 'none', border: 'none', color: 'var(--danger)', cursor: 'pointer', fontSize: '0.85rem' }}
+                        onClick={() => handleRemoveFile(f.id)}
+                        style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', fontWeight: 'bold' }}
                       >
                         ✕
                       </button>
-                    </div>
+                    </span>
                   ))}
                 </div>
               )}
@@ -792,49 +612,23 @@ const CreateMaterialRequest = ({ isModal = false, onClose = null, onSuccess = nu
         </div>
 
         {/* Footer Actions */}
-        <div style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          background: '#fff',
-          padding: '16px 20px',
-          borderRadius: 'var(--radius)',
-          border: '1px solid var(--border)',
-          boxShadow: 'var(--shadow-sm)'
-        }}>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
           <button
             type="button"
             className="btn btn-secondary"
-            onClick={() => {
-              if (isModal && onClose) onClose();
-              else navigate('/materials/requests');
-            }}
+            onClick={(e) => handleSubmit(e, true)}
+            disabled={submitting}
           >
-            Cancel & Discard
+            💾 Save as Draft
           </button>
-
-          <div style={{ display: 'flex', gap: '12px' }}>
-            <button
-              type="button"
-              className="btn btn-secondary"
-              onClick={(e) => handleSubmit(e, true)}
-              disabled={submitting}
-              style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
-            >
-              <span>💾</span>
-              <span>Save as Draft</span>
-            </button>
-
-            <button
-              type="submit"
-              className="btn btn-primary"
-              disabled={submitting}
-              style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
-            >
-              <span>✓</span>
-              <span>{submitting ? 'Submitting...' : 'Submit Request'}</span>
-            </button>
-          </div>
+          <button
+            type="submit"
+            className="btn btn-primary"
+            disabled={submitting}
+            style={{ fontWeight: 600 }}
+          >
+            {submitting ? 'Submitting...' : '🚀 Submit Request for Approval'}
+          </button>
         </div>
       </form>
     </div>

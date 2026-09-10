@@ -3,347 +3,7 @@ import { Link } from 'react-router-dom';
 import client from '../api/client';
 import Modal from '../components/Modal';
 
-// Initial Material Requests data matching Screen 7 specifications
-const INITIAL_MATERIAL_REQUESTS = [
-  {
-    id: 'mr-1024',
-    request_no: 'MR-1024',
-    site: 'Tower A',
-    site_full: 'Tower A - High Rise Towers',
-    project_name: 'High Rise Luxury Towers, Sector 62',
-    requested_by: 'Rajesh Kumar',
-    requested_by_role: 'Site Engineer',
-    amount: 248000,
-    date: '09-Sep-2026',
-    date_needed: '15-Sep-2026',
-    priority: 'Urgent',
-    status: 'Pending Approval',
-    purpose: 'Slab Casting 8th Floor - Grid A to D',
-    delivery_location: 'Tower A - North Gate Unloading Bay 2',
-    boq_allowance: '68% consumed of 50 MT allowance (16 MT balance)',
-    materials: [
-      { name: 'TMT Steel Rebar 16mm (Fe550D)', qty: 20, unit: 'MT', est_rate: 58000, total: 116000, site_stock: '2 MT', wh_stock: '18 MT', boq_quota: '68% consumed (32 MT left)' },
-      { name: 'OPC 53 Grade Cement (50kg Bag)', qty: 500, unit: 'Bags', est_rate: 380, total: 190000, site_stock: '120 Bags', wh_stock: '450 Bags', boq_quota: '72% consumed (480 Bags left)' },
-      { name: 'Binding Wire 18 Gauge', qty: 300, unit: 'Kg', est_rate: 70, total: 21000, site_stock: '45 Kg', wh_stock: '200 Kg', boq_quota: 'Within quota' },
-    ],
-    timeline: [
-      { step: 1, role: 'Site Engineer', name: 'Rajesh Kumar', status: 'Approved', date: '08-Sep-2026, 17:30', note: 'Indented as per bar bending schedule BBS-08' },
-      { step: 2, role: 'Project Manager', name: 'Amit Desai', status: 'Pending', date: 'Action Required', note: 'Pending budget & schedule verification' },
-      { step: 3, role: 'Purchase Manager', name: 'S. Raman', status: 'Upcoming', date: 'Step 3', note: 'PO generation upon PM clearance' },
-      { step: 4, role: 'Management', name: 'Director / Finance', status: 'Upcoming', date: 'Step 4', note: 'Final financial release' },
-    ]
-  },
-  {
-    id: 'mr-1023',
-    request_no: 'MR-1023',
-    site: 'Tower B',
-    site_full: 'Tower B - Luxury Towers',
-    project_name: 'High Rise Luxury Towers, Sector 62',
-    requested_by: 'Anil Verma',
-    requested_by_role: 'Store Incharge',
-    amount: 580000,
-    date: '09-Sep-2026',
-    date_needed: '12-Sep-2026',
-    priority: 'High',
-    status: 'Pending Approval',
-    purpose: 'Columns & Shear Wall Concrete Pour',
-    delivery_location: 'Tower B - Concrete Pump Station 1',
-    boq_allowance: '60% consumed of 400 Cu.m allowance',
-    materials: [
-      { name: 'Ready Mix Concrete (RMC) M30', qty: 120, unit: 'Cu.m', est_rate: 4600, total: 552000, site_stock: '0 Cu.m', wh_stock: 'Transit Order', boq_quota: '60% consumed' },
-      { name: 'River Sand (Coarse / Plastering)', qty: 800, unit: 'Cu.ft', est_rate: 65, total: 52000, site_stock: '250 Cu.ft', wh_stock: '1,200 Cu.ft', boq_quota: '54% consumed' },
-    ],
-    timeline: [
-      { step: 1, role: 'Site Engineer', name: 'Anil Verma', status: 'Approved', date: '08-Sep-2026, 18:00', note: 'Pour sequence confirmed with batching plant' },
-      { step: 2, role: 'Project Manager', name: 'Amit Desai', status: 'Pending', date: 'Action Required', note: 'Review pour schedule & RMC supplier' },
-      { step: 3, role: 'Purchase Manager', name: 'S. Raman', status: 'Upcoming', date: 'Step 3', note: 'Transit mixer dispatch coordination' },
-      { step: 4, role: 'Management', name: 'Director / Finance', status: 'Upcoming', date: 'Step 4', note: 'Commercial clearance' },
-    ]
-  },
-  {
-    id: 'mr-1022',
-    request_no: 'MR-1022',
-    site: 'Villa Project',
-    site_full: 'Palm Grove Villas Phase 2',
-    project_name: 'Palm Grove Gated Community, Sohna Road',
-    requested_by: 'Vikram Singh',
-    requested_by_role: 'Project Engineer',
-    amount: 98000,
-    date: '08-Sep-2026',
-    date_needed: '18-Sep-2026',
-    priority: 'Normal',
-    status: 'Pending Approval',
-    purpose: 'Plumbing Shaft Risers & Internal CPVC Piping',
-    delivery_location: 'Villa Sector - Plot 44 Store',
-    boq_allowance: 'Within allowance (38% consumed)',
-    materials: [
-      { name: 'CPVC Pipes 1 inch (SDR 11)', qty: 300, unit: 'Meter', est_rate: 140, total: 42000, site_stock: '45 Meter', wh_stock: '150 Meter', boq_quota: 'Within limit' },
-      { name: 'Finolex FRLS Copper Wire 2.5 sq.mm', qty: 15, unit: 'Bundle', est_rate: 2450, total: 36750, site_stock: '3 Bundles', wh_stock: '20 Bundles', boq_quota: '80% consumed' },
-      { name: 'CPVC Solvent Cement 500ml', qty: 12, unit: 'Tins', est_rate: 350, total: 4200, site_stock: '2 Tins', wh_stock: '18 Tins', boq_quota: 'Normal' },
-      { name: 'Brass Ball Valves 1 inch', qty: 25, unit: 'Nos', est_rate: 450, total: 11250, site_stock: '5 Nos', wh_stock: '30 Nos', boq_quota: 'Normal' },
-    ],
-    timeline: [
-      { step: 1, role: 'Site Engineer', name: 'Vikram Singh', status: 'Approved', date: '08-Sep-2026, 14:15', note: 'MEP consultant approved material brands' },
-      { step: 2, role: 'Project Manager', name: 'Amit Desai', status: 'Pending', date: 'Action Required', note: 'Verify against milestone schedule' },
-      { step: 3, role: 'Purchase Manager', name: 'S. Raman', status: 'Upcoming', date: 'Step 3', note: 'Local dealer rate comparison' },
-      { step: 4, role: 'Management', name: 'Director / Finance', status: 'Upcoming', date: 'Step 4', note: 'Standard approval' },
-    ]
-  },
-  {
-    id: 'mr-1021',
-    request_no: 'MR-1021',
-    site: 'Warehouse',
-    site_full: 'Central Logistics Facility',
-    project_name: 'Central Warehouse & Fabrication Yard, Manesar',
-    requested_by: 'Suresh Patel',
-    requested_by_role: 'Store Incharge',
-    amount: 175000,
-    date: '08-Sep-2026',
-    date_needed: '14-Sep-2026',
-    priority: 'Normal',
-    status: 'Pending Approval',
-    purpose: 'Shuttering Stock Replacement & Safety Gear',
-    delivery_location: 'Warehouse Dock 4, Manesar',
-    boq_allowance: 'Quarterly warehouse replenishment allowance',
-    materials: [
-      { name: 'Shuttering Plywood 12mm (Marine Grade)', qty: 80, unit: 'Sheet', est_rate: 1450, total: 116000, site_stock: '12 Sheets', wh_stock: '25 Sheets', boq_quota: 'Quarterly quota' },
-      { name: 'Safety Helmets & Harness Sets', qty: 45, unit: 'Sets', est_rate: 1250, total: 56250, site_stock: '8 Sets', wh_stock: '15 Sets', boq_quota: 'Safety standard' },
-    ],
-    timeline: [
-      { step: 1, role: 'Site Engineer', name: 'Suresh Patel', status: 'Approved', date: '07-Sep-2026, 16:00', note: 'Stock count verified below minimum safety threshold' },
-      { step: 2, role: 'Project Manager', name: 'Amit Desai', status: 'Pending', date: 'Action Required', note: 'Confirm inter-site movement schedule' },
-      { step: 3, role: 'Purchase Manager', name: 'S. Raman', status: 'Upcoming', date: 'Step 3', note: 'Bulk plywood vendor rate' },
-      { step: 4, role: 'Management', name: 'Director / Finance', status: 'Upcoming', date: 'Step 4', note: 'Signoff' },
-    ]
-  },
-  {
-    id: 'mr-1020',
-    request_no: 'MR-1020',
-    site: 'Tower C',
-    site_full: 'Tower C - Commercial & Office',
-    project_name: 'High Rise Luxury Towers, Sector 62',
-    requested_by: 'Manoj Sharma',
-    requested_by_role: 'Site Engineer',
-    amount: 320000,
-    date: '07-Sep-2026',
-    date_needed: '16-Sep-2026',
-    priority: 'High',
-    status: 'Pending Approval',
-    purpose: 'Raft Foundation Reinforcement & Beams',
-    delivery_location: 'Tower C - Excavation Bay',
-    boq_allowance: '71% consumed of structural steel package',
-    materials: [
-      { name: 'TMT Steel Rebar 12mm (Fe550D)', qty: 25, unit: 'MT', est_rate: 58500, total: 1462500, site_stock: '4 MT', wh_stock: '12 MT', boq_quota: '71% consumed' },
-      { name: 'Binding Wire 18 Gauge', qty: 500, unit: 'Kg', est_rate: 70, total: 35000, site_stock: '20 Kg', wh_stock: '150 Kg', boq_quota: 'Normal' },
-    ],
-    timeline: [
-      { step: 1, role: 'Site Engineer', name: 'Manoj Sharma', status: 'Approved', date: '06-Sep-2026, 18:30', note: 'Structural consultant GFC drawings issued' },
-      { step: 2, role: 'Project Manager', name: 'Amit Desai', status: 'Pending', date: 'Action Required', note: 'Steel mill pricing check' },
-      { step: 3, role: 'Purchase Manager', name: 'S. Raman', status: 'Upcoming', date: 'Step 3', note: 'Dispatch scheduling' },
-      { step: 4, role: 'Management', name: 'Director / Finance', status: 'Upcoming', date: 'Step 4', note: 'Payment milestone' },
-    ]
-  },
-  {
-    id: 'mr-1019',
-    request_no: 'MR-1019',
-    site: 'Commercial',
-    site_full: 'Commercial Complex & Retail Mall',
-    project_name: 'Metro Hub Business Park, Golf Course Ext.',
-    requested_by: 'Pooja Gupta',
-    requested_by_role: 'Project Engineer',
-    amount: 85000,
-    date: '07-Sep-2026',
-    date_needed: '20-Sep-2026',
-    priority: 'Normal',
-    status: 'Pending Approval',
-    purpose: 'Exterior Facade Painting & Weatherproofing',
-    delivery_location: 'Retail Wing - Gate 4',
-    boq_allowance: '52% consumed of finishing contract',
-    materials: [
-      { name: 'Asian Paints Apex Ultima Exterior', qty: 180, unit: 'Liters', est_rate: 385, total: 69300, site_stock: '10 Liters', wh_stock: '40 Liters', boq_quota: '52% consumed' },
-      { name: 'Exterior Wall Primer', qty: 100, unit: 'Liters', est_rate: 160, total: 16000, site_stock: '15 Liters', wh_stock: '30 Liters', boq_quota: 'Normal' },
-    ],
-    timeline: [
-      { step: 1, role: 'Site Engineer', name: 'Pooja Gupta', status: 'Approved', date: '07-Sep-2026, 09:30', note: 'Architect color code approved: Apex White 001' },
-      { step: 2, role: 'Project Manager', name: 'Amit Desai', status: 'Pending', date: 'Action Required', note: 'Review scaffolding readiness' },
-      { step: 3, role: 'Purchase Manager', name: 'S. Raman', status: 'Upcoming', date: 'Step 3', note: 'Manufacturer direct rate' },
-      { step: 4, role: 'Management', name: 'Director / Finance', status: 'Upcoming', date: 'Step 4', note: 'Signoff' },
-    ]
-  },
-  {
-    id: 'mr-1018',
-    request_no: 'MR-1018',
-    site: 'Tower A',
-    site_full: 'Tower A - High Rise Towers',
-    project_name: 'High Rise Luxury Towers, Sector 62',
-    requested_by: 'Rajesh Kumar',
-    requested_by_role: 'Site Engineer',
-    amount: 410000,
-    date: '06-Sep-2026',
-    date_needed: '13-Sep-2026',
-    priority: 'Urgent',
-    status: 'Pending Approval',
-    purpose: 'Internal AAC Block Masonry 6th to 8th Floor',
-    delivery_location: 'Tower A - Hoist Material Unloading Point',
-    boq_allowance: '64% consumed of masonry work package',
-    materials: [
-      { name: 'AAC Lightweight Blocks (600x200x150mm)', qty: 4000, unit: 'Nos', est_rate: 62, total: 248000, site_stock: '350 Nos', wh_stock: '800 Nos', boq_quota: '64% consumed' },
-      { name: 'AAC Block Jointing Adhesive (40kg)', qty: 80, unit: 'Bags', est_rate: 420, total: 33600, site_stock: '10 Bags', wh_stock: '60 Bags', boq_quota: 'Within limit' },
-    ],
-    timeline: [
-      { step: 1, role: 'Site Engineer', name: 'Rajesh Kumar', status: 'Approved', date: '06-Sep-2026, 11:30', note: 'Masonry gangs ready on floor 6 and 7' },
-      { step: 2, role: 'Project Manager', name: 'Amit Desai', status: 'Pending', date: 'Action Required', note: 'Verify palletized hoist schedule' },
-      { step: 3, role: 'Purchase Manager', name: 'S. Raman', status: 'Upcoming', date: 'Step 3', note: 'Direct factory truck dispatch' },
-      { step: 4, role: 'Management', name: 'Director / Finance', status: 'Upcoming', date: 'Step 4', note: 'Final clearance' },
-    ]
-  },
-];
-
-// Purchase Orders pending approvals (Tab 2)
-const INITIAL_PURCHASE_ORDERS = [
-  {
-    id: 'po-8821',
-    request_no: 'PO-8821',
-    site: 'Tower A',
-    site_full: 'Tower A - High Rise Towers',
-    project_name: 'High Rise Luxury Towers, Sector 62',
-    vendor_name: 'UltraTech Cement Ltd',
-    requested_by: 'Deepak Shah',
-    requested_by_role: 'Purchase Officer',
-    amount: 540000,
-    date: '09-Sep-2026',
-    priority: 'Urgent',
-    status: 'Pending Approval',
-    purpose: 'Bulk OPC 53 Cement Delivery (1400 Bags)',
-    delivery_location: 'Tower A Silo & Storage Shed',
-    boq_allowance: 'Cement Annual Master Contract',
-    materials: [
-      { name: 'OPC 53 Grade Cement (50kg Bag)', qty: 1400, unit: 'Bags', est_rate: 380, total: 532000, site_stock: '150 Bags', wh_stock: 'Central Silo' },
-      { name: 'Unloading & Pallet Freight', qty: 1, unit: 'LumpSum', est_rate: 8000, total: 8000, site_stock: 'N/A', wh_stock: 'N/A' },
-    ],
-    timeline: [
-      { step: 1, role: 'Purchase Officer', name: 'Deepak Shah', status: 'Approved', date: '08-Sep-2026, 16:45', note: 'Best rate negotiated against UltraTech rate card' },
-      { step: 2, role: 'Procurement Head', name: 'S. Raman', status: 'Pending', date: 'Action Required', note: 'Verify credit terms (30 days)' },
-      { step: 3, role: 'Finance Controller', name: 'Rajiv Kapoor', status: 'Upcoming', date: 'Step 3', note: 'Invoice processing clearance' },
-      { step: 4, role: 'Management', name: 'Managing Director', status: 'Upcoming', date: 'Step 4', note: 'High value PO signoff' },
-    ]
-  },
-  {
-    id: 'po-8820',
-    request_no: 'PO-8820',
-    site: 'Commercial',
-    site_full: 'Commercial Complex & Retail Mall',
-    project_name: 'Metro Hub Business Park, Golf Course Ext.',
-    vendor_name: 'Tata Steel Ltd (Distributor: Jindal Traders)',
-    requested_by: 'Sunil Mehta',
-    requested_by_role: 'Procurement Lead',
-    amount: 1280000,
-    date: '08-Sep-2026',
-    priority: 'High',
-    status: 'Pending Approval',
-    purpose: 'TMT Rebar Fe550D Bundle Consignment (22 MT)',
-    delivery_location: 'Commercial - North Material Yard',
-    boq_allowance: 'Foundation & Core Wall Quota',
-    materials: [
-      { name: 'TMT Steel Rebar 25mm (Fe550D)', qty: 12, unit: 'MT', est_rate: 57800, total: 693600, site_stock: '1 MT', wh_stock: 'Yard' },
-      { name: 'TMT Steel Rebar 20mm (Fe550D)', qty: 10, unit: 'MT', est_rate: 58200, total: 582000, site_stock: '2 MT', wh_stock: 'Yard' },
-    ],
-    timeline: [
-      { step: 1, role: 'Procurement Lead', name: 'Sunil Mehta', status: 'Approved', date: '07-Sep-2026, 19:10', note: 'Mill test certificates verified for heat numbers' },
-      { step: 2, role: 'Project Director', name: 'Amit Desai', status: 'Pending', date: 'Action Required', note: 'Structural package allocation review' },
-      { step: 3, role: 'Finance Head', name: 'Rajiv Kapoor', status: 'Upcoming', date: 'Step 3', note: 'LC / Advance verification' },
-      { step: 4, role: 'Management', name: 'Executive Committee', status: 'Upcoming', date: 'Step 4', note: 'Board signoff > ₹10L' },
-    ]
-  },
-  {
-    id: 'po-8819',
-    request_no: 'PO-8819',
-    site: 'Villa Project',
-    site_full: 'Palm Grove Villas Phase 2',
-    project_name: 'Palm Grove Gated Community, Sohna Road',
-    vendor_name: 'Finolex Cables & Electricals',
-    requested_by: 'Deepak Shah',
-    requested_by_role: 'Purchase Officer',
-    amount: 315000,
-    date: '07-Sep-2026',
-    priority: 'Normal',
-    status: 'Pending Approval',
-    purpose: 'FRLS Copper Wiring & Distribution Boards',
-    delivery_location: 'Villa Central Store',
-    boq_allowance: 'Electrical 1st Fix Allowance',
-    materials: [
-      { name: 'Finolex FRLS Copper Wire 4.0 sq.mm', qty: 30, unit: 'Bundle', est_rate: 3850, total: 115500, site_stock: '4 Bundles', wh_stock: 'Store' },
-      { name: 'Finolex FRLS Copper Wire 2.5 sq.mm', qty: 50, unit: 'Bundle', est_rate: 2450, total: 122500, site_stock: '6 Bundles', wh_stock: 'Store' },
-      { name: 'Modular Distribution Boards 8-Way', qty: 25, unit: 'Nos', est_rate: 3080, total: 77000, site_stock: '2 Nos', wh_stock: 'Store' },
-    ],
-    timeline: [
-      { step: 1, role: 'Purchase Officer', name: 'Deepak Shah', status: 'Approved', date: '07-Sep-2026, 11:20', note: 'Distributor discount 28% off list price' },
-      { step: 2, role: 'Project Manager', name: 'Amit Desai', status: 'Pending', date: 'Action Required', note: 'Review electrical conduit completion' },
-      { step: 3, role: 'Procurement Head', name: 'S. Raman', status: 'Upcoming', date: 'Step 3', note: 'PO issuance' },
-      { step: 4, role: 'Management', name: 'Management', status: 'Upcoming', date: 'Step 4', note: 'Clearance' },
-    ]
-  },
-];
-
-// GRN pending verification & approvals (Tab 3)
-const INITIAL_GRN_LIST = [
-  {
-    id: 'grn-4012',
-    request_no: 'GRN-4012',
-    site: 'Tower B',
-    site_full: 'Tower B - Luxury Towers',
-    project_name: 'High Rise Luxury Towers, Sector 62',
-    vendor_name: 'ACC Concrete Ltd',
-    requested_by: 'Anil Verma',
-    requested_by_role: 'Store Incharge',
-    amount: 465000,
-    date: '09-Sep-2026',
-    priority: 'Normal',
-    status: 'Pending Approval',
-    purpose: 'Transit Mixer RMC Pour Inspection (40 Cu.m M30)',
-    delivery_location: 'Tower B Pump 2',
-    boq_allowance: 'PO-8802 Material Receipt',
-    materials: [
-      { name: 'Ready Mix Concrete M30', qty: 40, unit: 'Cu.m', est_rate: 4600, total: 184000, site_stock: 'Received', wh_stock: 'Poured', boq_quota: 'Slump test passed (120mm)' },
-      { name: 'Admixture & Retarder Dosing', qty: 40, unit: 'LumpSum', est_rate: 200, total: 8000, site_stock: 'Verified', wh_stock: 'N/A', boq_quota: 'Lab test cubes casted' },
-    ],
-    timeline: [
-      { step: 1, role: 'Store / QC', name: 'Anil Verma', status: 'Approved', date: '09-Sep-2026, 11:30', note: 'Challan verified, 7-day cube specimens taken' },
-      { step: 2, role: 'Site In-Charge', name: 'Rajesh Kumar', status: 'Pending', date: 'Action Required', note: 'Verify pour log sheet against delivery slips' },
-      { step: 3, role: 'Project Manager', name: 'Amit Desai', status: 'Upcoming', date: 'Step 3', note: 'Bill booking approval' },
-      { step: 4, role: 'Accounts', name: 'Store Accounts', status: 'Upcoming', date: 'Step 4', note: 'ERP inventory ledger update' },
-    ]
-  },
-  {
-    id: 'grn-4011',
-    request_no: 'GRN-4011',
-    site: 'Tower A',
-    site_full: 'Tower A - High Rise Towers',
-    project_name: 'High Rise Luxury Towers, Sector 62',
-    vendor_name: 'Asian Paints Regional Depot',
-    requested_by: 'Kavita Rao',
-    requested_by_role: 'Quality Inspector',
-    amount: 190000,
-    date: '08-Sep-2026',
-    priority: 'High',
-    status: 'Pending Approval',
-    purpose: 'Exterior Emulsion & Sealer Inward Consignment',
-    delivery_location: 'Central Store Paint Bunker',
-    boq_allowance: 'PO-8801 Material Receipt',
-    materials: [
-      { name: 'Asian Paints Apex Ultima White', qty: 300, unit: 'Liters', est_rate: 385, total: 115500, site_stock: '300 Ltr', wh_stock: 'Store', boq_quota: 'Batch tested' },
-      { name: 'Acrylic Exterior Wall Primer', qty: 200, unit: 'Liters', est_rate: 160, total: 32000, site_stock: '200 Ltr', wh_stock: 'Store', boq_quota: 'Seal intact' },
-    ],
-    timeline: [
-      { step: 1, role: 'Quality Inspector', name: 'Kavita Rao', status: 'Approved', date: '08-Sep-2026, 15:40', note: 'Batch seal and manufacturing dates verified' },
-      { step: 2, role: 'Store Head', name: 'Suresh Patel', status: 'Pending', date: 'Action Required', note: 'Bin card entry confirmation' },
-      { step: 3, role: 'Project Manager', name: 'Amit Desai', status: 'Upcoming', date: 'Step 3', note: 'GRN signoff' },
-      { step: 4, role: 'Accounts', name: 'Store Accounts', status: 'Upcoming', date: 'Step 4', note: 'GRN closing' },
-    ]
-  },
-];
-
-const SITE_FILTER_OPTIONS = ['All Sites', 'Tower A', 'Tower B', 'Villa Project', 'Warehouse', 'Tower C', 'Commercial'];
+const SITE_FILTER_OPTIONS = ['All Sites'];
 const PRIORITY_FILTER_OPTIONS = ['All Priorities', 'Urgent', 'High', 'Normal'];
 const DATE_FILTER_OPTIONS = ['All Dates', 'Today', 'Last 7 Days', 'This Month'];
 
@@ -361,23 +21,111 @@ const ApprovalCenter = () => {
   const [activeTab, setActiveTab] = useState('mr');
 
   // Lists state
-  const [materialRequests, setMaterialRequests] = useState(() => {
-    try {
-      const stored = localStorage.getItem('sitetrack_pending_approvals');
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        const storedIds = new Set(parsed.map(p => p.request_no || p.id));
-        const combined = [...parsed, ...INITIAL_MATERIAL_REQUESTS.filter(d => !storedIds.has(d.request_no))];
-        return combined;
-      }
-    } catch (e) {
-      console.error(e);
-    }
-    return INITIAL_MATERIAL_REQUESTS;
-  });
+  const [materialRequests, setMaterialRequests] = useState([]);
+  const [purchaseOrders, setPurchaseOrders] = useState([]);
+  const [grnList, setGrnList] = useState([]);
+  const [loadingData, setLoadingData] = useState(false);
 
-  const [purchaseOrders, setPurchaseOrders] = useState(INITIAL_PURCHASE_ORDERS);
-  const [grnList, setGrnList] = useState(INITIAL_GRN_LIST);
+  useEffect(() => {
+    let isMounted = true;
+    const fetchApprovals = async () => {
+      setLoadingData(true);
+      try {
+        const [mrRes, poRes, grnRes] = await Promise.allSettled([
+          client.get('/material-requests?limit=100'),
+          client.get('/procurement/orders?limit=100'),
+          client.get('/procurement/grn?limit=100')
+        ]);
+
+        if (!isMounted) return;
+
+        if (mrRes.status === 'fulfilled') {
+          const raw = mrRes.value?.data?.data?.data || mrRes.value?.data?.data || mrRes.value?.data || [];
+          if (Array.isArray(raw)) {
+            const mapped = raw.map(m => ({
+              id: m.id,
+              request_no: m.mr_number || m.pr_number || `MR-${m.id?.slice(0, 6)}`,
+              site: m.site_name || m.site || '-',
+              site_full: m.site_name || '-',
+              project_name: m.project_name || '-',
+              requested_by: m.requester_name || m.requested_by || 'Staff',
+              requested_by_role: 'Site Engineer',
+              amount: Number(m.total_amount || m.estimated_cost || m.amount || 0),
+              date: m.created_at ? new Date(m.created_at).toLocaleDateString('en-GB') : '-',
+              date_needed: m.required_date ? new Date(m.required_date).toLocaleDateString('en-GB') : '-',
+              priority: m.priority || 'Normal',
+              status: (m.status || 'pending').toLowerCase() === 'pending' ? 'Pending Approval' : (m.status.charAt(0).toUpperCase() + m.status.slice(1)),
+              purpose: m.purpose || m.remarks || 'Material Request',
+              delivery_location: m.delivery_location || '-',
+              boq_allowance: 'Standard quota',
+              materials: Array.isArray(m.items) ? m.items : [],
+              timeline: []
+            }));
+            setMaterialRequests(mapped);
+          }
+        }
+
+        if (poRes.status === 'fulfilled') {
+          const raw = poRes.value?.data?.data?.data || poRes.value?.data?.data || poRes.value?.data || [];
+          if (Array.isArray(raw)) {
+            const mapped = raw.map(p => ({
+              id: p.id,
+              request_no: p.po_number || `PO-${p.id?.slice(0, 6)}`,
+              site: p.site_name || '-',
+              site_full: p.site_name || '-',
+              project_name: p.project_name || '-',
+              vendor_name: p.vendor_name || '-',
+              requested_by: p.buyer_name || p.created_by || 'Procurement',
+              requested_by_role: 'Purchase Officer',
+              amount: Number(p.total_amount || 0),
+              date: p.po_date || (p.created_at ? new Date(p.created_at).toLocaleDateString('en-GB') : '-'),
+              priority: p.priority || 'Normal',
+              status: (p.status || 'draft').toLowerCase() === 'draft' || (p.status || '').toLowerCase() === 'pending' ? 'Pending Approval' : (p.status.charAt(0).toUpperCase() + p.status.slice(1)),
+              purpose: p.notes || 'Purchase Order',
+              delivery_location: p.delivery_address || '-',
+              boq_allowance: 'PO Contract',
+              materials: Array.isArray(p.items) ? p.items : [],
+              timeline: []
+            }));
+            setPurchaseOrders(mapped);
+          }
+        }
+
+        if (grnRes.status === 'fulfilled') {
+          const raw = grnRes.value?.data?.data?.data || grnRes.value?.data?.data || grnRes.value?.data || [];
+          if (Array.isArray(raw)) {
+            const mapped = raw.map(g => ({
+              id: g.id,
+              request_no: g.grn_number || g.grn_no || `GRN-${g.id?.slice(0, 6)}`,
+              site: g.site_name || '-',
+              site_full: g.site_name || '-',
+              project_name: g.project_name || '-',
+              vendor_name: g.vendor_name || '-',
+              requested_by: g.received_by || 'Store Keeper',
+              requested_by_role: 'Store Incharge',
+              amount: Number(g.total_amount || 0),
+              date: g.received_at || g.date || (g.created_at ? new Date(g.created_at).toLocaleDateString('en-GB') : '-'),
+              priority: 'Normal',
+              status: (g.status || 'pending').toLowerCase() === 'pending' ? 'Pending Approval' : (g.status.charAt(0).toUpperCase() + g.status.slice(1)),
+              purpose: g.remarks || 'Goods Received Note',
+              delivery_location: g.site_name || '-',
+              boq_allowance: 'Delivery Inward',
+              materials: Array.isArray(g.items) ? g.items : [],
+              timeline: []
+            }));
+            setGrnList(mapped);
+          }
+        }
+      } catch (err) {
+        console.warn('Error fetching approvals:', err);
+      } finally {
+        if (isMounted) setLoadingData(false);
+      }
+    };
+
+    fetchApprovals();
+    return () => { isMounted = false; };
+  }, []);
 
   // Filters
   const [siteFilter, setSiteFilter] = useState('All Sites');

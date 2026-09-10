@@ -1,32 +1,68 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import client from '../api/client';
 import dayjs from 'dayjs';
-
-const INITIAL_ATTENDANCE = [
-  { id: 1, emp_id: 'EMP-001', name: 'Suresh Babu', dept: 'Procurement', designation: 'Purchase Manager', site: 'Tower A', check_in: '08:45 AM', check_out: '06:15 PM', status: 'Present', hours: '9h 30m', remarks: 'On site verification' },
-  { id: 2, emp_id: 'EMP-002', name: 'Ramesh Kumar', dept: 'Civil Engineering', designation: 'Site Engineer', site: 'Tower A', check_in: '08:30 AM', check_out: '06:00 PM', status: 'Present', hours: '9h 30m', remarks: 'Tower A casting' },
-  { id: 3, emp_id: 'EMP-003', name: 'M. Natarajan', dept: 'Operations', designation: 'Crane Operator', site: 'Tower A', check_in: '08:15 AM', check_out: '05:45 PM', status: 'Present', hours: '9h 30m', remarks: 'Tower crane op' },
-  { id: 4, emp_id: 'EMP-004', name: 'Arun Prakash', dept: 'Civil Engineering', designation: 'Junior Engineer', site: 'Tower A', check_in: '09:05 AM', check_out: '06:30 PM', status: 'Present', hours: '9h 25m', remarks: 'Steel inspection' },
-  { id: 5, emp_id: 'EMP-005', name: 'K. Balaji', dept: 'Stores & Inventory', designation: 'Store Incharge', site: 'Tower A', check_in: '08:50 AM', check_out: '06:20 PM', status: 'Present', hours: '9h 30m', remarks: 'Cement GRN received' },
-  { id: 6, emp_id: 'EMP-006', name: 'V. Sundaram', dept: 'Electrical', designation: 'Chief Electrician', site: 'Tower A', check_in: '09:00 AM', check_out: '01:30 PM', status: 'Half Day', hours: '4h 30m', remarks: 'Permission afternoon' },
-  { id: 7, emp_id: 'EMP-007', name: 'Priya Sharma', dept: 'Safety & Quality', designation: 'Safety Officer', site: 'Tower A', check_in: '—', check_out: '—', status: 'Leave', hours: '0h', remarks: 'Sick leave approved' },
-  { id: 8, emp_id: 'EMP-008', name: 'Rajesh G.', dept: 'Civil Engineering', designation: 'Supervisor', site: 'Tower A', check_in: '—', check_out: '—', status: 'Absent', hours: '0h', remarks: 'Uninformed' },
-  { id: 9, emp_id: 'EMP-009', name: 'S. Selvam', dept: 'Plant & Machinery', designation: 'Mechanic', site: 'Tower A', check_in: '08:30 AM', check_out: '05:30 PM', status: 'Present', hours: '9h 00m', remarks: 'Mixer maintenance' },
-  { id: 10, emp_id: 'EMP-010', name: 'D. Vignesh', dept: 'Civil Engineering', designation: 'Surveyor', site: 'Tower A', check_in: '08:45 AM', check_out: '06:00 PM', status: 'Present', hours: '9h 15m', remarks: 'Grid line marking' }
-];
 
 const ManualAttendance = () => {
   const [date, setDate] = useState(dayjs().format('YYYY-MM-DD'));
-  const [selectedSite, setSelectedSite] = useState('Tower A');
+  const [selectedSite, setSelectedSite] = useState('All');
   const [selectedDept, setSelectedDept] = useState('All');
   const [search, setSearch] = useState('');
-  const [attendance, setAttendance] = useState(INITIAL_ATTENDANCE);
+  const [attendance, setAttendance] = useState([]);
+  const [sites, setSites] = useState([]);
+  const [loading, setLoading] = useState(false);
   const [savedAlert, setSavedAlert] = useState(false);
 
   const statusList = ['Present', 'Absent', 'Half Day', 'Leave', 'Holiday', 'Weekly Off'];
 
+  useEffect(() => {
+    const loadEmployeesAndSites = async () => {
+      setLoading(true);
+      try {
+        const [empRes, siteRes] = await Promise.allSettled([
+          client.get('/employees?limit=200'),
+          client.get('/sites?limit=100')
+        ]);
+
+        if (siteRes.status === 'fulfilled') {
+          const rawS = siteRes.value?.data?.data || siteRes.value?.data || [];
+          if (Array.isArray(rawS)) {
+            setSites(rawS.map(s => s.name || s.site_name));
+          }
+        }
+
+        if (empRes.status === 'fulfilled') {
+          const rawE = empRes.value?.data?.data || empRes.value?.data || [];
+          if (Array.isArray(rawE)) {
+            const mapped = rawE.map((u, i) => ({
+              id: u.id || i + 1,
+              user_id: u.id,
+              emp_id: u.employee_id || `EMP-${(i + 1).toString().padStart(3, '0')}`,
+              name: u.full_name || 'Employee',
+              dept: u.department || 'Operations',
+              designation: u.role || 'Staff',
+              site: u.site_name || 'Main Site',
+              check_in: '08:30 AM',
+              check_out: '06:00 PM',
+              status: 'Present',
+              hours: '9h 30m',
+              remarks: ''
+            }));
+            setAttendance(mapped);
+          }
+        }
+      } catch (err) {
+        console.warn('Error loading attendance data:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadEmployeesAndSites();
+  }, [date]);
+
   const filtered = attendance.filter(item => {
-    const matchSearch = item.name.toLowerCase().includes(search.toLowerCase()) ||
-                        item.emp_id.toLowerCase().includes(search.toLowerCase());
+    const matchSearch = (item.name || '').toLowerCase().includes(search.toLowerCase()) ||
+                        (item.emp_id || '').toLowerCase().includes(search.toLowerCase());
     const matchDept = selectedDept === 'All' || item.dept === selectedDept;
     const matchSite = selectedSite === 'All' || item.site === selectedSite;
     return matchSearch && matchDept && matchSite;
@@ -52,7 +88,20 @@ const ManualAttendance = () => {
     })));
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
+    try {
+      const records = attendance.map(a => ({
+        user_id: a.user_id,
+        date: date,
+        status: a.status.toLowerCase(),
+        check_in: a.check_in,
+        check_out: a.check_out,
+        hours: a.hours
+      }));
+      await client.post('/attendance', { records });
+    } catch (e) {
+      console.warn('Submit attendance error:', e);
+    }
     setSavedAlert(true);
     setTimeout(() => setSavedAlert(false), 3000);
   };
