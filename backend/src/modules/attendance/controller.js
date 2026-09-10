@@ -1,11 +1,21 @@
 const service = require('./service');
+const { logAudit } = require('../../services/auditService');
 
 async function getBulkList(req, res, next) {
   try { res.json(await service.getBulkAttendanceList(req.query.date, req.query.project_id)); } catch(e) { next(e); }
 }
 
 async function submitBulk(req, res, next) {
-  try { res.json(await service.submitBulkAttendance(req.body, req.user?.id)); } catch(e) { next(e); }
+  try {
+    const result = await service.submitBulkAttendance(req.body, req.user?.id);
+    logAudit({
+      req,
+      module: 'HR',
+      action: 'SUBMIT_ATTENDANCE',
+      details: `Submitted daily muster roll for date ${req.body.attendance_date || 'today'} (${req.body.records?.length || 0} records)`
+    });
+    res.json(result);
+  } catch(e) { next(e); }
 }
 
 async function getSummary(req, res, next) {

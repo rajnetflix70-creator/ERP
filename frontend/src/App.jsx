@@ -72,6 +72,7 @@ import BillingInvoicing from './pages/BillingInvoicing';
 import ReportsModule from './pages/ReportsModule';
 import PurchaseRegister from './pages/PurchaseRegister';
 import NotificationCenter from './pages/NotificationCenter';
+import AuditLogs from './pages/AuditLogs';
 
 /* Account */
 import MyProfile from './pages/MyProfile';
@@ -149,6 +150,7 @@ function App() {
               {/* ── REPORTS ── */}
               <Route path="reports" element={<ReportsModule />} />
               <Route path="reports/purchase-register" element={<PurchaseRegister />} />
+              <Route path="reports/audit-logs" element={<AuditLogs />} />
               <Route path="purchase-register" element={<PurchaseRegister />} />
 
               {/* ── SETTINGS ── */}
@@ -157,6 +159,7 @@ function App() {
               <Route path="settings/roles" element={<UserMaster />} />
               <Route path="settings/workflows" element={<ApprovalWorkflowSettings />} />
               <Route path="settings/notifications" element={<NotificationSettings />} />
+              <Route path="settings/audit-logs" element={<AuditLogs />} />
 
               {/* ── EQUIPMENT (legacy - kept) ── */}
               <Route path="equipment/master" element={<EquipmentMaster />} />

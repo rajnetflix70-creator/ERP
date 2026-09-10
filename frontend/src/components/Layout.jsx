@@ -169,11 +169,13 @@ const Layout = () => {
       '/hr/attendance/reports': 'Attendance Reports',
       '/reports': 'Reports & Analytics Hub',
       '/reports/purchase-register': 'Purchase Register',
+      '/reports/audit-logs': 'Audit Trail & Activity Logs',
       '/purchase-register': 'Purchase Register',
       '/settings': 'Company Settings',
       '/settings/roles': 'Users & Roles',
       '/settings/workflows': 'Approval Workflow',
       '/settings/notifications': 'Notifications',
+      '/settings/audit-logs': 'Audit Trail & Activity Logs',
       '/my-profile': 'My Profile',
       '/change-password': 'Change Password',
     };
@@ -246,6 +248,7 @@ const Layout = () => {
           <NavGroup label="REPORTS">
             <SideLink to="/reports" icon="📈" label="Reports & Analytics" end onClick={closeSidebar} />
             <SideLink to="/reports/purchase-register" icon="📑" label="Purchase Register" onClick={closeSidebar} />
+            <SideLink to="/reports/audit-logs" icon="🛡️" label="Audit Trail" onClick={closeSidebar} />
           </NavGroup>
 
           <NavGroup label="SETTINGS">
@@ -253,6 +256,7 @@ const Layout = () => {
             <SideLink to="/settings/roles" icon="🔐" label="Users & Roles" onClick={closeSidebar} />
             <SideLink to="/settings/workflows" icon="🔄" label="Approval Workflow" onClick={closeSidebar} />
             <SideLink to="/settings/notifications" icon="🔔" label="Notifications" onClick={closeSidebar} />
+            <SideLink to="/settings/audit-logs" icon="🛡️" label="System Audit Logs" onClick={closeSidebar} />
           </NavGroup>
         </div>
 

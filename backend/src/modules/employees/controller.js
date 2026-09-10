@@ -1,5 +1,6 @@
 const service = require('./service');
 const { createEmployeeSchema, updateEmployeeSchema } = require('./validators');
+const { logAudit } = require('../../services/auditService');
 
 async function listEmployees(req, res, next) {
   try {
@@ -27,6 +28,13 @@ async function createEmployee(req, res, next) {
       return res.status(400).json({ error: true, message: error.details.map(d => d.message).join('; ') });
     }
     const employee = await service.createEmployee(value);
+    logAudit({
+      req,
+      module: 'HR',
+      action: 'CREATE_EMPLOYEE',
+      entityId: employee.id,
+      details: `Created employee record: ${employee.full_name} (${employee.email || employee.mobile_number})`
+    });
     res.status(201).json(employee);
   } catch (err) { next(err); }
 }
@@ -38,6 +46,13 @@ async function updateEmployee(req, res, next) {
       return res.status(400).json({ error: true, message: error.details.map(d => d.message).join('; ') });
     }
     const employee = await service.updateEmployee(req.params.id, value);
+    logAudit({
+      req,
+      module: 'HR',
+      action: 'UPDATE_EMPLOYEE',
+      entityId: req.params.id,
+      details: `Updated employee: ${employee.full_name} (Status: ${employee.is_active ? 'Active' : 'Inactive'})`
+    });
     res.json(employee);
   } catch (err) { next(err); }
 }
@@ -45,6 +60,13 @@ async function updateEmployee(req, res, next) {
 async function deactivateEmployee(req, res, next) {
   try {
     const result = await service.deactivateEmployee(req.params.id);
+    logAudit({
+      req,
+      module: 'HR',
+      action: 'DEACTIVATE_EMPLOYEE',
+      entityId: req.params.id,
+      details: `Deactivated employee ID: ${req.params.id}`
+    });
     res.json(result);
   } catch (err) { next(err); }
 }
