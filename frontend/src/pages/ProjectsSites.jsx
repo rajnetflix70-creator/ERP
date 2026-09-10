@@ -428,7 +428,7 @@ export default function ProjectsSites({ initialTab }) {
         client.get('/sites')
       ]);
 
-      if (projRes.status === 'fulfilled' && Array.isArray(projRes.value.data) && projRes.value.data.length > 0) {
+      if (projRes.status === 'fulfilled' && Array.isArray(projRes.value.data)) {
         const mappedProjects = projRes.value.data.map(p => ({
           id: p.id,
           code: p.folder_no || p.ak_job_no || 'PRJ-101',
@@ -448,10 +448,10 @@ export default function ProjectsSites({ initialTab }) {
         setProjects(mappedProjects);
       }
 
-      if (siteRes.status === 'fulfilled' && Array.isArray(siteRes.value.data) && siteRes.value.data.length > 0) {
+      if (siteRes.status === 'fulfilled' && Array.isArray(siteRes.value.data)) {
         const mappedSites = siteRes.value.data.map(s => ({
           id: s.id,
-          code: s.site_code || 'S-001',
+          code: s.code || s.site_code || 'S-001',
           name: s.name || 'Site',
           project: s.project_name || 'Project',
           location: s.emirate || 'Chennai',
@@ -466,7 +466,7 @@ export default function ProjectsSites({ initialTab }) {
         setSites(mappedSites);
       }
     } catch (err) {
-      console.warn('API data fetch failed, using sample data:', err);
+      console.warn('API data fetch failed:', err);
     } finally {
       setLoading(false);
     }

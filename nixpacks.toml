@@ -8,4 +8,4 @@ nixPkgs = ["nodejs-20_x"]
 cmds = ["cd frontend && npm ci && npm run build", "cd backend && npm ci --only=production"]
 
 [start]
-cmd = "cd backend && npm run migrate && npm run seed && npm start"
+cmd = "cd backend && npm run migrate && npm start"
