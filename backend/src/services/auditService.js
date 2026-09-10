@@ -119,8 +119,8 @@ async function getAuditLogs(filters = {}) {
   }
 
   // Clone for count
-  const countQuery = query.clone().count('id as total').first();
-  const [{ total }] = await countQuery;
+  const countRes = await query.clone().count('id as total').first();
+  const total = parseInt(countRes?.total || countRes?.count || 0);
 
   const logs = await query
     .orderBy('created_at', 'desc')
