@@ -25,12 +25,24 @@ function sanitizeProjectData(data) {
     'has_stressing_machine', 'has_onion_machine', 'has_gun_machine',
     'has_grouting_machine', 'notes', 'is_active', 'client_name',
     'start_date', 'planned_end_date', 'actual_end_date', 'completion_pct',
-    'priority', 'site_id', 'client_id'
+    'priority', 'site_id', 'client_id', 'budget', 'currency', 'location'
   ];
   const clean = {};
   allowed.forEach(k => {
     if (data[k] !== undefined) clean[k] = data[k] === '' ? null : data[k];
   });
+  if (data.name && !clean.project_name) clean.project_name = data.name;
+  if (data.code) {
+    if (!clean.folder_no) clean.folder_no = data.code;
+    if (!clean.ak_job_no) clean.ak_job_no = data.code;
+  }
+  if (data.location && !clean.emirate) clean.emirate = data.location;
+  if (clean.status && !['pending', 'active', 'needs_supervisor', 'completed', 'grouting_pending', 'stopped', 'strengthening'].includes(clean.status)) {
+    // Map non-standard statuses safely if check constraint is still in effect
+    if (clean.status === 'planning') clean.status = 'pending';
+    else if (clean.status === 'in_progress') clean.status = 'active';
+    else if (clean.status === 'on_hold') clean.status = 'stopped';
+  }
   return clean;
 }
 
