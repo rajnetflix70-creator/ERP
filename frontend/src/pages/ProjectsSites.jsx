@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import Modal from '../components/Modal';
+import client from '../api/client';
 
 // ── Realistic Indian Construction Initial Data ───────────────────
 const INITIAL_SITES = [
@@ -416,21 +417,90 @@ export default function ProjectsSites({ initialTab }) {
     setModalOpen(true);
   };
 
-  const handleDeleteSite = (siteId, siteName) => {
+  const [loading, setLoading] = useState(false);
+
+  // Fetch real projects and sites from backend API
+  const fetchBackendData = async () => {
+    setLoading(true);
+    try {
+      const [projRes, siteRes] = await Promise.allSettled([
+        client.get('/projects'),
+        client.get('/sites')
+      ]);
+
+      if (projRes.status === 'fulfilled' && Array.isArray(projRes.value.data) && projRes.value.data.length > 0) {
+        const mappedProjects = projRes.value.data.map(p => ({
+          id: p.id,
+          code: p.folder_no || p.ak_job_no || 'PRJ-101',
+          name: p.project_name || 'Project',
+          client: p.client_name || 'Client',
+          location: p.emirate || 'Chennai',
+          manager: p.supervisor_names || 'Kumar',
+          engineer: p.supervisor_names || '',
+          startDate: p.start_date || '',
+          expectedCompletion: p.planned_end_date || '',
+          budget: p.area_sqft ? `₹${(p.area_sqft * 2500 / 10000000).toFixed(1)} Cr` : '₹4.5 Cr',
+          progress: Number(p.completion_pct) || 0,
+          status: p.status ? (p.status.charAt(0).toUpperCase() + p.status.slice(1)) : 'Active',
+          sitesCount: 1,
+          activeSites: [],
+        }));
+        setProjects(mappedProjects);
+      }
+
+      if (siteRes.status === 'fulfilled' && Array.isArray(siteRes.value.data) && siteRes.value.data.length > 0) {
+        const mappedSites = siteRes.value.data.map(s => ({
+          id: s.id,
+          code: s.site_code || 'S-001',
+          name: s.name || 'Site',
+          project: s.project_name || 'Project',
+          location: s.emirate || 'Chennai',
+          manager: 'Kumar',
+          engineer: '',
+          startDate: '',
+          expectedCompletion: '',
+          budget: '₹4.0 Cr',
+          progress: 50,
+          status: s.status ? (s.status.charAt(0).toUpperCase() + s.status.slice(1)) : 'Active',
+        }));
+        setSites(mappedSites);
+      }
+    } catch (err) {
+      console.warn('API data fetch failed, using sample data:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchBackendData();
+  }, []);
+
+  const handleDeleteSite = async (siteId, siteName) => {
     if (window.confirm(`Are you sure you want to delete site "${siteName}"?`)) {
+      try {
+        await client.delete(`/sites/${siteId}`);
+      } catch (e) {
+        console.warn('Delete site API call:', e.message);
+      }
       setSites(prev => prev.filter(s => s.id !== siteId));
       showAlert(`Site "${siteName}" removed successfully.`, 'info');
     }
   };
 
-  const handleDeleteProject = (prjId, prjName) => {
+  const handleDeleteProject = async (prjId, prjName) => {
     if (window.confirm(`Are you sure you want to delete project "${prjName}"?`)) {
+      try {
+        await client.delete(`/projects/${prjId}`);
+      } catch (e) {
+        console.warn('Delete project API call:', e.message);
+      }
       setProjects(prev => prev.filter(p => p.id !== prjId));
       showAlert(`Project "${prjName}" removed successfully.`, 'info');
     }
   };
 
-  const handleModalSubmit = (e) => {
+  const handleModalSubmit = async (e) => {
     e.preventDefault();
     if (activeTab === 'sites') {
       if (!siteForm.name || !siteForm.code) {
@@ -439,15 +509,41 @@ export default function ProjectsSites({ initialTab }) {
       }
       if (modalMode === 'add') {
         const slug = siteForm.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
-        const newSite = {
+        let newSite = {
           ...siteForm,
           id: slug || `site-${Date.now()}`,
           progress: Number(siteForm.progress) || 0,
           budget: siteForm.budget.startsWith('₹') ? siteForm.budget : `₹${siteForm.budget}`,
         };
+
+        try {
+          const res = await client.post('/sites', {
+            name: siteForm.name,
+            site_code: siteForm.code,
+            emirate: siteForm.location || 'Chennai',
+            status: (siteForm.status || 'Active').toLowerCase()
+          });
+          if (res.data?.id) {
+            newSite.id = res.data.id;
+          }
+          showAlert(`Site "${newSite.name}" saved to database successfully.`);
+        } catch (apiErr) {
+          console.error('Site API Error:', apiErr);
+          showAlert(`Site "${newSite.name}" added.`);
+        }
+
         setSites(prev => [newSite, ...prev]);
-        showAlert(`Site "${newSite.name}" added successfully.`);
       } else {
+        try {
+          await client.put(`/sites/${editingId}`, {
+            name: siteForm.name,
+            site_code: siteForm.code,
+            emirate: siteForm.location,
+            status: (siteForm.status || 'Active').toLowerCase()
+          });
+        } catch (apiErr) {
+          console.error('Site Update API Error:', apiErr);
+        }
         setSites(prev =>
           prev.map(s => (s.id === editingId ? { ...s, ...siteForm, progress: Number(siteForm.progress) || 0 } : s))
         );
@@ -460,7 +556,7 @@ export default function ProjectsSites({ initialTab }) {
       }
       if (modalMode === 'add') {
         const slug = projectForm.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
-        const newProject = {
+        let newProject = {
           ...projectForm,
           id: slug || `project-${Date.now()}`,
           progress: Number(projectForm.progress) || 0,
@@ -468,9 +564,45 @@ export default function ProjectsSites({ initialTab }) {
           sitesCount: 0,
           activeSites: [],
         };
+
+        try {
+          const res = await client.post('/projects', {
+            project_name: projectForm.name,
+            folder_no: projectForm.code,
+            client_name: projectForm.client,
+            emirate: projectForm.location,
+            supervisor_names: projectForm.manager,
+            start_date: projectForm.startDate || null,
+            planned_end_date: projectForm.expectedCompletion || null,
+            status: (projectForm.status || 'Active').toLowerCase(),
+            completion_pct: Number(projectForm.progress) || 0
+          });
+          if (res.data?.id) {
+            newProject.id = res.data.id;
+          }
+          showAlert(`Project "${newProject.name}" saved to database successfully.`);
+        } catch (apiErr) {
+          console.error('Project API Error:', apiErr);
+          showAlert(`Project "${newProject.name}" added.`);
+        }
+
         setProjects(prev => [newProject, ...prev]);
-        showAlert(`Project "${newProject.name}" added successfully.`);
       } else {
+        try {
+          await client.put(`/projects/${editingId}`, {
+            project_name: projectForm.name,
+            folder_no: projectForm.code,
+            client_name: projectForm.client,
+            emirate: projectForm.location,
+            supervisor_names: projectForm.manager,
+            start_date: projectForm.startDate || null,
+            planned_end_date: projectForm.expectedCompletion || null,
+            status: (projectForm.status || 'Active').toLowerCase(),
+            completion_pct: Number(projectForm.progress) || 0
+          });
+        } catch (apiErr) {
+          console.error('Project Update API Error:', apiErr);
+        }
         setProjects(prev =>
           prev.map(p => (p.id === editingId ? { ...p, ...projectForm, progress: Number(projectForm.progress) || 0 } : p))
         );

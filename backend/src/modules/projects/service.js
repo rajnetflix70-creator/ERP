@@ -23,7 +23,9 @@ function sanitizeProjectData(data) {
     'supervisor_names', 'supervisors_assigned', 'supervisors_required',
     'technicians_required', 'supervisors_available_march', 'status',
     'has_stressing_machine', 'has_onion_machine', 'has_gun_machine',
-    'has_grouting_machine', 'notes', 'is_active'
+    'has_grouting_machine', 'notes', 'is_active', 'client_name',
+    'start_date', 'planned_end_date', 'actual_end_date', 'completion_pct',
+    'priority', 'site_id', 'client_id'
   ];
   const clean = {};
   allowed.forEach(k => {
