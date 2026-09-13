@@ -223,6 +223,7 @@ export default function ProjectsSites({ initialTab }) {
             engineer: p.engineer || '',
             startDate: p.start_date || '',
             expectedCompletion: p.planned_end_date || p.expectedCompletion || '',
+            rawBudget: Number(p.budget) || (p.area_sqft ? p.area_sqft * 2500 : 0) || 0,
             budget: p.budget ? (p.currency ? `${p.currency} ${Number(p.budget).toLocaleString()}` : `₹${Number(p.budget).toLocaleString()}`) : (p.area_sqft ? `₹${(p.area_sqft * 2500 / 10000000).toFixed(1)} Cr` : '-'),
             progress: Number(p.completion_pct) || 0,
             status: p.status ? (p.status.charAt(0).toUpperCase() + p.status.slice(1).replace('_', ' ')) : 'Active',
@@ -246,6 +247,7 @@ export default function ProjectsSites({ initialTab }) {
             engineer: s.engineer || '',
             startDate: s.startDate || '',
             expectedCompletion: s.expectedCompletion || '',
+            rawBudget: Number(String(s.budget || '').replace(/[^0-9.-]+/g, '')) || 0,
             budget: s.budget ? (s.budget.toString().startsWith('₹') ? s.budget : `₹${s.budget}`) : '-',
             progress: Number(s.progress || s.completion_pct) || 0,
             status: s.status ? (s.status.charAt(0).toUpperCase() + s.status.slice(1).replace('_', ' ')) : 'Active',
@@ -428,12 +430,19 @@ export default function ProjectsSites({ initialTab }) {
     return <span className="badge badge-default">{status}</span>;
   };
 
-  // Progress Bar color helper
-  const getProgressColor = (pct) => {
-    if (pct >= 75) return '#22c55e'; // success green
-    if (pct >= 40) return '#2563eb'; // brand blue
-    return '#f59e0b'; // warning orange
-  };
+  // Dynamic total budget / project value calculation
+  const totalBudgetOrValue = useMemo(() => {
+    const list = activeTab === 'sites' ? sites : projects;
+    if (!list || list.length === 0) return '₹0';
+    const sum = list.reduce((acc, item) => {
+      const b = item.rawBudget ?? (Number(String(item.budget || '').replace(/[^0-9.-]+/g, '')) || 0);
+      return acc + b;
+    }, 0);
+    if (sum === 0) return '₹0';
+    if (sum >= 10000000) return `₹${(sum / 10000000).toFixed(1)} Cr`;
+    if (sum >= 100000) return `₹${(sum / 100000).toFixed(1)} L`;
+    return `₹${Number(sum).toLocaleString()}`;
+  }, [activeTab, sites, projects]);
 
   return (
     <div className="page-container" style={{ paddingBottom: '40px' }}>
@@ -522,7 +531,7 @@ export default function ProjectsSites({ initialTab }) {
             <span style={{ fontSize: '1.2rem' }}>💰</span>
           </div>
           <div className="stat-number" style={{ marginTop: '8px', color: '#1e293b' }}>
-            {activeTab === 'sites' ? '₹38.1 Cr' : '₹187.5 Cr'}
+            {totalBudgetOrValue}
           </div>
           <div style={{ fontSize: '0.78rem', color: '#64748b', marginTop: '4px' }}>
             Estimated construction allocation
