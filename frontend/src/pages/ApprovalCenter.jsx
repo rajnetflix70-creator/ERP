@@ -36,36 +36,65 @@ const ApprovalCenter = () => {
 
         if (!isMounted) return;
 
+        // 1. Material Requests
+        let mappedMR = [];
         if (mrRes.status === 'fulfilled') {
           const raw = mrRes.value?.data?.data?.data || mrRes.value?.data?.data || mrRes.value?.data || [];
           if (Array.isArray(raw)) {
-            const mapped = raw.map(m => ({
+            mappedMR = raw.map(m => ({
               id: m.id,
-              request_no: m.mr_number || m.pr_number || `MR-${m.id?.slice(0, 6)}`,
+              request_no: m.mr_number || m.request_number || m.request_no || m.pr_number || `MR-${m.id?.slice(0, 6)}`,
               site: m.site_name || m.site || '-',
-              site_full: m.site_name || '-',
+              site_full: m.site_name || m.site || '-',
               project_name: m.project_name || '-',
-              requested_by: m.requester_name || m.requested_by || 'Staff',
-              requested_by_role: 'Site Engineer',
+              requested_by: m.requested_by_name || m.requester_name || m.requested_by || 'Staff',
+              requested_by_role: m.requested_by_role || 'Site Engineer',
               amount: Number(m.total_amount || m.estimated_cost || m.amount || 0),
-              date: m.created_at ? new Date(m.created_at).toLocaleDateString('en-GB') : '-',
-              date_needed: m.required_date ? new Date(m.required_date).toLocaleDateString('en-GB') : '-',
-              priority: m.priority || 'Normal',
-              status: (m.status || 'pending').toLowerCase() === 'pending' ? 'Pending Approval' : (m.status.charAt(0).toUpperCase() + m.status.slice(1)),
+              date: m.created_at ? (typeof m.created_at === 'string' && m.created_at.includes('T') ? new Date(m.created_at).toLocaleDateString('en-GB') : m.created_at) : (m.date || '-'),
+              date_needed: m.required_date ? (typeof m.required_date === 'string' && m.required_date.includes('-') ? new Date(m.required_date).toLocaleDateString('en-GB') : m.required_date) : '-',
+              priority: m.priority ? (m.priority.charAt(0).toUpperCase() + m.priority.slice(1)) : 'Normal',
+              status: (m.status || 'pending').toLowerCase().includes('approved') ? 'Approved' : 'Pending Approval',
               purpose: m.purpose || m.remarks || 'Material Request',
               delivery_location: m.delivery_location || '-',
               boq_allowance: 'Standard quota',
               materials: Array.isArray(m.items) ? m.items : [],
-              timeline: []
+              timeline: m.timeline || []
             }));
-            setMaterialRequests(mapped);
           }
         }
 
+        const localMR = JSON.parse(localStorage.getItem('sitetrack_material_requests') || '[]');
+        const localMappedMR = localMR.map(m => ({
+          id: m.id,
+          request_no: m.mr_number || m.request_number || m.request_no || `MR-${m.id?.slice(0, 6)}`,
+          site: m.site || m.site_name || '-',
+          site_full: m.site || m.site_name || '-',
+          project_name: m.project_name || '-',
+          requested_by: m.requested_by_name || m.requested_by || 'Site Engineer',
+          requested_by_role: m.requested_by_role || 'Site Engineer',
+          amount: Number(m.amount || m.total_amount || 0),
+          date: m.date || (m.created_at ? new Date(m.created_at).toLocaleDateString('en-GB') : '-'),
+          date_needed: m.required_date || '-',
+          priority: m.priority ? (m.priority.charAt(0).toUpperCase() + m.priority.slice(1)) : 'Normal',
+          status: (m.status || 'pending').toLowerCase().includes('approved') ? 'Approved' : 'Pending Approval',
+          purpose: m.purpose || m.remarks || 'Material Request',
+          delivery_location: m.delivery_location || '-',
+          boq_allowance: 'Standard quota',
+          materials: Array.isArray(m.items) ? m.items : [],
+          timeline: m.timeline || []
+        }));
+
+        const existingMRIds = new Set(mappedMR.map(m => String(m.id || m.request_no)));
+        const extraLocalMR = localMappedMR.filter(m => !existingMRIds.has(String(m.id || m.request_no)));
+        const mergedMR = [...extraLocalMR, ...mappedMR];
+        setMaterialRequests(mergedMR);
+
+        // 2. Purchase Orders
+        let mappedPO = [];
         if (poRes.status === 'fulfilled') {
           const raw = poRes.value?.data?.data?.data || poRes.value?.data?.data || poRes.value?.data || [];
           if (Array.isArray(raw)) {
-            const mapped = raw.map(p => ({
+            mappedPO = raw.map(p => ({
               id: p.id,
               request_no: p.po_number || `PO-${p.id?.slice(0, 6)}`,
               site: p.site_name || '-',
@@ -77,21 +106,23 @@ const ApprovalCenter = () => {
               amount: Number(p.total_amount || 0),
               date: p.po_date || (p.created_at ? new Date(p.created_at).toLocaleDateString('en-GB') : '-'),
               priority: p.priority || 'Normal',
-              status: (p.status || 'draft').toLowerCase() === 'draft' || (p.status || '').toLowerCase() === 'pending' ? 'Pending Approval' : (p.status.charAt(0).toUpperCase() + p.status.slice(1)),
+              status: (p.status || 'draft').toLowerCase().includes('approved') ? 'Approved' : 'Pending Approval',
               purpose: p.notes || 'Purchase Order',
               delivery_location: p.delivery_address || '-',
               boq_allowance: 'PO Contract',
               materials: Array.isArray(p.items) ? p.items : [],
-              timeline: []
+              timeline: p.timeline || []
             }));
-            setPurchaseOrders(mapped);
           }
         }
+        setPurchaseOrders(mappedPO);
 
+        // 3. Goods Receipt Notes (GRN)
+        let mappedGRN = [];
         if (grnRes.status === 'fulfilled') {
           const raw = grnRes.value?.data?.data?.data || grnRes.value?.data?.data || grnRes.value?.data || [];
           if (Array.isArray(raw)) {
-            const mapped = raw.map(g => ({
+            mappedGRN = raw.map(g => ({
               id: g.id,
               request_no: g.grn_number || g.grn_no || `GRN-${g.id?.slice(0, 6)}`,
               site: g.site_name || '-',
@@ -103,16 +134,17 @@ const ApprovalCenter = () => {
               amount: Number(g.total_amount || 0),
               date: g.received_at || g.date || (g.created_at ? new Date(g.created_at).toLocaleDateString('en-GB') : '-'),
               priority: 'Normal',
-              status: (g.status || 'pending').toLowerCase() === 'pending' ? 'Pending Approval' : (g.status.charAt(0).toUpperCase() + g.status.slice(1)),
+              status: (g.status || 'pending').toLowerCase().includes('approved') ? 'Approved' : 'Pending Approval',
               purpose: g.remarks || 'Goods Received Note',
               delivery_location: g.site_name || '-',
               boq_allowance: 'Delivery Inward',
               materials: Array.isArray(g.items) ? g.items : [],
-              timeline: []
+              timeline: g.timeline || []
             }));
-            setGrnList(mapped);
           }
         }
+        setGrnList(mappedGRN);
+
       } catch (err) {
         console.warn('Error fetching approvals:', err);
       } finally {
