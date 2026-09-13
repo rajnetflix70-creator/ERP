@@ -37,7 +37,7 @@ const MaterialRequest = () => {
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
 
-  // Fetch from API
+  // Fetch from API & local storage fallback
   useEffect(() => {
     let isMounted = true;
     const fetchApiData = async () => {
@@ -45,31 +45,40 @@ const MaterialRequest = () => {
         setLoading(true);
         const res = await client.get('/material-requests?limit=200');
         const raw = res.data?.data?.data || res.data?.data || res.data || [];
-        if (!isMounted) return;
+        const localStored = JSON.parse(localStorage.getItem('sitetrack_material_requests') || '[]');
+
+        let mapped = [];
         if (Array.isArray(raw)) {
-          const mapped = raw.map(item => ({
+          mapped = raw.map(item => ({
             id: item.id,
-            mr_number: item.mr_number || item.pr_number || `MR-${item.id?.slice(0, 6)}`,
+            mr_number: item.mr_number || item.request_number || item.request_no || item.pr_number || `MR-${item.id?.slice(0, 6)}`,
             site: item.site_name || item.site || '-',
             project_name: item.project_name || '-',
-            requested_by: item.requester_name || item.requested_by || 'Site Engineer',
+            requested_by: item.requested_by_name || item.requester_name || item.requested_by || 'Site Engineer',
             requested_by_role: 'Site Engineer',
             amount: Number(item.total_amount || item.amount || 0),
             created_at: item.created_at || new Date().toISOString(),
             date: item.created_at ? new Date(item.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '-',
-            required_date: item.required_date ? new Date(item.required_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '-',
+            required_date: item.required_date ? (typeof item.required_date === 'string' && item.required_date.includes('-') ? new Date(item.required_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : item.required_date) : '-',
             priority: item.priority ? item.priority.charAt(0).toUpperCase() + item.priority.slice(1) : 'Normal',
             status: item.status ? (item.status.charAt(0).toUpperCase() + item.status.slice(1).replace('_', ' ')) : 'Pending',
             purpose: item.purpose || item.remarks || '-',
-            material_summary: item.material_summary || (item.items?.length ? `${item.items.length} items` : 'Materials'),
+            material_summary: item.material_summary || (item.items?.length ? `${item.items[0]?.name || 'Material'} (${item.items.length} items)` : (item.material_name || 'Materials')),
             more_items_count: item.items?.length > 1 ? item.items.length - 1 : 0,
             items: Array.isArray(item.items) ? item.items : [],
             remarks: item.remarks || ''
           }));
-          setRequests(mapped);
         }
+
+        const existingIds = new Set(mapped.map(m => String(m.id || m.mr_number)));
+        const extraLocal = localStored.filter(m => !existingIds.has(String(m.id || m.mr_number)));
+        const mergedAll = [...extraLocal, ...mapped];
+
+        if (isMounted) setRequests(mergedAll);
       } catch (err) {
         console.warn('Error fetching material requests:', err);
+        const localStored = JSON.parse(localStorage.getItem('sitetrack_material_requests') || '[]');
+        if (isMounted && localStored.length > 0) setRequests(localStored);
       } finally {
         if (isMounted) setLoading(false);
       }

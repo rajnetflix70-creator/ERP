@@ -14,6 +14,17 @@ const COMMON_PURPOSES = [
   'Flooring & Tiling Work',
 ];
 
+const DEFAULT_MATERIALS_CATALOG = [
+  { id: 'mat-1001', code: 'MAT-1001', name: 'OPC Cement 53 Grade', category: 'Cement', unit_of_measure: 'Bag', unit: 'Bag', current_rate: 380, standard_rate: 380 },
+  { id: 'mat-1002', code: 'MAT-1002', name: 'TMT Steel Bars 12mm Fe550D', category: 'Steel', unit_of_measure: 'Ton', unit: 'Ton', current_rate: 2850, standard_rate: 2850 },
+  { id: 'mat-1003', code: 'MAT-1003', name: 'Deformed Reinforcement Bars 16mm', category: 'Steel', unit_of_measure: 'Ton', unit: 'Ton', current_rate: 2900, standard_rate: 2900 },
+  { id: 'mat-1004', code: 'MAT-1004', name: 'Ready Mix Concrete M30 Grade', category: 'Aggregate', unit_of_measure: 'Cu.M', unit: 'Cu.M', current_rate: 240, standard_rate: 240 },
+  { id: 'mat-1005', code: 'MAT-1005', name: 'Plaster Sand / M-Sand (Washed)', category: 'Sand', unit_of_measure: 'Ton', unit: 'Ton', current_rate: 85, standard_rate: 85 },
+  { id: 'mat-1006', code: 'MAT-1006', name: 'Hollow Concrete Blocks 200mm', category: 'Masonry', unit_of_measure: 'Nos', unit: 'Nos', current_rate: 4.5, standard_rate: 4.5 },
+  { id: 'mat-1007', code: 'MAT-1007', name: 'Exterior Acrylic Enamel Paint (White)', category: 'Paint', unit_of_measure: 'Litre', unit: 'Litre', current_rate: 45, standard_rate: 45 },
+  { id: 'mat-1008', code: 'MAT-1008', name: 'PVC Rigid Conduit Pipes 25mm', category: 'Electrical', unit_of_measure: 'Mtr', unit: 'Mtr', current_rate: 12, standard_rate: 12 },
+];
+
 const CreateMaterialRequest = ({ isModal = false, onClose = null, onSuccess = null }) => {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -25,7 +36,7 @@ const CreateMaterialRequest = ({ isModal = false, onClose = null, onSuccess = nu
   };
 
   const [sitesList, setSitesList] = useState([]);
-  const [materialsCatalog, setMaterialsCatalog] = useState([]);
+  const [materialsCatalog, setMaterialsCatalog] = useState(DEFAULT_MATERIALS_CATALOG);
   const [site, setSite] = useState('');
   const [requestedBy, setRequestedBy] = useState(user?.full_name || 'Site Engineer');
   const [requiredDate, setRequiredDate] = useState(getDefaultRequiredDate());
@@ -40,7 +51,7 @@ const CreateMaterialRequest = ({ isModal = false, onClose = null, onSuccess = nu
   const [submitting, setSubmitting] = useState(false);
   const [notification, setNotification] = useState(null);
 
-  // Load live sites and materials
+  // Load live sites and materials from API & Material Master fallback
   useEffect(() => {
     const loadMasters = async () => {
       try {
@@ -61,13 +72,20 @@ const CreateMaterialRequest = ({ isModal = false, onClose = null, onSuccess = nu
 
         let loadedMats = [];
         if (matRes.status === 'fulfilled') {
-          const rawM = matRes.value.data?.data?.data || matRes.value.data?.data || matRes.value.data || [];
+          const rawM = matRes.value.data?.data?.materials || matRes.value.data?.materials || matRes.value.data?.data || matRes.value.data || [];
           if (Array.isArray(rawM)) loadedMats = rawM;
         }
-        setMaterialsCatalog(loadedMats);
 
-        if (loadedMats.length > 0 && materials.length === 0) {
-          const first = loadedMats[0];
+        const localMats = JSON.parse(localStorage.getItem('sitetrack_materials_fallback') || '[]');
+        const existingIds = new Set(loadedMats.map(m => String(m.id)));
+        const extraLocal = localMats.filter(m => !existingIds.has(String(m.id)));
+        const combined = [...loadedMats, ...extraLocal];
+
+        const finalCatalog = combined.length > 0 ? combined : DEFAULT_MATERIALS_CATALOG;
+        setMaterialsCatalog(finalCatalog);
+
+        if (finalCatalog.length > 0) {
+          const first = finalCatalog[0];
           setMaterials([
             {
               id: Date.now(),
@@ -75,7 +93,7 @@ const CreateMaterialRequest = ({ isModal = false, onClose = null, onSuccess = nu
               name: first.name,
               quantity: 1,
               unit: first.unit_of_measure || first.unit || 'Nos',
-              estRate: Number(first.unit_price || first.cost_price || 100),
+              estRate: Number(first.current_rate || first.standard_rate || first.unit_price || first.cost_price || 100),
               required_date: getDefaultRequiredDate(),
               remarks: '',
             }
@@ -97,14 +115,14 @@ const CreateMaterialRequest = ({ isModal = false, onClose = null, onSuccess = nu
   }, [site, sitesList]);
 
   const handleAddRow = () => {
-    const defaultMat = materialsCatalog[0] || { id: `mat-${Date.now()}`, name: 'New Material', unit: 'Nos', estRate: 100 };
+    const defaultMat = materialsCatalog[0] || DEFAULT_MATERIALS_CATALOG[0];
     const newRow = {
-      id: Date.now(),
+      id: Date.now() + Math.random(),
       material_id: defaultMat.id,
       name: defaultMat.name,
       quantity: 1,
       unit: defaultMat.unit_of_measure || defaultMat.unit || 'Nos',
-      estRate: Number(defaultMat.unit_price || defaultMat.cost_price || 100),
+      estRate: Number(defaultMat.current_rate || defaultMat.standard_rate || defaultMat.unit_price || defaultMat.cost_price || 100),
       required_date: requiredDate,
       remarks: '',
     };
@@ -130,7 +148,7 @@ const CreateMaterialRequest = ({ isModal = false, onClose = null, onSuccess = nu
           material_id: selected.id,
           name: selected.name,
           unit: selected.unit_of_measure || selected.unit || 'Nos',
-          estRate: Number(selected.unit_price || selected.cost_price || 100),
+          estRate: Number(selected.current_rate || selected.standard_rate || selected.unit_price || selected.cost_price || 100),
         };
       }
       return row;
@@ -476,15 +494,11 @@ const CreateMaterialRequest = ({ isModal = false, onClose = null, onSuccess = nu
                             onChange={e => handleMaterialChange(row.id, e.target.value)}
                             style={{ fontSize: '0.82rem', padding: '6px 8px' }}
                           >
-                            {materialsCatalog.length === 0 ? (
-                              <option value={row.material_id}>{row.name}</option>
-                            ) : (
-                              materialsCatalog.map(m => (
-                                <option key={m.id} value={m.id}>
-                                  {m.name}
-                                </option>
-                              ))
-                            )}
+                            {materialsCatalog.map(m => (
+                              <option key={m.id} value={m.id}>
+                                {m.code ? `${m.code} - ${m.name}` : m.name}
+                              </option>
+                            ))}
                           </select>
                         </td>
                         <td>
