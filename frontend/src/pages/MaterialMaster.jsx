@@ -19,7 +19,7 @@ const MaterialMaster = () => {
     unit: 'Nos',
     brand: '',
     spec: '',
-    gst: 18,
+    gst: 0,
     min_stock: 10,
     current_rate: '',
     status: 'Active'
@@ -43,7 +43,7 @@ const MaterialMaster = () => {
           unit: m.unit || m.unit_of_measure || 'Nos',
           brand: m.brand || '',
           spec: m.spec || m.specification || '',
-          gst: m.gst_rate || m.gst || 18,
+          gst: m.gst_rate !== undefined ? m.gst_rate : (m.gst !== undefined ? m.gst : 0),
           min_stock: m.min_stock || m.minimum_stock || m.reorder_level || 0,
           current_rate: m.standard_rate || m.current_rate || m.unit_price || 0,
           status: m.is_active !== false ? 'Active' : 'Inactive'
@@ -89,7 +89,7 @@ const MaterialMaster = () => {
       unit: 'Nos',
       brand: '',
       spec: '',
-      gst: 18,
+      gst: 0,
       min_stock: 10,
       current_rate: '',
       status: 'Active'
@@ -99,7 +99,19 @@ const MaterialMaster = () => {
 
   const handleOpenEdit = (item) => {
     setEditingItem(item);
-    setFormData({ ...item });
+    setFormData({
+      code: item.code || '',
+      name: item.name || '',
+      category: item.category || 'General',
+      subcategory: item.subcategory || '',
+      unit: item.unit || 'Nos',
+      brand: item.brand || '',
+      spec: item.spec || '',
+      gst: item.gst !== undefined && item.gst !== null ? Number(item.gst) : 0,
+      min_stock: item.min_stock !== undefined ? item.min_stock : 10,
+      current_rate: item.current_rate !== undefined ? item.current_rate : '',
+      status: item.status || 'Active'
+    });
     setModalOpen(true);
   };
 
