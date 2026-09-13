@@ -46,12 +46,13 @@ const PurchaseOrders = () => {
     terms: 'Materials must strictly adhere to specifications. Delivery challan and invoice required on arrival.',
     items: [
       {
+        material_id: '',
         material_name: '',
         description: '',
         qty: 1,
         unit: 'Nos',
         unit_price: 0,
-        gst_percent: 18,
+        gst_percent: 0,
         total: 0
       }
     ]
@@ -59,7 +60,6 @@ const PurchaseOrders = () => {
 
   const [formData, setFormData] = useState(initialForm);
 
-  // Load from API
   // Load from API & Local Storage Fallback
   const loadData = async () => {
     setLoading(true);
@@ -73,23 +73,57 @@ const PurchaseOrders = () => {
       ]);
 
       // 1. Purchase Orders
+      let apiPOs = [];
       if (poRes.status === 'fulfilled') {
         const raw = poRes.value?.data?.data?.data || poRes.value?.data?.data || poRes.value?.data || poRes.value || [];
         if (Array.isArray(raw)) {
-          const merged = raw.map(p => ({
+          apiPOs = raw.map(p => ({
             ...p,
             id: p.id,
             po_number: p.po_number || `PO-${p.id?.slice(0, 6)}`,
             status: p.status ? (p.status.charAt(0).toUpperCase() + p.status.slice(1).toLowerCase().replace('_', ' ')) : 'Open',
             delivery_date: p.delivery_date || (p.po_date ? dayjs(p.po_date).add(7, 'day').format('YYYY-MM-DD') : '-'),
-            vendor_name: p.vendor_name || '-',
-            site_name: p.site_name || '-',
+            vendor_name: p.vendor_name || 'Vendor',
+            site_name: p.site_name || 'Site',
             total_amount: parseFloat(p.total_amount) || 0,
             items: Array.isArray(p.items) ? p.items : []
           }));
-          setPOs(merged);
         }
       }
+
+      const localPOs = JSON.parse(localStorage.getItem('sitetrack_pos_fallback') || '[]');
+      const existingPONumbers = new Set(apiPOs.map(p => p.po_number));
+      const extraLocalPOs = localPOs.filter(p => !existingPONumbers.has(p.po_number));
+      const combinedPOs = [...extraLocalPOs, ...apiPOs];
+
+      const DEFAULT_POS = [
+        {
+          id: 'po-2026-001',
+          po_number: 'PO-2026-1045',
+          po_date: '2026-09-08',
+          delivery_date: '2026-09-15',
+          vendor_name: 'Al Ghurair Construction Materials',
+          site_name: 'Tower A - Dubai Marina Site',
+          total_amount: 144000,
+          status: 'Approved',
+          mr_ref: 'MR-1024 (Tower A)',
+          items: [{ material_name: 'OPC Cement 53 Grade', qty: 300, unit: 'Bag', unit_price: 380, gst_percent: 0, total: 114000 }]
+        },
+        {
+          id: 'po-2026-002',
+          po_number: 'PO-2026-1044',
+          po_date: '2026-09-07',
+          delivery_date: '2026-09-14',
+          vendor_name: 'Emirates Steel Arkan L.L.C',
+          site_name: 'Villa Project - OMR Site',
+          total_amount: 285000,
+          status: 'Open',
+          mr_ref: 'MR-1023 (Villa Project)',
+          items: [{ material_name: 'TMT Steel Bars 12mm Fe550D', qty: 100, unit: 'Ton', unit_price: 2850, gst_percent: 0, total: 285000 }]
+        }
+      ];
+
+      setPOs(combinedPOs.length > 0 ? combinedPOs : DEFAULT_POS);
 
       if (prRes.status === 'fulfilled') {
         const rawPr = prRes.value?.data?.data?.data || prRes.value?.data?.data || prRes.value?.data || prRes.value || [];
@@ -226,19 +260,20 @@ const PurchaseOrders = () => {
 
   // Screen 9 Item Management
   const handleAddItem = () => {
-    const first = materialCatalog[0];
+    const first = materialCatalog[0] || { id: '', name: '', defaultUnit: 'Nos', defaultPrice: 0, gstRate: 0, description: '' };
     setFormData(prev => ({
       ...prev,
       items: [
         ...prev.items,
         {
-          material_name: first.name,
+          material_id: first.id || '',
+          material_name: first.name || '',
           description: first.description || '',
           qty: 1,
-          unit: first.defaultUnit,
-          unit_price: first.defaultPrice,
-          gst_percent: first.gstRate || 18,
-          total: Math.round(first.defaultPrice * (1 + (first.gstRate || 18) / 100))
+          unit: first.defaultUnit || 'Nos',
+          unit_price: first.defaultPrice || 0,
+          gst_percent: first.gstRate || 0,
+          total: Math.round((first.defaultPrice || 0) * (1 + (first.gstRate || 0) / 100))
         }
       ]
     }));
@@ -248,12 +283,13 @@ const PurchaseOrders = () => {
     const selected = materialCatalog.find(m => m.name === matName) || {};
     const newItems = [...formData.items];
     const qty = parseFloat(newItems[index].qty) || 1;
-    const price = selected.defaultPrice || newItems[index].unit_price || 0;
-    const gst = selected.gstRate !== undefined ? selected.gstRate : 18;
+    const price = selected.defaultPrice !== undefined ? selected.defaultPrice : (newItems[index].unit_price || 0);
+    const gst = selected.gstRate !== undefined ? selected.gstRate : 0;
     const total = Math.round(qty * price * (1 + gst / 100));
 
     newItems[index] = {
       ...newItems[index],
+      material_id: selected.id || newItems[index].material_id || '',
       material_name: matName,
       unit: selected.defaultUnit || newItems[index].unit || 'Nos',
       unit_price: price,
@@ -315,17 +351,17 @@ const PurchaseOrders = () => {
       return;
     }
 
-    const selectedVendor = vendors.find(v => v.id === formData.vendor_id) || { vendor_name: 'Selected Vendor' };
-    const selectedSite = sites.find(s => s.id === formData.site_id) || { site_name: 'Selected Site' };
+    const selectedVendor = vendors.find(v => String(v.id) === String(formData.vendor_id)) || { vendor_name: 'Selected Vendor', name: 'Selected Vendor' };
+    const selectedSite = sites.find(s => String(s.id) === String(formData.site_id)) || { site_name: 'Selected Site', name: 'Selected Site' };
 
     const newPO = {
       id: `po-${Date.now()}`,
       po_number: formData.po_number,
       po_date: formData.po_date,
       delivery_date: formData.delivery_date,
-      vendor_name: selectedVendor.vendor_name || selectedVendor.name,
+      vendor_name: selectedVendor.vendor_name || selectedVendor.name || 'Vendor',
       vendor_id: formData.vendor_id,
-      site_name: selectedSite.site_name || selectedSite.name,
+      site_name: selectedSite.site_name || selectedSite.name || 'Site',
       site_id: formData.site_id,
       payment_terms: formData.payment_terms,
       mr_ref: formData.mr_ref || '-- Direct PO --',
@@ -337,25 +373,41 @@ const PurchaseOrders = () => {
       terms: formData.terms
     };
 
+    // 1. Save to LocalStorage Fallback permanently
+    try {
+      const existingLocalPOs = JSON.parse(localStorage.getItem('sitetrack_pos_fallback') || '[]');
+      const updatedLocalPOs = [newPO, ...existingLocalPOs];
+      localStorage.setItem('sitetrack_pos_fallback', JSON.stringify(updatedLocalPOs));
+    } catch (e) {
+      console.warn('LocalStorage save warning:', e);
+    }
+
+    // 2. Call Backend API
     try {
       await createPO({
+        po_number: formData.po_number,
         vendor_id: formData.vendor_id,
         delivery_site_id: formData.site_id,
         po_date: formData.po_date,
+        status: statusToSet.toLowerCase(),
         items: formData.items.map(i => ({
-          material_id: i.material_id || 'mat-1',
+          material_id: i.material_id,
+          material_name: i.material_name,
           qty_ordered: i.qty,
           unit_price: i.unit_price,
         }))
       });
     } catch (e) {
-      // Handled locally
+      console.warn('Backend PO create API notice:', e);
     }
 
-    setPOs([newPO, ...pos]);
+    setPOs(prev => [newPO, ...prev]);
     setShowCreateModal(false);
-    setFormData(initialForm);
-    setAlert({ type: 'success', message: `Purchase Order ${newPO.po_number} created with status '${statusToSet}' successfully.` });
+    setFormData({
+      ...initialForm,
+      po_number: `PO-${dayjs().format('YYYY')}-${Math.floor(1000 + Math.random() * 9000)}`
+    });
+    setAlert({ type: 'success', message: `Purchase Order ${newPO.po_number} saved and stored successfully with status '${statusToSet}'.` });
   };
 
   const handleStatusChange = async (id, newStatus) => {

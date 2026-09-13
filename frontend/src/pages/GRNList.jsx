@@ -88,12 +88,15 @@ const GRNList = () => {
         }
       }
 
+      let apiPOs = [];
       if (poData.status === 'fulfilled') {
         const rawPos = poData.value?.data?.data?.data || poData.value?.data?.data || poData.value?.data || poData.value || [];
-        if (Array.isArray(rawPos)) {
-          setAvailablePOs(rawPos);
-        }
+        if (Array.isArray(rawPos)) apiPOs = rawPos;
       }
+      const localPOs = JSON.parse(localStorage.getItem('sitetrack_pos_fallback') || '[]');
+      const existingPONumbers = new Set(apiPOs.map(p => p.po_number));
+      const extraLocalPOs = localPOs.filter(p => !existingPONumbers.has(p.po_number));
+      setAvailablePOs([...extraLocalPOs, ...apiPOs]);
     } catch (e) {
       console.warn('Error loading GRN data:', e);
     } finally {

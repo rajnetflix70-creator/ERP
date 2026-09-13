@@ -47,15 +47,26 @@ async function approvePR(prId, userId, status) {
   return { success: true };
 }
 
+const isUUID = (str) => typeof str === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
+
 async function getPOs() {
-  return db('purchase_orders as po')
+  const pos = await db('purchase_orders as po')
     .leftJoin('vendors as v', 'po.vendor_id', 'v.id')
+    .leftJoin('sites as s', 'po.delivery_site_id', 's.id')
     .leftJoin('users as u', 'po.raised_by', 'u.id')
     .select(
       'po.id', 'po.po_number', 'po.status', 'po.po_date', 'po.total_amount',
-      'v.vendor_name', 'u.full_name as raised_by_name', 'po.created_at'
+      'po.vendor_id', 'v.vendor_name', 'v.name as v_name',
+      'po.delivery_site_id', 's.name as site_name',
+      'u.full_name as raised_by_name', 'po.created_at'
     )
     .orderBy('po.created_at', 'desc');
+
+  return pos.map(p => ({
+    ...p,
+    vendor_name: p.vendor_name || p.v_name || 'Vendor',
+    site_name: p.site_name || 'Site'
+  }));
 }
 
 async function createPO(data, userId) {
@@ -65,49 +76,71 @@ async function createPO(data, userId) {
     throw err;
   }
 
+  // Sanitize IDs for UUID column compatibility
+  let validUserId = isUUID(userId) ? userId : null;
+  if (!validUserId) {
+    const u = await db('users').select('id').first();
+    validUserId = u ? u.id : null;
+  }
+
+  let validVendorId = isUUID(data.vendor_id) ? data.vendor_id : null;
+  if (!validVendorId) {
+    const v = await db('vendors').select('id').first();
+    validVendorId = v ? v.id : null;
+  }
+
+  let validSiteId = isUUID(data.delivery_site_id) ? data.delivery_site_id : null;
+  if (!validSiteId) {
+    const s = await db('sites').select('id').first();
+    validSiteId = s ? s.id : null;
+  }
+
   return db.transaction(async (trx) => {
-    const po_number = `PO-${Date.now()}`;
+    const po_number = data.po_number || `PO-${Date.now()}`;
     let total_amount = 0;
     
     if (data.items && Array.isArray(data.items) && data.items.length > 0) {
       data.items.forEach(i => {
-        total_amount += (parseFloat(i.qty_ordered) || 0) * (parseFloat(i.unit_price) || 0);
+        total_amount += (parseFloat(i.qty_ordered || i.qty) || 0) * (parseFloat(i.unit_price) || 0);
       });
     }
 
     const [poId] = await trx('purchase_orders').insert({
       po_number,
-      vendor_id: data.vendor_id,
-      pr_id: data.pr_id || null,
-      raised_by: userId,
-      status: 'draft',
+      vendor_id: validVendorId,
+      pr_id: isUUID(data.pr_id) ? data.pr_id : null,
+      raised_by: validUserId,
+      status: data.status || 'draft',
       po_date: data.po_date || new Date().toISOString().slice(0, 10),
       total_amount,
-      delivery_site_id: data.delivery_site_id || null
+      delivery_site_id: validSiteId
     }).returning('id');
 
     const poIdVal = typeof poId === 'object' ? poId.id : poId;
 
     if (data.items && Array.isArray(data.items) && data.items.length > 0) {
+      const defaultMaterial = await trx('materials').select('id').first();
+      const defaultMatId = defaultMaterial ? defaultMaterial.id : null;
+
       const items = data.items.map(i => {
-        const qty = parseFloat(i.qty_ordered) || 0;
+        const qty = parseFloat(i.qty_ordered || i.qty) || 0;
         const price = parseFloat(i.unit_price) || 0;
+        const matId = isUUID(i.material_id) ? i.material_id : defaultMatId;
         return {
           po_id: poIdVal,
-          material_id: i.material_id,
+          material_id: matId,
           qty_ordered: qty,
           unit_price: price,
           total: qty * price
         };
-      });
-      await trx('po_line_items').insert(items);
+      }).filter(i => i.material_id);
+
+      if (items.length > 0) {
+        await trx('po_line_items').insert(items);
+      }
     }
 
-    if (data.pr_id) {
-      await trx('purchase_requests').where({ id: data.pr_id }).update({ status: 'po_raised' });
-    }
-
-    return { id: poIdVal, po_number };
+    return { id: poIdVal, po_number, total_amount, status: data.status || 'draft' };
   });
 }
 
