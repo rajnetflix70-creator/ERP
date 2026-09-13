@@ -269,7 +269,7 @@ const MaterialRequest = () => {
             </div>
           </div>
           <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '8px' }}>
-            Across 6 active site locations
+            {kpis.total === 0 ? 'No requests recorded' : `${kpis.total} total in database`}
           </div>
         </div>
 
@@ -284,7 +284,7 @@ const MaterialRequest = () => {
             </div>
           </div>
           <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '8px' }}>
-            Awaiting PM / In-Charge review
+            {kpis.pending === 0 ? 'No pending approvals' : 'Awaiting PM / In-Charge review'}
           </div>
         </div>
 
