@@ -151,18 +151,43 @@ async function listVendors() {
 }
 
 async function createVendor(data) {
-  // Strip id (null from frontend) and any undefined fields before inserting
-  const { id, ...rest } = data;
-  const insertData = Object.fromEntries(
-    Object.entries(rest).filter(([_, v]) => v !== undefined && v !== null || typeof v === 'boolean' || typeof v === 'number')
-  );
+  const name = data.vendor_name || data.name || 'New Vendor';
+  const type = data.vendor_type || data.category || data.vendor_category || 'General Supplies';
+
+  const insertData = {
+    vendor_name: name,
+    vendor_type: type,
+    contact_person: data.contact_person || data.contact_name || null,
+    mobile: data.mobile || data.phone || null,
+    email: data.email || null,
+    trn_number: data.trn_number || data.gstin || data.tax_number || null,
+    address: data.address || null,
+    status: data.status ? data.status.toLowerCase() : 'active',
+  };
+
   const [v] = await db('vendors').insert(insertData).returning('*');
   return v;
 }
 
 async function updateVendor(id, data) {
-  const { id: _id, ...rest } = data;
-  const [v] = await db('vendors').where({ id }).update({ ...rest, updated_at: db.fn.now() }).returning('*');
+  const payload = {};
+  if (data.vendor_name || data.name) payload.vendor_name = data.vendor_name || data.name;
+  if (data.vendor_type || data.category) payload.vendor_type = data.vendor_type || data.category;
+  if (data.contact_person !== undefined) payload.contact_person = data.contact_person;
+  if (data.mobile !== undefined || data.phone !== undefined) payload.mobile = data.mobile ?? data.phone;
+  if (data.email !== undefined) payload.email = data.email;
+  if (data.trn_number !== undefined || data.gstin !== undefined || data.tax_number !== undefined) {
+    payload.trn_number = data.trn_number ?? data.gstin ?? data.tax_number;
+  }
+  if (data.status !== undefined) payload.status = typeof data.status === 'string' ? data.status.toLowerCase() : 'active';
+  payload.updated_at = db.fn.now();
+
+  const [v] = await db('vendors').where({ id }).update(payload).returning('*');
+  return v;
+}
+
+async function deleteVendor(id) {
+  const [v] = await db('vendors').where({ id }).update({ status: 'inactive', updated_at: db.fn.now() }).returning('*');
   return v;
 }
 
@@ -197,7 +222,7 @@ module.exports = {
   listBreakdowns, createBreakdown, updateBreakdown,
   listDocuments, createDocument,
   listOperators, createOperator,
-  listVendors, createVendor, updateVendor,
+  listVendors, createVendor, updateVendor, deleteVendor,
   listNotifications, markNotificationRead,
   getReportsData
 };

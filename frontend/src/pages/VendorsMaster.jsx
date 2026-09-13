@@ -27,25 +27,35 @@ const VendorsMaster = () => {
     try {
       const res = await client.get('/vendors?limit=200');
       const raw = res.data?.data?.vendors || res.data?.vendors || res.data?.data || res.data || [];
+      const localVendors = JSON.parse(localStorage.getItem('sitetrack_vendors_fallback') || '[]');
+
+      let mapped = [];
       if (Array.isArray(raw)) {
-        const mapped = raw.map(v => ({
+        mapped = raw.map(v => ({
           id: v.id,
           code: v.code || v.vendor_code || `VEN-${v.id?.slice(0, 6)}`,
           name: v.name || v.vendor_name,
-          category: v.category || 'General Supplies',
+          category: v.category || v.vendor_type || 'General Supplies',
           contact_person: v.contact_person || v.contact_name || '-',
           phone: v.phone || v.mobile || '-',
           email: v.email || '-',
-          gstin: v.gstin || v.tax_number || '-',
+          gstin: v.gstin || v.trn_number || v.tax_number || '-',
           rating: v.rating || 5.0,
-          status: v.is_active !== false ? 'Active' : 'Inactive',
-          total_purchase: v.total_purchase ? `₹${v.total_purchase}` : '₹0',
+          status: v.status ? (v.status.toLowerCase() === 'active' ? 'Active' : 'Inactive') : (v.is_active !== false ? 'Active' : 'Inactive'),
+          total_purchase: v.total_purchase ? `AED ${v.total_purchase}` : 'AED 0',
           open_pos: v.open_pos_count || 0
         }));
-        setVendors(mapped);
       }
+
+      const existingIds = new Set(mapped.map(v => String(v.id)));
+      const extraLocal = localVendors.filter(v => !existingIds.has(String(v.id)));
+      setVendors([...extraLocal, ...mapped]);
     } catch (err) {
       console.warn('Error fetching vendors:', err);
+      const localVendors = JSON.parse(localStorage.getItem('sitetrack_vendors_fallback') || '[]');
+      if (localVendors.length > 0) {
+        setVendors(localVendors);
+      }
     } finally {
       setLoading(false);
     }
@@ -85,44 +95,68 @@ const VendorsMaster = () => {
 
   const handleOpenEdit = (v) => {
     setEditingVendor(v);
-    setFormData({ ...v });
+    setFormData({
+      code: v.code || '',
+      name: v.name || '',
+      category: v.category || 'General Supplies',
+      contact_person: v.contact_person || '',
+      phone: v.phone || '',
+      email: v.email || '',
+      gstin: v.gstin || '',
+      status: v.status || 'Active'
+    });
     setModalOpen(true);
   };
 
   const handleSave = async (e) => {
     e.preventDefault();
+    if (!formData.name || !formData.name.trim()) {
+      alert('Please enter a Vendor / Company Name');
+      return;
+    }
+
+    const payload = {
+      name: formData.name.trim(),
+      vendor_name: formData.name.trim(),
+      code: formData.code,
+      vendor_code: formData.code,
+      category: formData.category,
+      vendor_type: formData.category,
+      contact_person: formData.contact_person,
+      phone: formData.phone,
+      mobile: formData.phone,
+      email: formData.email,
+      gstin: formData.gstin,
+      trn_number: formData.gstin,
+      status: formData.status
+    };
+
     try {
       if (editingVendor) {
-        await client.put(`/vendors/${editingVendor.id}`, {
-          name: formData.name,
-          vendor_name: formData.name,
-          code: formData.code,
-          category: formData.category,
-          contact_person: formData.contact_person,
-          phone: formData.phone,
-          email: formData.email,
-          gstin: formData.gstin
-        });
+        await client.put(`/vendors/${editingVendor.id}`, payload);
       } else {
-        await client.post('/vendors', {
-          name: formData.name,
-          vendor_name: formData.name,
-          code: formData.code,
-          category: formData.category,
-          contact_person: formData.contact_person,
-          phone: formData.phone,
-          email: formData.email,
-          gstin: formData.gstin
-        });
+        await client.post('/vendors', payload);
       }
-      fetchVendors();
+      await fetchVendors();
     } catch (apiErr) {
-      console.warn('Save vendor error:', apiErr);
+      console.warn('Save vendor API error, using local fallback:', apiErr);
+      const savedVendor = {
+        ...formData,
+        id: editingVendor ? editingVendor.id : Date.now(),
+        total_purchase: editingVendor ? (editingVendor.total_purchase || 'AED 0') : 'AED 0',
+        open_pos: editingVendor ? (editingVendor.open_pos || 0) : 0,
+        rating: editingVendor ? (editingVendor.rating || 5.0) : 5.0
+      };
+
       if (editingVendor) {
-        setVendors(vendors.map(v => v.id === editingVendor.id ? { ...formData, id: editingVendor.id } : v));
+        setVendors(vendors.map(v => v.id === editingVendor.id ? savedVendor : v));
       } else {
-        setVendors([{ ...formData, id: Date.now(), total_purchase: '₹0 L', open_pos: 0, rating: 5.0 }, ...vendors]);
+        setVendors([savedVendor, ...vendors]);
       }
+
+      const localVendors = JSON.parse(localStorage.getItem('sitetrack_vendors_fallback') || '[]');
+      const filteredLocal = localVendors.filter(v => String(v.id) !== String(savedVendor.id));
+      localStorage.setItem('sitetrack_vendors_fallback', JSON.stringify([savedVendor, ...filteredLocal]));
     }
     setModalOpen(false);
   };

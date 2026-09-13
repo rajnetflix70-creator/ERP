@@ -18,6 +18,7 @@ const procurementRoutes = require('./modules/procurement/routes');
 const billingRoutes = require('./modules/billing/routes');
 const reportsRoutes = require('./modules/reports/routes');
 const mainStoreRoutes = require('./modules/main_store/routes');
+const vendorRoutes = require('./modules/vendors/routes');
 
 const app = express();
 
@@ -63,6 +64,7 @@ app.use('/api/v1/work-packages', authMiddleware, workPackageRoutes);
 app.use('/api/v1/materials', authMiddleware, materialRoutes);
 app.use('/api/v1/material-requests', authMiddleware, materialRoutes);
 app.use('/api/v1/equipment-machines', authMiddleware, equipmentMachineRoutes);
+app.use('/api/v1/vendors', authMiddleware, vendorRoutes);
 app.use('/api/v1/attendance', authMiddleware, attendanceRoutes);
 app.use('/api/v1/procurement', authMiddleware, procurementRoutes);
 app.use('/api/v1/billing', authMiddleware, billingRoutes);
