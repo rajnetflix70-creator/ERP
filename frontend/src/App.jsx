@@ -39,6 +39,8 @@ import VendorsMaster from './pages/VendorsMaster';
 import InventoryDashboard from './pages/InventoryDashboard';
 import SiteStock from './pages/SiteStock';
 import MaterialConsumption from './pages/MaterialConsumption';
+import StockTransfer from './pages/StockTransfer';
+import StockAdjustment from './pages/StockAdjustment';
 import MaterialConsumptionReport from './pages/MaterialConsumptionReport';
 
 /* HR & Attendance */
@@ -125,10 +127,10 @@ function App() {
 
               {/* ── INVENTORY ── */}
               <Route path="inventory" element={<InventoryDashboard />} />
-              <Route path="inventory/stock" element={<InventoryDashboard />} />
-              <Route path="inventory/issue" element={<InventoryDashboard defaultTab="issue" />} />
-              <Route path="inventory/transfer" element={<MainStoreMaterial />} />
-              <Route path="inventory/adjustment" element={<MainStoreMaterial />} />
+              <Route path="inventory/stock" element={<SiteStock />} />
+              <Route path="inventory/issue" element={<MaterialConsumption />} />
+              <Route path="inventory/transfer" element={<StockTransfer />} />
+              <Route path="inventory/adjustment" element={<StockAdjustment />} />
               <Route path="inventory/ledger" element={<MaterialConsumptionReport />} />
               {/* Legacy */}
               <Route path="materials/stock" element={<SiteStock />} />
