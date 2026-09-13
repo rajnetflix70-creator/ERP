@@ -145,9 +145,10 @@ async function createPO(data, userId) {
 }
 
 async function updatePOStatus(poId, status, userId) {
-  const updateData = { status, updated_at: db.fn.now() };
-  if (status === 'approved') updateData.approved_by = userId;
-  await db('purchase_orders').where({ id: poId }).update(updateData);
+  const normStatus = (status || '').toLowerCase();
+  const updateData = { status: normStatus, updated_at: db.fn.now() };
+  if (normStatus === 'approved') updateData.approved_by = userId;
+  await db('purchase_orders').where({ id: poId }).orWhere({ po_number: poId }).update(updateData);
   return { success: true };
 }
 

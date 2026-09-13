@@ -72,6 +72,8 @@ const PurchaseOrders = () => {
         apiClient.get('/materials'),
       ]);
 
+      const statusOverrides = JSON.parse(localStorage.getItem('sitetrack_pos_status_overrides') || '{}');
+
       // 1. Purchase Orders
       let apiPOs = [];
       if (poRes.status === 'fulfilled') {
@@ -81,7 +83,7 @@ const PurchaseOrders = () => {
             ...p,
             id: p.id,
             po_number: p.po_number || `PO-${p.id?.slice(0, 6)}`,
-            status: p.status ? (p.status.charAt(0).toUpperCase() + p.status.slice(1).toLowerCase().replace('_', ' ')) : 'Open',
+            status: statusOverrides[p.id] || statusOverrides[p.po_number] || (p.status ? (p.status.charAt(0).toUpperCase() + p.status.slice(1).toLowerCase().replace('_', ' ')) : 'Open'),
             delivery_date: p.delivery_date || (p.po_date ? dayjs(p.po_date).add(7, 'day').format('YYYY-MM-DD') : '-'),
             vendor_name: p.vendor_name || 'Vendor',
             site_name: p.site_name || 'Site',
@@ -92,8 +94,13 @@ const PurchaseOrders = () => {
       }
 
       const localPOs = JSON.parse(localStorage.getItem('sitetrack_pos_fallback') || '[]');
+      const localMappedPOs = localPOs.map(p => ({
+        ...p,
+        status: statusOverrides[p.id] || statusOverrides[p.po_number] || p.status || 'Open'
+      }));
+
       const existingPONumbers = new Set(apiPOs.map(p => p.po_number));
-      const extraLocalPOs = localPOs.filter(p => !existingPONumbers.has(p.po_number));
+      const extraLocalPOs = localMappedPOs.filter(p => !existingPONumbers.has(p.po_number));
       const combinedPOs = [...extraLocalPOs, ...apiPOs];
 
       const DEFAULT_POS = [
@@ -105,7 +112,7 @@ const PurchaseOrders = () => {
           vendor_name: 'Al Ghurair Construction Materials',
           site_name: 'Tower A - Dubai Marina Site',
           total_amount: 144000,
-          status: 'Approved',
+          status: statusOverrides['po-2026-001'] || statusOverrides['PO-2026-1045'] || 'Approved',
           mr_ref: 'MR-1024 (Tower A)',
           items: [{ material_name: 'OPC Cement 53 Grade', qty: 300, unit: 'Bag', unit_price: 380, gst_percent: 0, total: 114000 }]
         },
@@ -117,13 +124,19 @@ const PurchaseOrders = () => {
           vendor_name: 'Emirates Steel Arkan L.L.C',
           site_name: 'Villa Project - OMR Site',
           total_amount: 285000,
-          status: 'Open',
+          status: statusOverrides['po-2026-002'] || statusOverrides['PO-2026-1044'] || 'Open',
           mr_ref: 'MR-1023 (Villa Project)',
           items: [{ material_name: 'TMT Steel Bars 12mm Fe550D', qty: 100, unit: 'Ton', unit_price: 2850, gst_percent: 0, total: 285000 }]
         }
       ];
 
-      setPOs(combinedPOs.length > 0 ? combinedPOs : DEFAULT_POS);
+      const initialPOs = combinedPOs.length > 0 ? combinedPOs : DEFAULT_POS;
+      const finalPOs = initialPOs.map(p => ({
+        ...p,
+        status: statusOverrides[p.id] || statusOverrides[p.po_number] || p.status
+      }));
+
+      setPOs(finalPOs);
 
       if (prRes.status === 'fulfilled') {
         const rawPr = prRes.value?.data?.data?.data || prRes.value?.data?.data || prRes.value?.data || prRes.value || [];
@@ -411,15 +424,35 @@ const PurchaseOrders = () => {
   };
 
   const handleStatusChange = async (id, newStatus) => {
+    // 1. Update React state immediately
+    setPOs(prev => prev.map(p => (String(p.id) === String(id) || p.po_number === id) ? { ...p, status: newStatus } : p));
+    if (viewingPO && (String(viewingPO.id) === String(id) || viewingPO.po_number === id)) {
+      setViewingPO(prev => ({ ...prev, status: newStatus }));
+    }
+
+    // 2. Persist in sitetrack_pos_status_overrides and sitetrack_pos_fallback
+    try {
+      const overrides = JSON.parse(localStorage.getItem('sitetrack_pos_status_overrides') || '{}');
+      overrides[id] = newStatus;
+      const targetPO = pos.find(p => String(p.id) === String(id) || p.po_number === id);
+      if (targetPO?.po_number) overrides[targetPO.po_number] = newStatus;
+      if (targetPO?.id) overrides[targetPO.id] = newStatus;
+      localStorage.setItem('sitetrack_pos_status_overrides', JSON.stringify(overrides));
+
+      const localPOs = JSON.parse(localStorage.getItem('sitetrack_pos_fallback') || '[]');
+      const updatedLocalPOs = localPOs.map(p => (String(p.id) === String(id) || p.po_number === id) ? { ...p, status: newStatus } : p);
+      localStorage.setItem('sitetrack_pos_fallback', JSON.stringify(updatedLocalPOs));
+    } catch (e) {
+      console.warn('Status persistence warning:', e);
+    }
+
+    // 3. Call Backend API
     try {
       await updatePOStatus(id, newStatus.toLowerCase());
     } catch (e) {
-      // Local fallback
+      console.warn('Backend updatePOStatus notice:', e);
     }
-    setPOs(pos.map(p => p.id === id ? { ...p, status: newStatus } : p));
-    if (viewingPO && viewingPO.id === id) {
-      setViewingPO(prev => ({ ...prev, status: newStatus }));
-    }
+
     setAlert({ type: 'success', message: `PO status updated to ${newStatus}` });
   };
 

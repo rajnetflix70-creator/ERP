@@ -303,11 +303,22 @@ const ApprovalCenter = () => {
 
       setActionAlert({ type: alertType, message: alertMsg });
 
-      // Update in stored material requests as well
+      // Update in stored local storage as well
       try {
-        const stored = JSON.parse(localStorage.getItem('sitetrack_material_requests') || '[]');
-        const updated = stored.map(s => s.mr_number === itemNo ? { ...s, status: newStatus } : s);
-        localStorage.setItem('sitetrack_material_requests', JSON.stringify(updated));
+        if (activeTab === 'mr') {
+          const stored = JSON.parse(localStorage.getItem('sitetrack_material_requests') || '[]');
+          const updated = stored.map(s => s.mr_number === itemNo ? { ...s, status: newStatus } : s);
+          localStorage.setItem('sitetrack_material_requests', JSON.stringify(updated));
+        } else if (activeTab === 'po') {
+          const overrides = JSON.parse(localStorage.getItem('sitetrack_pos_status_overrides') || '{}');
+          overrides[itemNo] = newStatus;
+          if (currentReviewItem.id) overrides[currentReviewItem.id] = newStatus;
+          localStorage.setItem('sitetrack_pos_status_overrides', JSON.stringify(overrides));
+
+          const storedPOs = JSON.parse(localStorage.getItem('sitetrack_pos_fallback') || '[]');
+          const updatedPOs = storedPOs.map(p => (p.po_number === itemNo || String(p.id) === String(currentReviewItem.id)) ? { ...p, status: newStatus } : p);
+          localStorage.setItem('sitetrack_pos_fallback', JSON.stringify(updatedPOs));
+        }
       } catch (e) {
         console.error(e);
       }
