@@ -103,40 +103,7 @@ const PurchaseOrders = () => {
       const extraLocalPOs = localMappedPOs.filter(p => !existingPONumbers.has(p.po_number));
       const combinedPOs = [...extraLocalPOs, ...apiPOs];
 
-      const DEFAULT_POS = [
-        {
-          id: 'po-2026-001',
-          po_number: 'PO-2026-1045',
-          po_date: '2026-09-08',
-          delivery_date: '2026-09-15',
-          vendor_name: 'Al Ghurair Construction Materials',
-          site_name: 'Tower A - Dubai Marina Site',
-          total_amount: 144000,
-          status: statusOverrides['po-2026-001'] || statusOverrides['PO-2026-1045'] || 'Approved',
-          mr_ref: 'MR-1024 (Tower A)',
-          items: [{ material_name: 'OPC Cement 53 Grade', qty: 300, unit: 'Bag', unit_price: 380, gst_percent: 0, total: 114000 }]
-        },
-        {
-          id: 'po-2026-002',
-          po_number: 'PO-2026-1044',
-          po_date: '2026-09-07',
-          delivery_date: '2026-09-14',
-          vendor_name: 'Emirates Steel Arkan L.L.C',
-          site_name: 'Villa Project - OMR Site',
-          total_amount: 285000,
-          status: statusOverrides['po-2026-002'] || statusOverrides['PO-2026-1044'] || 'Open',
-          mr_ref: 'MR-1023 (Villa Project)',
-          items: [{ material_name: 'TMT Steel Bars 12mm Fe550D', qty: 100, unit: 'Ton', unit_price: 2850, gst_percent: 0, total: 285000 }]
-        }
-      ];
-
-      const initialPOs = combinedPOs.length > 0 ? combinedPOs : DEFAULT_POS;
-      const finalPOs = initialPOs.map(p => ({
-        ...p,
-        status: statusOverrides[p.id] || statusOverrides[p.po_number] || p.status
-      }));
-
-      setPOs(finalPOs);
+      setPOs(combinedPOs);
 
       if (prRes.status === 'fulfilled') {
         const rawPr = prRes.value?.data?.data?.data || prRes.value?.data?.data || prRes.value?.data || prRes.value || [];
@@ -170,15 +137,7 @@ const PurchaseOrders = () => {
       const existingVIds = new Set(mappedVendors.map(v => String(v.id)));
       const extraLocalV = localMappedV.filter(v => !existingVIds.has(String(v.id)));
       const combinedVendors = [...extraLocalV, ...mappedVendors];
-
-      const DEFAULT_VENDORS = [
-        { id: 'v-001', name: 'Al Habtoor Heavy Machinery Rentals', vendor_name: 'Al Habtoor Heavy Machinery Rentals', category: 'Equipment Rental' },
-        { id: 'v-002', name: 'Emirates Hydraulic & Service Corp', vendor_name: 'Emirates Hydraulic & Service Corp', category: 'Maintenance' },
-        { id: 'v-003', name: 'Gulf Transport & Logistics L.L.C', vendor_name: 'Gulf Transport & Logistics L.L.C', category: 'Transport' },
-        { id: 'v-004', name: 'Al Ghurair Construction Materials', vendor_name: 'Al Ghurair Construction Materials', category: 'Cement & Concrete' },
-        { id: 'v-005', name: 'Emirates Steel Arkan L.L.C', vendor_name: 'Emirates Steel Arkan L.L.C', category: 'Steel' },
-      ];
-      setVendors(combinedVendors.length > 0 ? combinedVendors : DEFAULT_VENDORS);
+      setVendors(combinedVendors);
 
       // 3. Sites
       let mappedSites = [];
@@ -192,13 +151,7 @@ const PurchaseOrders = () => {
           }));
         }
       }
-      const DEFAULT_SITES = [
-        { id: 'site-1', site_name: 'Tower A - Dubai Marina Site' },
-        { id: 'site-2', site_name: 'Villa Project - OMR Site' },
-        { id: 'site-3', site_name: 'Warehouse - Tambaram Site' },
-        { id: 'site-4', site_name: 'Tower B - Velachery Site' },
-      ];
-      setSites(mappedSites.length > 0 ? mappedSites : DEFAULT_SITES);
+      setSites(mappedSites);
 
       // 4. Material Catalog
       let mappedMats = [];
@@ -229,16 +182,7 @@ const PurchaseOrders = () => {
       const existingMIds = new Set(mappedMats.map(m => String(m.id)));
       const extraLocalM = localMappedM.filter(m => !existingMIds.has(String(m.id)));
       const combinedMats = [...extraLocalM, ...mappedMats];
-
-      const DEFAULT_MATERIALS = [
-        { id: 'mat-1001', name: 'OPC Cement 53 Grade', defaultUnit: 'Bag', defaultPrice: 380, gstRate: 0 },
-        { id: 'mat-1002', name: 'TMT Steel Bars 12mm Fe550D', defaultUnit: 'Ton', defaultPrice: 2850, gstRate: 0 },
-        { id: 'mat-1003', name: 'Deformed Reinforcement Bars 16mm', defaultUnit: 'Ton', defaultPrice: 2900, gstRate: 0 },
-        { id: 'mat-1004', name: 'Ready Mix Concrete M30 Grade', defaultUnit: 'Cu.M', defaultPrice: 240, gstRate: 0 },
-        { id: 'mat-1005', name: 'Plaster Sand / M-Sand (Washed)', defaultUnit: 'Ton', defaultPrice: 85, gstRate: 0 },
-        { id: 'mat-1006', name: 'Hollow Concrete Blocks 200mm', defaultUnit: 'Nos', defaultPrice: 4.5, gstRate: 0 },
-      ];
-      setMaterialCatalog(combinedMats.length > 0 ? combinedMats : DEFAULT_MATERIALS);
+      setMaterialCatalog(combinedMats);
 
     } catch (e) {
       console.warn('API fetch warning:', e);

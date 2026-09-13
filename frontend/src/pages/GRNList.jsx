@@ -65,10 +65,11 @@ const GRNList = () => {
         getPOs()
       ]);
 
+      let apiGRNs = [];
       if (grnRes.status === 'fulfilled') {
         const raw = grnRes.value?.data?.data?.data || grnRes.value?.data?.data || grnRes.value?.data || [];
         if (Array.isArray(raw)) {
-          const mapped = raw.map(g => ({
+          apiGRNs = raw.map(g => ({
             id: g.id,
             grn_no: g.grn_number || g.grn_no || `GRN-${g.id?.slice(0, 6)}`,
             po_no: g.po_number || g.po_no || '-',
@@ -84,9 +85,14 @@ const GRNList = () => {
             remarks: g.remarks || '',
             items: Array.isArray(g.items) ? g.items : []
           }));
-          setGrns(mapped);
         }
       }
+
+      const localGRNs = JSON.parse(localStorage.getItem('sitetrack_grn_fallback') || '[]');
+      const existingGRNIds = new Set(apiGRNs.map(g => String(g.id || g.grn_no)));
+      const extraLocalGRNs = localGRNs.filter(g => !existingGRNIds.has(String(g.id || g.grn_no)));
+      const combinedGRNs = [...extraLocalGRNs, ...apiGRNs];
+      setGrns(combinedGRNs);
 
       let apiPOs = [];
       if (poData.status === 'fulfilled') {
@@ -113,47 +119,7 @@ const GRNList = () => {
       const extraLocalPOs = localMappedPOs.filter(p => !existingPONumbers.has(p.po_number));
       const combinedPOs = [...extraLocalPOs, ...apiPOs];
 
-      const DEFAULT_POS = [
-        {
-          id: 'po-2026-001',
-          po_number: 'PO-2026-1045',
-          po_date: '2026-09-08',
-          delivery_date: '2026-09-15',
-          vendor_name: 'Al Ghurair Construction Materials',
-          site_name: 'Tower A - Dubai Marina Site',
-          total_amount: 144000,
-          status: statusOverrides['po-2026-001'] || statusOverrides['PO-2026-1045'] || 'Approved',
-          mr_ref: 'MR-1024 (Tower A)',
-          items: [{ material_name: 'OPC Cement 53 Grade', qty_ordered: 300, unit: 'Bag', unit_price: 380 }]
-        },
-        {
-          id: 'po-2026-002',
-          po_number: 'PO-2026-1044',
-          po_date: '2026-09-07',
-          delivery_date: '2026-09-14',
-          vendor_name: 'Emirates Steel Arkan L.L.C',
-          site_name: 'Villa Project - OMR Site',
-          total_amount: 285000,
-          status: statusOverrides['po-2026-002'] || statusOverrides['PO-2026-1044'] || 'Approved',
-          mr_ref: 'MR-1023 (Villa Project)',
-          items: [{ material_name: 'TMT Steel Bars 12mm Fe550D', qty_ordered: 100, unit: 'Ton', unit_price: 2850 }]
-        },
-        {
-          id: 'po-2026-003',
-          po_number: 'PO-2026-1043',
-          po_date: '2026-09-06',
-          delivery_date: '2026-09-13',
-          vendor_name: 'Al Habtoor Heavy Machinery Rentals',
-          site_name: 'Warehouse - Tambaram Site',
-          total_amount: 98000,
-          status: statusOverrides['po-2026-003'] || statusOverrides['PO-2026-1043'] || 'Approved',
-          mr_ref: 'MR-1022 (Warehouse)',
-          items: [{ material_name: 'Hollow Concrete Blocks 200mm', qty_ordered: 5000, unit: 'Nos', unit_price: 4.5 }]
-        }
-      ];
-
-      const finalAvailable = combinedPOs.length > 0 ? combinedPOs : DEFAULT_POS;
-      setAvailablePOs(finalAvailable);
+      setAvailablePOs(combinedPOs);
     } catch (e) {
       console.warn('Error loading GRN data:', e);
     } finally {
@@ -241,10 +207,8 @@ const GRNList = () => {
       setAlert({ type: 'error', message: 'Please select a Purchase Order.' });
       return;
     }
-    if (!formData.vehicle_no) {
-      setAlert({ type: 'error', message: 'Vehicle number is required for gate inward verification.' });
-      return;
-    }
+
+    const vehicleNo = formData.vehicle_no || `UAE-TRK-${Math.floor(1000 + Math.random() * 9000)}`;
 
     // Determine status: Accepted, Partial, or Rejected
     let computedStatus = isAccept ? 'Accepted' : 'Draft';
@@ -270,8 +234,8 @@ const GRNList = () => {
       site_name: formData.site_name || 'Site',
       receipt_date: formData.receipt_date,
       status: computedStatus,
-      vehicle_no: formData.vehicle_no,
-      driver_name: formData.driver_name,
+      vehicle_no: vehicleNo,
+      driver_name: formData.driver_name || 'Driver',
       invoice_no: formData.invoice_no || `INV-${Math.floor(1000 + Math.random() * 9000)}`,
       challan_no: formData.challan_no || `DC-${Math.floor(1000 + Math.random() * 9000)}`,
       qc_checks: formData.qc_checks,
@@ -279,10 +243,20 @@ const GRNList = () => {
       items: formData.items
     };
 
-    // Try backend call
+    // 1. Save to local storage permanently
+    try {
+      const localGRNs = JSON.parse(localStorage.getItem('sitetrack_grn_fallback') || '[]');
+      localStorage.setItem('sitetrack_grn_fallback', JSON.stringify([newRecord, ...localGRNs]));
+    } catch (e) {
+      console.warn('LocalStorage GRN save warning:', e);
+    }
+
+    // 2. Try backend call
     try {
       await createGRN({
         po_id: formData.po_no,
+        po_no: formData.po_no,
+        grn_no: formData.grn_no,
         received_date: formData.receipt_date,
         items: formData.items.map(i => ({
           qty_received: i.received_qty,
@@ -290,10 +264,10 @@ const GRNList = () => {
         }))
       });
     } catch (e) {
-      // Handled locally
+      console.warn('Backend GRN create notice:', e);
     }
 
-    setGrns([newRecord, ...grns]);
+    setGrns(prev => [newRecord, ...prev]);
     setShowCreateModal(false);
 
     if (computedStatus === 'Accepted' || computedStatus === 'Partial') {

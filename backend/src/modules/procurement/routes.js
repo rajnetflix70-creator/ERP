@@ -16,6 +16,7 @@ router.post('/po', requireRole(...ADMIN), ctrl.createPO);
 router.put('/po/:id/status', requireRole(...ADMIN), ctrl.updatePOStatus);
 
 // GRN Routes
+router.get('/grn', requireRole(...SUPERVISOR), ctrl.getGRNs);
 router.post('/grn', requireRole(...SUPERVISOR), ctrl.createGRN);
 
 module.exports = router;

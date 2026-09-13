@@ -71,6 +71,10 @@ async function updatePOStatus(req, res, next) {
   } catch(e) { next(e); }
 }
 
+async function getGRNs(req, res, next) {
+  try { res.json(await service.getGRNs()); } catch(e) { next(e); }
+}
+
 async function createGRN(req, res, next) {
   try {
     const result = await service.createGRN(req.body, req.user?.id);
@@ -89,5 +93,5 @@ async function createGRN(req, res, next) {
 module.exports = {
   getPRs, createPR, approvePR,
   getPOs, createPO, updatePOStatus,
-  createGRN
+  getGRNs, createGRN
 };
