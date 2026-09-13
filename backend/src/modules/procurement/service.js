@@ -56,7 +56,7 @@ async function getPOs() {
     .leftJoin('users as u', 'po.raised_by', 'u.id')
     .select(
       'po.id', 'po.po_number', 'po.status', 'po.po_date', 'po.total_amount',
-      'po.vendor_id', 'v.vendor_name', 'v.name as v_name',
+      'po.vendor_id', 'v.vendor_name',
       'po.delivery_site_id', 's.name as site_name',
       'u.full_name as raised_by_name', 'po.created_at'
     )
@@ -64,7 +64,7 @@ async function getPOs() {
 
   return pos.map(p => ({
     ...p,
-    vendor_name: p.vendor_name || p.v_name || 'Vendor',
+    vendor_name: p.vendor_name || 'Vendor',
     site_name: p.site_name || 'Site'
   }));
 }
@@ -159,7 +159,7 @@ async function getGRNs() {
     .leftJoin('sites as s', 'po.delivery_site_id', 's.id')
     .leftJoin('users as u', 'g.received_by', 'u.id')
     .select(
-      'g.id', 'g.po_id', 'po.po_number', 'v.vendor_name', 'v.name as v_name',
+      'g.id', 'g.po_id', 'po.po_number', 'v.vendor_name',
       's.name as site_name', 'g.received_date', 'g.qty_received', 'g.remarks',
       'u.full_name as received_by_name', 'g.created_at'
     )
@@ -168,9 +168,9 @@ async function getGRNs() {
   return grns.map(g => ({
     ...g,
     grn_no: `GRN-${g.id?.slice(0, 6)}`,
-    po_no: g.po_number || 'PO-2026-1045',
-    vendor_name: g.vendor_name || g.v_name || 'Al Ghurair Construction Materials',
-    site_name: g.site_name || 'Tower A - Dubai Marina Site',
+    po_no: g.po_number || '-',
+    vendor_name: g.vendor_name || 'Vendor',
+    site_name: g.site_name || 'Site',
     status: 'Accepted',
     receipt_date: g.received_date ? new Date(g.received_date).toISOString().slice(0, 10) : new Date().toISOString().slice(0, 10)
   }));
