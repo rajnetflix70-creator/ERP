@@ -11,17 +11,10 @@ const EMPTY_FORM = {
   role_id: '', preferred_language: 'en', is_active: true,
 };
 
-const DEFAULT_ROLES = [
-  { id: 1, name: 'super_admin', description: 'Super Administrator' },
-  { id: 2, name: 'company_admin', description: 'Company Administrator' },
-  { id: 3, name: 'site_supervisor', description: 'Site Supervisor' },
-  { id: 4, name: 'worker', description: 'Site Worker' }
-];
-
 const EmployeeMaster = () => {
   const { t } = useTranslation();
   const [employees, setEmployees] = useState([]);
-  const [roles, setRoles] = useState(DEFAULT_ROLES);
+  const [roles, setRoles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [filterRole, setFilterRole] = useState('');

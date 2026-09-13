@@ -92,32 +92,19 @@ const ReportsModule = () => {
       const res = await apiClient.get('/reports/dashboard');
       setReportsData(res.data);
     } catch (e) {
-      // Fallback analytics
+      // Fallback to clean zero state when API not available
       setReportsData({
         kpis: {
-          activeProjects: 6,
-          totalProjects: 8,
-          todayAttendance: 142,
-          totalEmployees: 165,
-          totalBilled: 1440000,
-          lowStockAlerts: 32,
+          activeProjects: 0,
+          totalProjects: 0,
+          todayAttendance: 0,
+          totalEmployees: 0,
+          totalBilled: 0,
+          lowStockAlerts: 0,
         },
         charts: {
-          projectProgress: [
-            { name: 'Tower A', progress: 68 },
-            { name: 'Metro Ph 2', progress: 42 },
-            { name: 'Tech Park', progress: 85 },
-            { name: 'Highway 42', progress: 30 },
-            { name: 'CyberCity', progress: 95 },
-          ],
-          monthlyBilling: [
-            { month: 'Apr', amount: 850000 },
-            { month: 'May', amount: 1120000 },
-            { month: 'Jun', amount: 980000 },
-            { month: 'Jul', amount: 1350000 },
-            { month: 'Aug', amount: 1240000 },
-            { month: 'Sep', amount: 1440000 },
-          ]
+          projectProgress: [],
+          monthlyBilling: []
         }
       });
     } finally {

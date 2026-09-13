@@ -120,12 +120,12 @@ const GRNList = () => {
           }))
         : [
             {
-              material_name: 'UltraTech 53 Grade Cement',
-              ordered_qty: 500,
-              received_qty: 500,
-              accepted_qty: 500,
+              material_name: '',
+              ordered_qty: 0,
+              received_qty: 0,
+              accepted_qty: 0,
               rejected_qty: 0,
-              unit: 'Bags'
+              unit: 'Nos'
             }
           ];
 

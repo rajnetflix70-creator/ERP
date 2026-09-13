@@ -196,11 +196,9 @@ const ManualAttendance = () => {
               style={{ width: 'auto', padding: '6px 12px' }}
             >
               <option value="All">All Sites</option>
-              <option value="Tower A">Tower A</option>
-              <option value="Tower B">Tower B</option>
-              <option value="Villa Project">Villa Project</option>
-              <option value="Warehouse">Warehouse</option>
-              <option value="Commercial">Commercial</option>
+              {sites.map(siteName => (
+                <option key={siteName} value={siteName}>{siteName}</option>
+              ))}
             </select>
           </div>
 

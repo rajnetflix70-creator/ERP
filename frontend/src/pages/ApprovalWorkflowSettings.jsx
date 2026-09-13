@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 
-const INITIAL_WORKFLOWS = [
+// System default workflow configurations (approval templates, NOT demo data)
+// These represent the out-of-the-box ERP workflow structure.
+const DEFAULT_WORKFLOW_TEMPLATES = [
   {
     id: 'wf-mr',
     module: 'Material Request (MR)',
@@ -53,8 +55,8 @@ const INITIAL_WORKFLOWS = [
 ];
 
 const ApprovalWorkflowSettings = () => {
-  const [workflows, setWorkflows] = useState(INITIAL_WORKFLOWS);
-  const [selectedWorkflow, setSelectedWorkflow] = useState(workflows[0]);
+  const [workflows, setWorkflows] = useState(DEFAULT_WORKFLOW_TEMPLATES);
+  const [selectedWorkflow, setSelectedWorkflow] = useState(DEFAULT_WORKFLOW_TEMPLATES[0]);
   const [saved, setSaved] = useState(false);
 
   const handleSave = () => {
