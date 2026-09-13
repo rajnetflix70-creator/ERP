@@ -91,12 +91,69 @@ const GRNList = () => {
       let apiPOs = [];
       if (poData.status === 'fulfilled') {
         const rawPos = poData.value?.data?.data?.data || poData.value?.data?.data || poData.value?.data || poData.value || [];
-        if (Array.isArray(rawPos)) apiPOs = rawPos;
+        if (Array.isArray(rawPos)) {
+          apiPOs = rawPos.map(p => ({
+            ...p,
+            po_number: p.po_number || `PO-${p.id?.slice(0, 6)}`,
+            vendor_name: p.vendor_name || 'Vendor',
+            site_name: p.site_name || 'Site',
+            items: Array.isArray(p.items) ? p.items : []
+          }));
+        }
       }
+
+      const statusOverrides = JSON.parse(localStorage.getItem('sitetrack_pos_status_overrides') || '{}');
       const localPOs = JSON.parse(localStorage.getItem('sitetrack_pos_fallback') || '[]');
+      const localMappedPOs = localPOs.map(p => ({
+        ...p,
+        status: statusOverrides[p.id] || statusOverrides[p.po_number] || p.status || 'Approved'
+      }));
+
       const existingPONumbers = new Set(apiPOs.map(p => p.po_number));
-      const extraLocalPOs = localPOs.filter(p => !existingPONumbers.has(p.po_number));
-      setAvailablePOs([...extraLocalPOs, ...apiPOs]);
+      const extraLocalPOs = localMappedPOs.filter(p => !existingPONumbers.has(p.po_number));
+      const combinedPOs = [...extraLocalPOs, ...apiPOs];
+
+      const DEFAULT_POS = [
+        {
+          id: 'po-2026-001',
+          po_number: 'PO-2026-1045',
+          po_date: '2026-09-08',
+          delivery_date: '2026-09-15',
+          vendor_name: 'Al Ghurair Construction Materials',
+          site_name: 'Tower A - Dubai Marina Site',
+          total_amount: 144000,
+          status: statusOverrides['po-2026-001'] || statusOverrides['PO-2026-1045'] || 'Approved',
+          mr_ref: 'MR-1024 (Tower A)',
+          items: [{ material_name: 'OPC Cement 53 Grade', qty_ordered: 300, unit: 'Bag', unit_price: 380 }]
+        },
+        {
+          id: 'po-2026-002',
+          po_number: 'PO-2026-1044',
+          po_date: '2026-09-07',
+          delivery_date: '2026-09-14',
+          vendor_name: 'Emirates Steel Arkan L.L.C',
+          site_name: 'Villa Project - OMR Site',
+          total_amount: 285000,
+          status: statusOverrides['po-2026-002'] || statusOverrides['PO-2026-1044'] || 'Approved',
+          mr_ref: 'MR-1023 (Villa Project)',
+          items: [{ material_name: 'TMT Steel Bars 12mm Fe550D', qty_ordered: 100, unit: 'Ton', unit_price: 2850 }]
+        },
+        {
+          id: 'po-2026-003',
+          po_number: 'PO-2026-1043',
+          po_date: '2026-09-06',
+          delivery_date: '2026-09-13',
+          vendor_name: 'Al Habtoor Heavy Machinery Rentals',
+          site_name: 'Warehouse - Tambaram Site',
+          total_amount: 98000,
+          status: statusOverrides['po-2026-003'] || statusOverrides['PO-2026-1043'] || 'Approved',
+          mr_ref: 'MR-1022 (Warehouse)',
+          items: [{ material_name: 'Hollow Concrete Blocks 200mm', qty_ordered: 5000, unit: 'Nos', unit_price: 4.5 }]
+        }
+      ];
+
+      const finalAvailable = combinedPOs.length > 0 ? combinedPOs : DEFAULT_POS;
+      setAvailablePOs(finalAvailable);
     } catch (e) {
       console.warn('Error loading GRN data:', e);
     } finally {
