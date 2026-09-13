@@ -34,6 +34,7 @@ import MainStoreReturnOrder from './pages/MainStoreReturnOrder';
 
 /* Vendors */
 import VendorsMaster from './pages/VendorsMaster';
+import VendorPerformance from './pages/VendorPerformance';
 
 /* Inventory */
 import InventoryDashboard from './pages/InventoryDashboard';
@@ -121,7 +122,7 @@ function App() {
 
               {/* ── VENDORS ── */}
               <Route path="vendors" element={<VendorsMaster />} />
-              <Route path="vendors/performance" element={<VendorsMaster />} />
+              <Route path="vendors/performance" element={<VendorPerformance />} />
               {/* Legacy */}
               <Route path="masters/vendors" element={<VendorsMaster />} />
 

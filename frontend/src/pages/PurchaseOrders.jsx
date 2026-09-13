@@ -60,6 +60,7 @@ const PurchaseOrders = () => {
   const [formData, setFormData] = useState(initialForm);
 
   // Load from API
+  // Load from API & Local Storage Fallback
   const loadData = async () => {
     setLoading(true);
     try {
@@ -71,6 +72,7 @@ const PurchaseOrders = () => {
         apiClient.get('/materials'),
       ]);
 
+      // 1. Purchase Orders
       if (poRes.status === 'fulfilled') {
         const raw = poRes.value?.data?.data?.data || poRes.value?.data?.data || poRes.value?.data || poRes.value || [];
         if (Array.isArray(raw)) {
@@ -93,30 +95,104 @@ const PurchaseOrders = () => {
         const rawPr = prRes.value?.data?.data?.data || prRes.value?.data?.data || prRes.value?.data || prRes.value || [];
         if (Array.isArray(rawPr)) setPRs(rawPr);
       }
+
+      // 2. Vendors (API + sitetrack_vendors_fallback)
+      let mappedVendors = [];
       if (vRes.status === 'fulfilled') {
-        const rawV = vRes.value?.data?.data?.data || vRes.value?.data?.data || vRes.value?.data || [];
-        if (Array.isArray(rawV)) setVendors(rawV);
-      }
-      if (sRes.status === 'fulfilled') {
-        const rawS = sRes.value?.data?.data?.data || sRes.value?.data?.data || sRes.value?.data || [];
-        if (Array.isArray(rawS)) {
-          setSites(rawS.map(s => ({ id: s.id, site_name: s.name || s.site_name, address: s.location || s.emirate || s.address })));
+        const rawV = vRes.value?.data?.data?.vendors || vRes.value?.data?.vendors || vRes.value?.data?.data || vRes.value?.data || [];
+        if (Array.isArray(rawV)) {
+          mappedVendors = rawV.map(v => ({
+            id: v.id,
+            name: v.name || v.vendor_name || 'Vendor',
+            vendor_name: v.name || v.vendor_name || 'Vendor',
+            code: v.code || v.vendor_code || '',
+            category: v.category || v.vendor_type || 'Supplier'
+          }));
         }
       }
+
+      const localVendors = JSON.parse(localStorage.getItem('sitetrack_vendors_fallback') || '[]');
+      const localMappedV = localVendors.map(v => ({
+        id: v.id,
+        name: v.name || v.vendor_name || 'Vendor',
+        vendor_name: v.name || v.vendor_name || 'Vendor',
+        code: v.code || v.vendor_code || '',
+        category: v.category || 'Supplier'
+      }));
+
+      const existingVIds = new Set(mappedVendors.map(v => String(v.id)));
+      const extraLocalV = localMappedV.filter(v => !existingVIds.has(String(v.id)));
+      const combinedVendors = [...extraLocalV, ...mappedVendors];
+
+      const DEFAULT_VENDORS = [
+        { id: 'v-001', name: 'Al Habtoor Heavy Machinery Rentals', vendor_name: 'Al Habtoor Heavy Machinery Rentals', category: 'Equipment Rental' },
+        { id: 'v-002', name: 'Emirates Hydraulic & Service Corp', vendor_name: 'Emirates Hydraulic & Service Corp', category: 'Maintenance' },
+        { id: 'v-003', name: 'Gulf Transport & Logistics L.L.C', vendor_name: 'Gulf Transport & Logistics L.L.C', category: 'Transport' },
+        { id: 'v-004', name: 'Al Ghurair Construction Materials', vendor_name: 'Al Ghurair Construction Materials', category: 'Cement & Concrete' },
+        { id: 'v-005', name: 'Emirates Steel Arkan L.L.C', vendor_name: 'Emirates Steel Arkan L.L.C', category: 'Steel' },
+      ];
+      setVendors(combinedVendors.length > 0 ? combinedVendors : DEFAULT_VENDORS);
+
+      // 3. Sites
+      let mappedSites = [];
+      if (sRes.status === 'fulfilled') {
+        const rawS = sRes.value?.data?.data?.sites || sRes.value?.data?.sites || sRes.value?.data?.data || sRes.value?.data || [];
+        if (Array.isArray(rawS)) {
+          mappedSites = rawS.map(s => ({
+            id: s.id,
+            site_name: s.name || s.site_name || s.title || 'Site',
+            address: s.location || s.emirate || s.address || ''
+          }));
+        }
+      }
+      const DEFAULT_SITES = [
+        { id: 'site-1', site_name: 'Tower A - Dubai Marina Site' },
+        { id: 'site-2', site_name: 'Villa Project - OMR Site' },
+        { id: 'site-3', site_name: 'Warehouse - Tambaram Site' },
+        { id: 'site-4', site_name: 'Tower B - Velachery Site' },
+      ];
+      setSites(mappedSites.length > 0 ? mappedSites : DEFAULT_SITES);
+
+      // 4. Material Catalog
+      let mappedMats = [];
       if (mRes.status === 'fulfilled') {
-        const rawM = mRes.value?.data?.materials || mRes.value?.data?.data || mRes.value?.data || [];
+        const rawM = mRes.value?.data?.data?.materials || mRes.value?.data?.materials || mRes.value?.data?.data || mRes.value?.data || [];
         if (Array.isArray(rawM)) {
-          const mapped = rawM.map(m => ({
+          mappedMats = rawM.map(m => ({
             id: m.id,
             name: m.name || m.material_name,
             defaultUnit: m.unit_of_measure || m.unit || 'Nos',
-            defaultPrice: parseFloat(m.standard_rate || m.unit_price) || 0,
-            gstRate: 18,
+            defaultPrice: parseFloat(m.standard_rate || m.current_rate || m.unit_price) || 0,
+            gstRate: 0,
             description: m.description || m.category || ''
           }));
-          setMaterialCatalog(mapped);
         }
       }
+
+      const localMats = JSON.parse(localStorage.getItem('sitetrack_materials_fallback') || '[]');
+      const localMappedM = localMats.map(m => ({
+        id: m.id,
+        name: m.name,
+        defaultUnit: m.unit || m.unit_of_measure || 'Nos',
+        defaultPrice: parseFloat(m.current_rate || m.standard_rate) || 0,
+        gstRate: 0,
+        description: m.spec || m.category || ''
+      }));
+
+      const existingMIds = new Set(mappedMats.map(m => String(m.id)));
+      const extraLocalM = localMappedM.filter(m => !existingMIds.has(String(m.id)));
+      const combinedMats = [...extraLocalM, ...mappedMats];
+
+      const DEFAULT_MATERIALS = [
+        { id: 'mat-1001', name: 'OPC Cement 53 Grade', defaultUnit: 'Bag', defaultPrice: 380, gstRate: 0 },
+        { id: 'mat-1002', name: 'TMT Steel Bars 12mm Fe550D', defaultUnit: 'Ton', defaultPrice: 2850, gstRate: 0 },
+        { id: 'mat-1003', name: 'Deformed Reinforcement Bars 16mm', defaultUnit: 'Ton', defaultPrice: 2900, gstRate: 0 },
+        { id: 'mat-1004', name: 'Ready Mix Concrete M30 Grade', defaultUnit: 'Cu.M', defaultPrice: 240, gstRate: 0 },
+        { id: 'mat-1005', name: 'Plaster Sand / M-Sand (Washed)', defaultUnit: 'Ton', defaultPrice: 85, gstRate: 0 },
+        { id: 'mat-1006', name: 'Hollow Concrete Blocks 200mm', defaultUnit: 'Nos', defaultPrice: 4.5, gstRate: 0 },
+      ];
+      setMaterialCatalog(combinedMats.length > 0 ? combinedMats : DEFAULT_MATERIALS);
+
     } catch (e) {
       console.warn('API fetch warning:', e);
     } finally {
