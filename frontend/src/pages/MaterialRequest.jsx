@@ -7,11 +7,11 @@ const SITES_OPTIONS = ['All Sites'];
 const STATUS_OPTIONS = ['All Statuses', 'Pending', 'Approved', 'Ordered', 'Delivered', 'Rejected'];
 const DATE_OPTIONS = ['All Time', 'Today', 'Last 7 Days', 'This Month'];
 
-const formatINR = (val) => {
-  if (!val && val !== 0) return '₹0';
-  return new Intl.NumberFormat('en-IN', {
+const formatAED = (val) => {
+  if (!val && val !== 0) return 'AED 0';
+  return new Intl.NumberFormat('en-AE', {
     style: 'currency',
-    currency: 'INR',
+    currency: 'AED',
     maximumFractionDigits: 0
   }).format(val);
 };
@@ -37,7 +37,7 @@ const MaterialRequest = () => {
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
 
-  // Fetch from API & local storage fallback
+  // Fetch strictly from API
   useEffect(() => {
     let isMounted = true;
     const fetchApiData = async () => {
@@ -45,7 +45,6 @@ const MaterialRequest = () => {
         setLoading(true);
         const res = await client.get('/material-requests?limit=200');
         const raw = res.data?.data?.data || res.data?.data || res.data || [];
-        const localStored = JSON.parse(localStorage.getItem('sitetrack_material_requests') || '[]');
 
         let mapped = [];
         if (Array.isArray(raw)) {
@@ -70,15 +69,10 @@ const MaterialRequest = () => {
           }));
         }
 
-        const existingIds = new Set(mapped.map(m => String(m.id || m.mr_number)));
-        const extraLocal = localStored.filter(m => !existingIds.has(String(m.id || m.mr_number)));
-        const mergedAll = [...extraLocal, ...mapped];
-
-        if (isMounted) setRequests(mergedAll);
+        if (isMounted) setRequests(mapped);
       } catch (err) {
         console.warn('Error fetching material requests:', err);
-        const localStored = JSON.parse(localStorage.getItem('sitetrack_material_requests') || '[]');
-        if (isMounted && localStored.length > 0) setRequests(localStored);
+        if (isMounted) setRequests([]);
       } finally {
         if (isMounted) setLoading(false);
       }

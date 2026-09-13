@@ -7,15 +7,11 @@ const MANAGER    = ['super_admin', 'company_admin', 'project_manager'];
 const SUPERVISOR = ['super_admin', 'company_admin', 'project_manager', 'site_supervisor'];
 
 /* Material requests */
-router.get('/',                           ctrl.listReqs);
-router.post('/',                          requireRole(...SUPERVISOR), ctrl.createReq);
 router.get('/requests',                   ctrl.listReqs);
 router.get('/requests/all',               ctrl.listReqs);
 router.post('/requests',                  requireRole(...SUPERVISOR), ctrl.createReq);
 router.put('/requests/:id/approve',       requireRole(...MANAGER),    ctrl.approveReq);
-router.put('/:id/approve',                requireRole(...MANAGER),    ctrl.approveReq);
 router.put('/requests/:id/issue',         requireRole(...MANAGER),    ctrl.issueReq);
-router.put('/:id/issue',                  requireRole(...MANAGER),    ctrl.issueReq);
 
 /* Consumption */
 router.get('/consumption/history',        ctrl.listConsumeHistory);

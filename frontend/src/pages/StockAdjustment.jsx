@@ -65,12 +65,7 @@ const StockAdjustment = () => {
         if (Array.isArray(rawS)) setSites(rawS);
       }
 
-      const saved = localStorage.getItem('sitetrack_stock_adjustments');
-      if (saved) {
-        try { setAdjustments(JSON.parse(saved)); } catch { setAdjustments([]); }
-      } else {
-        setAdjustments([]);
-      }
+      setAdjustments([]);
     } catch (err) {
       console.error(err);
     } finally {
@@ -84,7 +79,6 @@ const StockAdjustment = () => {
 
   const saveAdjustmentsToStorage = (updated) => {
     setAdjustments(updated);
-    localStorage.setItem('sitetrack_stock_adjustments', JSON.stringify(updated));
   };
 
   const handleMaterialChange = (matId) => {

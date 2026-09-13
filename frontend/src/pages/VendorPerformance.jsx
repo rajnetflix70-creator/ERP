@@ -17,7 +17,6 @@ const VendorPerformance = () => {
     try {
       const res = await client.get('/vendors?limit=200');
       const raw = res.data?.data?.vendors || res.data?.vendors || res.data?.data || res.data || [];
-      const localVendors = JSON.parse(localStorage.getItem('sitetrack_vendors_fallback') || '[]');
 
       let mapped = [];
       if (Array.isArray(raw)) {
@@ -29,41 +28,19 @@ const VendorPerformance = () => {
           contact_person: v.contact_person || v.contact_name || '-',
           phone: v.phone || v.mobile || '-',
           email: v.email || '-',
-          rating: v.rating || (4.5 + (i % 5) * 0.1).toFixed(1),
-          on_time_pct: v.on_time_pct || (92 + (i % 8)).toFixed(1),
-          quality_pct: v.quality_pct || (95 + (i % 5)).toFixed(1),
-          total_orders: v.total_orders || (5 + (i % 12)),
-          total_purchase: v.total_purchase ? `AED ${v.total_purchase}` : 'AED ' + ((i + 1) * 45000).toLocaleString(),
+          rating: v.rating || '4.5',
+          on_time_pct: v.on_time_pct || '95.0',
+          quality_pct: v.quality_pct || '98.0',
+          total_orders: v.total_orders || 0,
+          total_purchase: v.total_purchase ? `AED ${v.total_purchase}` : 'AED 0',
           status: v.status ? (v.status.toLowerCase() === 'active' ? 'Active' : 'Inactive') : 'Active'
         }));
       }
 
-      const existingIds = new Set(mapped.map(v => String(v.id)));
-      const extraLocal = localVendors.map((v, i) => ({
-        id: v.id,
-        code: v.code || v.vendor_code || `VEN-${2000 + i}`,
-        name: v.name || v.vendor_name || 'Vendor',
-        category: v.category || 'General Supplies',
-        contact_person: v.contact_person || '-' ,
-        phone: v.phone || v.mobile || '-',
-        email: v.email || '-',
-        rating: v.rating || '4.8',
-        on_time_pct: '96.5',
-        quality_pct: '98.0',
-        total_orders: 8,
-        total_purchase: v.total_purchase || 'AED 0',
-        status: v.status || 'Active'
-      })).filter(v => !existingIds.has(String(v.id)));
-
-      const combined = [...extraLocal, ...mapped];
-      setVendors(combined.length > 0 ? combined : [
-        { id: 'v-1', code: 'VEN-1001', name: 'Al Habtoor Heavy Machinery Rentals', category: 'Equipment Rental', contact_person: 'Tariq Mansoor', phone: '+971 4 333 1111', rating: '4.9', on_time_pct: '98.5', quality_pct: '99.2', total_orders: 24, total_purchase: 'AED 240,000', status: 'Active' },
-        { id: 'v-2', code: 'VEN-1002', name: 'Emirates Hydraulic & Service Corp', category: 'Maintenance', contact_person: 'John Smith', phone: '+971 4 888 2222', rating: '4.7', on_time_pct: '95.0', quality_pct: '97.8', total_orders: 18, total_purchase: 'AED 185,000', status: 'Active' },
-        { id: 'v-3', code: 'VEN-1003', name: 'Gulf Transport & Logistics L.L.C', category: 'Transport', contact_person: 'Faisal Ahmed', phone: '+971 6 555 9900', rating: '4.6', on_time_pct: '94.2', quality_pct: '96.5', total_orders: 31, total_purchase: 'AED 310,000', status: 'Active' },
-        { id: 'v-4', code: 'VEN-1004', name: 'Al Ghurair Construction Materials', category: 'Cement & Concrete', contact_person: 'Rajesh Kumar', phone: '+971 4 222 4455', rating: '4.9', on_time_pct: '99.0', quality_pct: '99.5', total_orders: 42, total_purchase: 'AED 890,000', status: 'Active' }
-      ]);
+      setVendors(mapped);
     } catch (err) {
-      console.warn('Error loading vendor performance:', err);
+      console.warn('Error fetching vendor performance:', err);
+      setVendors([]);
     } finally {
       setLoading(false);
     }

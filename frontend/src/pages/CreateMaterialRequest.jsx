@@ -76,12 +76,7 @@ const CreateMaterialRequest = ({ isModal = false, onClose = null, onSuccess = nu
           if (Array.isArray(rawM)) loadedMats = rawM;
         }
 
-        const localMats = JSON.parse(localStorage.getItem('sitetrack_materials_fallback') || '[]');
-        const existingIds = new Set(loadedMats.map(m => String(m.id)));
-        const extraLocal = localMats.filter(m => !existingIds.has(String(m.id)));
-        const combined = [...loadedMats, ...extraLocal];
-
-        const finalCatalog = combined.length > 0 ? combined : DEFAULT_MATERIALS_CATALOG;
+        const finalCatalog = loadedMats.length > 0 ? loadedMats : DEFAULT_MATERIALS_CATALOG;
         setMaterialsCatalog(finalCatalog);
 
         if (finalCatalog.length > 0) {
@@ -265,31 +260,30 @@ const CreateMaterialRequest = ({ isModal = false, onClose = null, onSuccess = nu
         })),
       });
 
-      if (res.data?.mr_number) {
-        newRequestData.mr_number = res.data.mr_number;
-        newRequestData.request_number = res.data.mr_number;
-        newRequestData.request_no = res.data.mr_number;
+      const returnedMRNumber = res.data?.mr_number || res.data?.data?.mr_number || mrNumber;
+      newRequestData.mr_number = returnedMRNumber;
+      newRequestData.request_number = returnedMRNumber;
+
+      setSubmitting(false);
+      setNotification({
+        type: 'success',
+        message: `Material Request ${returnedMRNumber} saved to database successfully!`
+      });
+
+      if (onSuccess) {
+        onSuccess(newRequestData);
+      } else {
+        setTimeout(() => {
+          navigate('/materials/requests');
+        }, 1200);
       }
     } catch (apiErr) {
-      console.warn('Backend API request saved via fallback:', apiErr?.message);
-    }
-
-    // Persist to localStorage
-    const existingStored = JSON.parse(localStorage.getItem('sitetrack_material_requests') || '[]');
-    localStorage.setItem('sitetrack_material_requests', JSON.stringify([newRequestData, ...existingStored]));
-
-    setSubmitting(false);
-    setNotification({
-      type: 'success',
-      message: `Material Request ${mrNumber} submitted successfully!`
-    });
-
-    if (onSuccess) {
-      onSuccess(newRequestData);
-    } else {
-      setTimeout(() => {
-        navigate('/materials/requests');
-      }, 1200);
+      console.error('Failed to submit Material Request:', apiErr);
+      setSubmitting(false);
+      setNotification({
+        type: 'error',
+        message: apiErr.response?.data?.message || 'Failed to save Material Request to database.'
+      });
     }
   };
 

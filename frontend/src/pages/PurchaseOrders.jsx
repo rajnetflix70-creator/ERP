@@ -60,7 +60,7 @@ const PurchaseOrders = () => {
 
   const [formData, setFormData] = useState(initialForm);
 
-  // Load from API & Local Storage Fallback
+  // Load from API
   const loadData = async () => {
     setLoading(true);
     try {
@@ -72,8 +72,6 @@ const PurchaseOrders = () => {
         apiClient.get('/materials'),
       ]);
 
-      const statusOverrides = JSON.parse(localStorage.getItem('sitetrack_pos_status_overrides') || '{}');
-
       // 1. Purchase Orders
       let apiPOs = [];
       if (poRes.status === 'fulfilled') {
@@ -82,8 +80,8 @@ const PurchaseOrders = () => {
           apiPOs = raw.map(p => ({
             ...p,
             id: p.id,
-            po_number: p.po_number || `PO-${p.id?.slice(0, 6)}`,
-            status: statusOverrides[p.id] || statusOverrides[p.po_number] || (p.status ? (p.status.charAt(0).toUpperCase() + p.status.slice(1).toLowerCase().replace('_', ' ')) : 'Open'),
+            po_number: p.po_number || `PO-${String(p.id).slice(0, 6)}`,
+            status: p.status ? (p.status.charAt(0).toUpperCase() + p.status.slice(1).toLowerCase().replace('_', ' ')) : 'Open',
             delivery_date: p.delivery_date || (p.po_date ? dayjs(p.po_date).add(7, 'day').format('YYYY-MM-DD') : '-'),
             vendor_name: p.vendor_name || 'Vendor',
             site_name: p.site_name || 'Site',
@@ -92,25 +90,14 @@ const PurchaseOrders = () => {
           }));
         }
       }
-
-      const localPOs = JSON.parse(localStorage.getItem('sitetrack_pos_fallback') || '[]');
-      const localMappedPOs = localPOs.map(p => ({
-        ...p,
-        status: statusOverrides[p.id] || statusOverrides[p.po_number] || p.status || 'Open'
-      }));
-
-      const existingPONumbers = new Set(apiPOs.map(p => p.po_number));
-      const extraLocalPOs = localMappedPOs.filter(p => !existingPONumbers.has(p.po_number));
-      const combinedPOs = [...extraLocalPOs, ...apiPOs];
-
-      setPOs(combinedPOs);
+      setPOs(apiPOs);
 
       if (prRes.status === 'fulfilled') {
         const rawPr = prRes.value?.data?.data?.data || prRes.value?.data?.data || prRes.value?.data || prRes.value || [];
         if (Array.isArray(rawPr)) setPRs(rawPr);
       }
 
-      // 2. Vendors (API + sitetrack_vendors_fallback)
+      // 2. Vendors
       let mappedVendors = [];
       if (vRes.status === 'fulfilled') {
         const rawV = vRes.value?.data?.data?.vendors || vRes.value?.data?.vendors || vRes.value?.data?.data || vRes.value?.data || [];
@@ -124,20 +111,7 @@ const PurchaseOrders = () => {
           }));
         }
       }
-
-      const localVendors = JSON.parse(localStorage.getItem('sitetrack_vendors_fallback') || '[]');
-      const localMappedV = localVendors.map(v => ({
-        id: v.id,
-        name: v.name || v.vendor_name || 'Vendor',
-        vendor_name: v.name || v.vendor_name || 'Vendor',
-        code: v.code || v.vendor_code || '',
-        category: v.category || 'Supplier'
-      }));
-
-      const existingVIds = new Set(mappedVendors.map(v => String(v.id)));
-      const extraLocalV = localMappedV.filter(v => !existingVIds.has(String(v.id)));
-      const combinedVendors = [...extraLocalV, ...mappedVendors];
-      setVendors(combinedVendors);
+      setVendors(mappedVendors);
 
       // 3. Sites
       let mappedSites = [];
@@ -168,21 +142,7 @@ const PurchaseOrders = () => {
           }));
         }
       }
-
-      const localMats = JSON.parse(localStorage.getItem('sitetrack_materials_fallback') || '[]');
-      const localMappedM = localMats.map(m => ({
-        id: m.id,
-        name: m.name,
-        defaultUnit: m.unit || m.unit_of_measure || 'Nos',
-        defaultPrice: parseFloat(m.current_rate || m.standard_rate) || 0,
-        gstRate: 0,
-        description: m.spec || m.category || ''
-      }));
-
-      const existingMIds = new Set(mappedMats.map(m => String(m.id)));
-      const extraLocalM = localMappedM.filter(m => !existingMIds.has(String(m.id)));
-      const combinedMats = [...extraLocalM, ...mappedMats];
-      setMaterialCatalog(combinedMats);
+      setMaterialCatalog(mappedMats);
 
     } catch (e) {
       console.warn('API fetch warning:', e);
@@ -308,38 +268,6 @@ const PurchaseOrders = () => {
       return;
     }
 
-    const selectedVendor = vendors.find(v => String(v.id) === String(formData.vendor_id)) || { vendor_name: 'Selected Vendor', name: 'Selected Vendor' };
-    const selectedSite = sites.find(s => String(s.id) === String(formData.site_id)) || { site_name: 'Selected Site', name: 'Selected Site' };
-
-    const newPO = {
-      id: `po-${Date.now()}`,
-      po_number: formData.po_number,
-      po_date: formData.po_date,
-      delivery_date: formData.delivery_date,
-      vendor_name: selectedVendor.vendor_name || selectedVendor.name || 'Vendor',
-      vendor_id: formData.vendor_id,
-      site_name: selectedSite.site_name || selectedSite.name || 'Site',
-      site_id: formData.site_id,
-      payment_terms: formData.payment_terms,
-      mr_ref: formData.mr_ref || '-- Direct PO --',
-      status: statusToSet,
-      total_amount: grandTotal,
-      subtotal: Math.round(subtotal),
-      tax_amount: Math.round(totalGST),
-      items: formData.items,
-      terms: formData.terms
-    };
-
-    // 1. Save to LocalStorage Fallback permanently
-    try {
-      const existingLocalPOs = JSON.parse(localStorage.getItem('sitetrack_pos_fallback') || '[]');
-      const updatedLocalPOs = [newPO, ...existingLocalPOs];
-      localStorage.setItem('sitetrack_pos_fallback', JSON.stringify(updatedLocalPOs));
-    } catch (e) {
-      console.warn('LocalStorage save warning:', e);
-    }
-
-    // 2. Call Backend API
     try {
       await createPO({
         po_number: formData.po_number,
@@ -354,50 +282,28 @@ const PurchaseOrders = () => {
           unit_price: i.unit_price,
         }))
       });
+      await loadData();
+      setShowCreateModal(false);
+      setFormData({
+        ...initialForm,
+        po_number: `PO-${dayjs().format('YYYY')}-${Math.floor(1000 + Math.random() * 9000)}`
+      });
+      setAlert({ type: 'success', message: `Purchase Order ${formData.po_number} created and stored in database successfully.` });
     } catch (e) {
-      console.warn('Backend PO create API notice:', e);
+      console.error('Backend PO create API error:', e);
+      setAlert({ type: 'error', message: 'Failed to create Purchase Order in database. Please check connection.' });
     }
-
-    setPOs(prev => [newPO, ...prev]);
-    setShowCreateModal(false);
-    setFormData({
-      ...initialForm,
-      po_number: `PO-${dayjs().format('YYYY')}-${Math.floor(1000 + Math.random() * 9000)}`
-    });
-    setAlert({ type: 'success', message: `Purchase Order ${newPO.po_number} saved and stored successfully with status '${statusToSet}'.` });
   };
 
   const handleStatusChange = async (id, newStatus) => {
-    // 1. Update React state immediately
-    setPOs(prev => prev.map(p => (String(p.id) === String(id) || p.po_number === id) ? { ...p, status: newStatus } : p));
-    if (viewingPO && (String(viewingPO.id) === String(id) || viewingPO.po_number === id)) {
-      setViewingPO(prev => ({ ...prev, status: newStatus }));
-    }
-
-    // 2. Persist in sitetrack_pos_status_overrides and sitetrack_pos_fallback
-    try {
-      const overrides = JSON.parse(localStorage.getItem('sitetrack_pos_status_overrides') || '{}');
-      overrides[id] = newStatus;
-      const targetPO = pos.find(p => String(p.id) === String(id) || p.po_number === id);
-      if (targetPO?.po_number) overrides[targetPO.po_number] = newStatus;
-      if (targetPO?.id) overrides[targetPO.id] = newStatus;
-      localStorage.setItem('sitetrack_pos_status_overrides', JSON.stringify(overrides));
-
-      const localPOs = JSON.parse(localStorage.getItem('sitetrack_pos_fallback') || '[]');
-      const updatedLocalPOs = localPOs.map(p => (String(p.id) === String(id) || p.po_number === id) ? { ...p, status: newStatus } : p);
-      localStorage.setItem('sitetrack_pos_fallback', JSON.stringify(updatedLocalPOs));
-    } catch (e) {
-      console.warn('Status persistence warning:', e);
-    }
-
-    // 3. Call Backend API
     try {
       await updatePOStatus(id, newStatus.toLowerCase());
+      await loadData();
+      setAlert({ type: 'success', message: `PO status updated to ${newStatus} in database` });
     } catch (e) {
-      console.warn('Backend updatePOStatus notice:', e);
+      console.error('Backend updatePOStatus error:', e);
+      setAlert({ type: 'error', message: 'Failed to update PO status in database' });
     }
-
-    setAlert({ type: 'success', message: `PO status updated to ${newStatus}` });
   };
 
   const getStatusBadge = (status) => {

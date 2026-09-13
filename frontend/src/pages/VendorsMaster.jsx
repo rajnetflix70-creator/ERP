@@ -27,13 +27,12 @@ const VendorsMaster = () => {
     try {
       const res = await client.get('/vendors?limit=200');
       const raw = res.data?.data?.vendors || res.data?.vendors || res.data?.data || res.data || [];
-      const localVendors = JSON.parse(localStorage.getItem('sitetrack_vendors_fallback') || '[]');
 
       let mapped = [];
       if (Array.isArray(raw)) {
         mapped = raw.map(v => ({
           id: v.id,
-          code: v.code || v.vendor_code || `VEN-${v.id?.slice(0, 6)}`,
+          code: v.code || v.vendor_code || `VEN-${String(v.id).slice(0, 6)}`,
           name: v.name || v.vendor_name,
           category: v.category || v.vendor_type || 'General Supplies',
           contact_person: v.contact_person || v.contact_name || '-',
@@ -47,15 +46,10 @@ const VendorsMaster = () => {
         }));
       }
 
-      const existingIds = new Set(mapped.map(v => String(v.id)));
-      const extraLocal = localVendors.filter(v => !existingIds.has(String(v.id)));
-      setVendors([...extraLocal, ...mapped]);
+      setVendors(mapped);
     } catch (err) {
-      console.warn('Error fetching vendors:', err);
-      const localVendors = JSON.parse(localStorage.getItem('sitetrack_vendors_fallback') || '[]');
-      if (localVendors.length > 0) {
-        setVendors(localVendors);
-      }
+      console.warn('Error fetching vendors from backend:', err);
+      setVendors([]);
     } finally {
       setLoading(false);
     }
@@ -138,27 +132,11 @@ const VendorsMaster = () => {
         await client.post('/vendors', payload);
       }
       await fetchVendors();
+      setModalOpen(false);
     } catch (apiErr) {
-      console.warn('Save vendor API error, using local fallback:', apiErr);
-      const savedVendor = {
-        ...formData,
-        id: editingVendor ? editingVendor.id : Date.now(),
-        total_purchase: editingVendor ? (editingVendor.total_purchase || 'AED 0') : 'AED 0',
-        open_pos: editingVendor ? (editingVendor.open_pos || 0) : 0,
-        rating: editingVendor ? (editingVendor.rating || 5.0) : 5.0
-      };
-
-      if (editingVendor) {
-        setVendors(vendors.map(v => v.id === editingVendor.id ? savedVendor : v));
-      } else {
-        setVendors([savedVendor, ...vendors]);
-      }
-
-      const localVendors = JSON.parse(localStorage.getItem('sitetrack_vendors_fallback') || '[]');
-      const filteredLocal = localVendors.filter(v => String(v.id) !== String(savedVendor.id));
-      localStorage.setItem('sitetrack_vendors_fallback', JSON.stringify([savedVendor, ...filteredLocal]));
+      console.error('Save vendor API error:', apiErr);
+      alert('Failed to save vendor to database. Please check your backend connection.');
     }
-    setModalOpen(false);
   };
 
   const handleDelete = async (id) => {

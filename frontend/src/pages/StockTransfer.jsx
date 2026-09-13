@@ -60,12 +60,7 @@ const StockTransfer = () => {
         if (Array.isArray(rawS)) setSites(rawS);
       }
 
-      const saved = localStorage.getItem('sitetrack_stock_transfers');
-      if (saved) {
-        try { setTransfers(JSON.parse(saved)); } catch { setTransfers([]); }
-      } else {
-        setTransfers([]);
-      }
+      setTransfers([]);
     } catch (err) {
       console.error(err);
     } finally {
@@ -79,7 +74,6 @@ const StockTransfer = () => {
 
   const saveTransfersToStorage = (updated) => {
     setTransfers(updated);
-    localStorage.setItem('sitetrack_stock_transfers', JSON.stringify(updated));
   };
 
   const handleMaterialChange = (matId) => {

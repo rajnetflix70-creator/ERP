@@ -63,31 +63,7 @@ const ApprovalCenter = () => {
           }
         }
 
-        const localMR = JSON.parse(localStorage.getItem('sitetrack_material_requests') || '[]');
-        const localMappedMR = localMR.map(m => ({
-          id: m.id,
-          request_no: m.mr_number || m.request_number || m.request_no || `MR-${m.id?.slice(0, 6)}`,
-          site: m.site || m.site_name || '-',
-          site_full: m.site || m.site_name || '-',
-          project_name: m.project_name || '-',
-          requested_by: m.requested_by_name || m.requested_by || 'Site Engineer',
-          requested_by_role: m.requested_by_role || 'Site Engineer',
-          amount: Number(m.amount || m.total_amount || 0),
-          date: m.date || (m.created_at ? new Date(m.created_at).toLocaleDateString('en-GB') : '-'),
-          date_needed: m.required_date || '-',
-          priority: m.priority ? (m.priority.charAt(0).toUpperCase() + m.priority.slice(1)) : 'Normal',
-          status: (m.status || 'pending').toLowerCase().includes('approved') ? 'Approved' : 'Pending Approval',
-          purpose: m.purpose || m.remarks || 'Material Request',
-          delivery_location: m.delivery_location || '-',
-          boq_allowance: 'Standard quota',
-          materials: Array.isArray(m.items) ? m.items : [],
-          timeline: m.timeline || []
-        }));
-
-        const existingMRIds = new Set(mappedMR.map(m => String(m.id || m.request_no)));
-        const extraLocalMR = localMappedMR.filter(m => !existingMRIds.has(String(m.id || m.request_no)));
-        const mergedMR = [...extraLocalMR, ...mappedMR];
-        setMaterialRequests(mergedMR);
+        setMaterialRequests(mappedMR);
 
         // 2. Purchase Orders
         let mappedPO = [];
@@ -303,25 +279,7 @@ const ApprovalCenter = () => {
 
       setActionAlert({ type: alertType, message: alertMsg });
 
-      // Update in stored local storage as well
-      try {
-        if (activeTab === 'mr') {
-          const stored = JSON.parse(localStorage.getItem('sitetrack_material_requests') || '[]');
-          const updated = stored.map(s => s.mr_number === itemNo ? { ...s, status: newStatus } : s);
-          localStorage.setItem('sitetrack_material_requests', JSON.stringify(updated));
-        } else if (activeTab === 'po') {
-          const overrides = JSON.parse(localStorage.getItem('sitetrack_pos_status_overrides') || '{}');
-          overrides[itemNo] = newStatus;
-          if (currentReviewItem.id) overrides[currentReviewItem.id] = newStatus;
-          localStorage.setItem('sitetrack_pos_status_overrides', JSON.stringify(overrides));
 
-          const storedPOs = JSON.parse(localStorage.getItem('sitetrack_pos_fallback') || '[]');
-          const updatedPOs = storedPOs.map(p => (p.po_number === itemNo || String(p.id) === String(currentReviewItem.id)) ? { ...p, status: newStatus } : p);
-          localStorage.setItem('sitetrack_pos_fallback', JSON.stringify(updatedPOs));
-        }
-      } catch (e) {
-        console.error(e);
-      }
 
       setTimeout(() => {
         setIsReviewOpen(false);

@@ -87,12 +87,7 @@ const GRNList = () => {
           }));
         }
       }
-
-      const localGRNs = JSON.parse(localStorage.getItem('sitetrack_grn_fallback') || '[]');
-      const existingGRNIds = new Set(apiGRNs.map(g => String(g.id || g.grn_no)));
-      const extraLocalGRNs = localGRNs.filter(g => !existingGRNIds.has(String(g.id || g.grn_no)));
-      const combinedGRNs = [...extraLocalGRNs, ...apiGRNs];
-      setGrns(combinedGRNs);
+      setGrns(apiGRNs);
 
       let apiPOs = [];
       if (poData.status === 'fulfilled') {
@@ -107,19 +102,7 @@ const GRNList = () => {
           }));
         }
       }
-
-      const statusOverrides = JSON.parse(localStorage.getItem('sitetrack_pos_status_overrides') || '{}');
-      const localPOs = JSON.parse(localStorage.getItem('sitetrack_pos_fallback') || '[]');
-      const localMappedPOs = localPOs.map(p => ({
-        ...p,
-        status: statusOverrides[p.id] || statusOverrides[p.po_number] || p.status || 'Approved'
-      }));
-
-      const existingPONumbers = new Set(apiPOs.map(p => p.po_number));
-      const extraLocalPOs = localMappedPOs.filter(p => !existingPONumbers.has(p.po_number));
-      const combinedPOs = [...extraLocalPOs, ...apiPOs];
-
-      setAvailablePOs(combinedPOs);
+      setAvailablePOs(apiPOs);
     } catch (e) {
       console.warn('Error loading GRN data:', e);
     } finally {
@@ -243,15 +226,6 @@ const GRNList = () => {
       items: formData.items
     };
 
-    // 1. Save to local storage permanently
-    try {
-      const localGRNs = JSON.parse(localStorage.getItem('sitetrack_grn_fallback') || '[]');
-      localStorage.setItem('sitetrack_grn_fallback', JSON.stringify([newRecord, ...localGRNs]));
-    } catch (e) {
-      console.warn('LocalStorage GRN save warning:', e);
-    }
-
-    // 2. Try backend call
     try {
       await createGRN({
         po_id: formData.po_no,
@@ -263,22 +237,17 @@ const GRNList = () => {
           remarks: formData.remarks
         }))
       });
-    } catch (e) {
-      console.warn('Backend GRN create notice:', e);
-    }
-
-    setGrns(prev => [newRecord, ...prev]);
-    setShowCreateModal(false);
-
-    if (computedStatus === 'Accepted' || computedStatus === 'Partial') {
+      await loadData();
+      setShowCreateModal(false);
       setAlert({
         type: 'success',
-        message: `GRN ${newRecord.grn_no} accepted successfully! ${formData.items.map(i => `${i.accepted_qty} ${i.unit} of ${i.material_name}`).join(', ')} visually credited to Site Stock inventory.`
+        message: `GRN ${formData.grn_no} saved to database successfully!`
       });
-    } else {
+    } catch (e) {
+      console.error('Backend GRN create failed:', e);
       setAlert({
-        type: 'success',
-        message: `GRN ${newRecord.grn_no} recorded as ${computedStatus}.`
+        type: 'error',
+        message: e.response?.data?.message || 'Failed to save GRN to database.'
       });
     }
   };

@@ -30,7 +30,6 @@ const MaterialMaster = () => {
     try {
       const res = await client.get('/materials?limit=200');
       const raw = res.data?.data?.materials || res.data?.materials || res.data?.data || res.data || [];
-      const localMats = JSON.parse(localStorage.getItem('sitetrack_materials_fallback') || '[]');
       
       let mapped = [];
       if (Array.isArray(raw)) {
@@ -50,15 +49,10 @@ const MaterialMaster = () => {
         }));
       }
 
-      const existingIds = new Set(mapped.map(m => String(m.id)));
-      const extraLocal = localMats.filter(m => !existingIds.has(String(m.id)));
-      setMaterials([...extraLocal, ...mapped]);
+      setMaterials(mapped);
     } catch (err) {
       console.warn('Error fetching materials:', err);
-      const localMats = JSON.parse(localStorage.getItem('sitetrack_materials_fallback') || '[]');
-      if (localMats.length > 0) {
-        setMaterials(localMats);
-      }
+      setMaterials([]);
     } finally {
       setLoading(false);
     }
@@ -148,16 +142,8 @@ const MaterialMaster = () => {
       }
       await fetchMaterials();
     } catch (apiErr) {
-      console.warn('Save material API error, using local fallback:', apiErr);
-      const savedItem = { ...formData, id: editingItem ? editingItem.id : Date.now() };
-      if (editingItem) {
-        setMaterials(materials.map(m => m.id === editingItem.id ? savedItem : m));
-      } else {
-        setMaterials([savedItem, ...materials]);
-      }
-      const localMats = JSON.parse(localStorage.getItem('sitetrack_materials_fallback') || '[]');
-      const filteredLocal = localMats.filter(m => String(m.id) !== String(savedItem.id));
-      localStorage.setItem('sitetrack_materials_fallback', JSON.stringify([savedItem, ...filteredLocal]));
+      console.error('Save material API error:', apiErr);
+      alert(apiErr.response?.data?.message || 'Failed to save material to database.');
     }
     setModalOpen(false);
   };
