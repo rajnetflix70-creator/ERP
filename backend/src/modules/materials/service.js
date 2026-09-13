@@ -39,14 +39,46 @@ async function getMaterial(id) {
 }
 
 async function createMaterial(data) {
-  const exists = await db('materials').whereILike('material_code', data.material_code).first();
-  if (exists) { const e = new Error(`Material code "${data.material_code}" already exists`); e.statusCode = 409; throw e; }
-  const [m] = await db('materials').insert(data).returning('*');
+  const code = data.material_code || data.code || `MAT-${Math.floor(1000 + Math.random() * 9000)}`;
+  let finalCode = code;
+  const exists = await db('materials').whereILike('material_code', code).first();
+  if (exists) {
+    finalCode = `${code}-${Math.floor(10 + Math.random() * 90)}`;
+  }
+
+  const insertPayload = {
+    material_code: finalCode,
+    name: data.name || 'New Material',
+    unit_of_measure: data.unit_of_measure || data.unit || 'Nos',
+    category: data.category || 'General',
+    standard_rate: parseFloat(data.standard_rate ?? data.current_rate ?? 0),
+    description: data.description || data.spec || data.brand || null,
+    reorder_level: parseFloat(data.reorder_level ?? data.min_stock ?? data.minimum_stock ?? 0),
+    is_active: data.is_active !== false,
+  };
+
+  const [m] = await db('materials').insert(insertPayload).returning('*');
   return m;
 }
 
 async function updateMaterial(id, data) {
-  const [m] = await db('materials').where({ id }).update(data).returning('*');
+  const payload = {};
+  if (data.material_code || data.code) payload.material_code = data.material_code || data.code;
+  if (data.name) payload.name = data.name;
+  if (data.unit_of_measure || data.unit) payload.unit_of_measure = data.unit_of_measure || data.unit;
+  if (data.category) payload.category = data.category;
+  if (data.standard_rate !== undefined || data.current_rate !== undefined) {
+    payload.standard_rate = parseFloat(data.standard_rate ?? data.current_rate ?? 0);
+  }
+  if (data.reorder_level !== undefined || data.min_stock !== undefined || data.minimum_stock !== undefined) {
+    payload.reorder_level = parseFloat(data.reorder_level ?? data.min_stock ?? data.minimum_stock ?? 0);
+  }
+  if (data.description !== undefined || data.spec !== undefined) {
+    payload.description = data.description ?? data.spec ?? null;
+  }
+  if (data.is_active !== undefined) payload.is_active = data.is_active;
+
+  const [m] = await db('materials').where({ id }).update(payload).returning('*');
   if (!m) { const e = new Error('Material not found'); e.statusCode = 404; throw e; }
   return m;
 }

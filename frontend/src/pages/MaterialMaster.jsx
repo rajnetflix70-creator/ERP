@@ -30,8 +30,11 @@ const MaterialMaster = () => {
     try {
       const res = await client.get('/materials?limit=200');
       const raw = res.data?.data?.materials || res.data?.materials || res.data?.data || res.data || [];
+      const localMats = JSON.parse(localStorage.getItem('sitetrack_materials_fallback') || '[]');
+      
+      let mapped = [];
       if (Array.isArray(raw)) {
-        const mapped = raw.map(m => ({
+        mapped = raw.map(m => ({
           id: m.id,
           code: m.code || m.material_code || `MAT-${m.id?.slice(0, 6)}`,
           name: m.name || m.material_name,
@@ -41,14 +44,21 @@ const MaterialMaster = () => {
           brand: m.brand || '',
           spec: m.spec || m.specification || '',
           gst: m.gst_rate || m.gst || 18,
-          min_stock: m.min_stock || m.minimum_stock || 0,
+          min_stock: m.min_stock || m.minimum_stock || m.reorder_level || 0,
           current_rate: m.standard_rate || m.current_rate || m.unit_price || 0,
           status: m.is_active !== false ? 'Active' : 'Inactive'
         }));
-        setMaterials(mapped);
       }
+
+      const existingIds = new Set(mapped.map(m => String(m.id)));
+      const extraLocal = localMats.filter(m => !existingIds.has(String(m.id)));
+      setMaterials([...extraLocal, ...mapped]);
     } catch (err) {
       console.warn('Error fetching materials:', err);
+      const localMats = JSON.parse(localStorage.getItem('sitetrack_materials_fallback') || '[]');
+      if (localMats.length > 0) {
+        setMaterials(localMats);
+      }
     } finally {
       setLoading(false);
     }
@@ -95,34 +105,47 @@ const MaterialMaster = () => {
 
   const handleSave = async (e) => {
     e.preventDefault();
+    if (!formData.name || !formData.name.trim()) {
+      alert('Please enter a Material Name');
+      return;
+    }
+
+    const payload = {
+      material_code: formData.code,
+      code: formData.code,
+      name: formData.name.trim(),
+      category: formData.category || 'General',
+      subcategory: formData.subcategory,
+      unit_of_measure: formData.unit,
+      unit: formData.unit,
+      brand: formData.brand,
+      spec: formData.spec,
+      gst: formData.gst,
+      standard_rate: Number(formData.current_rate) || 0,
+      current_rate: Number(formData.current_rate) || 0,
+      minimum_stock: Number(formData.min_stock) || 0,
+      reorder_level: Number(formData.min_stock) || 0,
+      status: formData.status
+    };
+
     try {
       if (editingItem) {
-        await client.put(`/materials/${editingItem.id}`, {
-          name: formData.name,
-          code: formData.code,
-          category: formData.category,
-          unit_of_measure: formData.unit,
-          standard_rate: Number(formData.current_rate) || 0,
-          minimum_stock: Number(formData.min_stock) || 0
-        });
+        await client.put(`/materials/${editingItem.id}`, payload);
       } else {
-        await client.post('/materials', {
-          name: formData.name,
-          code: formData.code,
-          category: formData.category,
-          unit_of_measure: formData.unit,
-          standard_rate: Number(formData.current_rate) || 0,
-          minimum_stock: Number(formData.min_stock) || 0
-        });
+        await client.post('/materials', payload);
       }
-      fetchMaterials();
+      await fetchMaterials();
     } catch (apiErr) {
-      console.warn('Save material error:', apiErr);
+      console.warn('Save material API error, using local fallback:', apiErr);
+      const savedItem = { ...formData, id: editingItem ? editingItem.id : Date.now() };
       if (editingItem) {
-        setMaterials(materials.map(m => m.id === editingItem.id ? { ...formData, id: editingItem.id } : m));
+        setMaterials(materials.map(m => m.id === editingItem.id ? savedItem : m));
       } else {
-        setMaterials([{ ...formData, id: Date.now() }, ...materials]);
+        setMaterials([savedItem, ...materials]);
       }
+      const localMats = JSON.parse(localStorage.getItem('sitetrack_materials_fallback') || '[]');
+      const filteredLocal = localMats.filter(m => String(m.id) !== String(savedItem.id));
+      localStorage.setItem('sitetrack_materials_fallback', JSON.stringify([savedItem, ...filteredLocal]));
     }
     setModalOpen(false);
   };

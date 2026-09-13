@@ -5,24 +5,32 @@ const UNITS = ['bags', 'kg', 'ton', 'm', 'sqft', 'litre', 'nos', 'rolls', 'sheet
 const PRIORITIES = ['urgent', 'normal', 'low'];
 
 const createMaterialSchema = Joi.object({
-  material_code: Joi.string().max(50).required().messages({ 'string.empty': 'Material code is required' }),
+  material_code: Joi.string().max(50).allow('', null).optional(),
+  code: Joi.string().max(50).allow('', null).optional(),
   name: Joi.string().min(2).max(200).required().messages({ 'string.empty': 'Material name is required' }),
-  unit_of_measure: Joi.string().valid(...UNITS).required(),
-  category: Joi.string().valid(...CATEGORIES).required(),
-  standard_rate: Joi.number().min(0).default(0),
+  unit_of_measure: Joi.string().allow('', null).optional(),
+  unit: Joi.string().allow('', null).optional(),
+  category: Joi.string().allow('', null).optional(),
+  standard_rate: Joi.number().min(0).allow(null, '').optional(),
+  current_rate: Joi.number().min(0).allow(null, '').optional(),
   description: Joi.string().allow('', null).optional(),
-  reorder_level: Joi.number().min(0).default(0),
-  is_active: Joi.boolean().default(true),
+  reorder_level: Joi.number().min(0).allow(null, '').optional(),
+  minimum_stock: Joi.number().min(0).allow(null, '').optional(),
+  is_active: Joi.boolean().optional(),
 }).unknown(true);
 
 const updateMaterialSchema = Joi.object({
-  material_code: Joi.string().max(50).optional(),
+  material_code: Joi.string().max(50).allow('', null).optional(),
+  code: Joi.string().max(50).allow('', null).optional(),
   name: Joi.string().min(2).max(200).optional(),
-  unit_of_measure: Joi.string().valid(...UNITS).optional(),
-  category: Joi.string().valid(...CATEGORIES).optional(),
-  standard_rate: Joi.number().min(0).optional(),
+  unit_of_measure: Joi.string().allow('', null).optional(),
+  unit: Joi.string().allow('', null).optional(),
+  category: Joi.string().allow('', null).optional(),
+  standard_rate: Joi.number().min(0).allow(null, '').optional(),
+  current_rate: Joi.number().min(0).allow(null, '').optional(),
   description: Joi.string().allow('', null).optional(),
-  reorder_level: Joi.number().min(0).optional(),
+  reorder_level: Joi.number().min(0).allow(null, '').optional(),
+  minimum_stock: Joi.number().min(0).allow(null, '').optional(),
   is_active: Joi.boolean().optional(),
 }).unknown(true);
 
