@@ -5,28 +5,26 @@ const CompanySettings = () => {
   const [saved, setSaved] = useState(false);
 
   const [companyInfo, setCompanyInfo] = useState({
-    company_name: 'SiteTrack Construction & Infra Tech Pvt Ltd',
-    trade_name: 'SiteTrack Infra',
-    cin_number: 'U45200TN2020PTC123456',
-    gstin: '33AABCS1234F1Z8',
-    pan: 'AABCS1234F',
-    email: 'corporate@sitetrack.ae',
-    phone: '+91 44 2450 1234',
-    alt_phone: '+91 98401 98765',
+    company_name: 'SiteTrack Construction & Infra Tech LLC',
+    trade_license: 'CN-1029384-UAE',
+    gst_vat_number: '100293847500003',
+    email: 'info@sitetrack.ae',
+    phone: '+971 4 392 8800',
+    alt_phone: '+971 50 123 4567',
     website: 'https://sitetrack.ae',
-    address_line1: 'Tower 4, Level 6, Chennai One IT SEZ',
-    address_line2: 'Pallavaram-Thoraipakkam 200 Feet Radial Road',
-    city: 'Chennai',
-    state: 'Tamil Nadu',
-    pincode: '600097',
-    country: 'India',
-    financial_year_start: '04-01',
-    financial_year_end: '03-31',
-    currency: 'INR (₹)',
-    timezone: 'Asia/Kolkata (GMT+5:30)',
+    address_line1: 'Level 18, Commercial Tower, Business Bay',
+    address_line2: 'Sheikh Zayed Road, P.O. Box 48291',
+    city: 'Dubai',
+    state: 'Dubai',
+    pincode: '00000',
+    country: 'United Arab Emirates',
+    financial_year_start: '01-01',
+    financial_year_end: '12-31',
+    currency: 'AED (د.إ)',
+    timezone: 'Asia/Dubai (GMT+4:00)',
     date_format: 'DD-MMM-YYYY',
-    tax_type: 'GST',
-    default_gst_rate: 18,
+    tax_type: 'VAT',
+    default_gst_rate: 5,
     bank_name: 'HDFC Bank Ltd',
     bank_branch: 'OMR Velachery Branch',
     bank_account: '50200012345678',
@@ -365,10 +363,10 @@ const CompanySettings = () => {
                   onChange={e => setCompanyInfo({ ...companyInfo, currency: e.target.value })}
                   className="form-control"
                 >
-                  <option value="INR (₹)">Indian Rupee — INR (₹)</option>
                   <option value="AED (د.إ)">UAE Dirham — AED (د.إ)</option>
                   <option value="USD ($)">US Dollar — USD ($)</option>
                   <option value="SAR (﷼)">Saudi Riyal — SAR (﷼)</option>
+                  <option value="INR (₹)">Indian Rupee — INR (₹)</option>
                 </select>
               </div>
               <div className="form-group">

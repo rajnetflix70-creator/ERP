@@ -14,13 +14,26 @@ async function listSites(user) {
 
 function sanitizeSiteData(data) {
   const allowed = [
-    'name', 'code', 'emirate', 'address', 'latitude', 'longitude',
-    'geofence_radius_meters', 'supervisor_id', 'is_active'
+    'name', 'code', 'emirate', 'location', 'address', 'latitude', 'longitude',
+    'geofence_radius_meters', 'supervisor_id', 'is_active',
+    'manager', 'engineer', 'budget', 'currency', 'start_date',
+    'expected_completion', 'planned_end_date', 'completion_pct'
   ];
   const clean = {};
   allowed.forEach(k => {
     if (data[k] !== undefined) clean[k] = data[k] === '' ? null : data[k];
   });
+  if (data.startDate && !clean.start_date) clean.start_date = data.startDate;
+  if (data.expectedCompletion) {
+    if (!clean.expected_completion) clean.expected_completion = data.expectedCompletion;
+    if (!clean.planned_end_date) clean.planned_end_date = data.expectedCompletion;
+  }
+  if (data.progress !== undefined && clean.completion_pct === undefined) clean.completion_pct = Number(data.progress) || 0;
+  if (clean.budget !== undefined && clean.budget !== null) {
+    clean.budget = Number(String(clean.budget).replace(/[^0-9.-]+/g, '')) || 0;
+  }
+  if (!clean.currency) clean.currency = 'AED';
+  if (!clean.location) clean.location = clean.emirate || 'Dubai';
   return clean;
 }
 

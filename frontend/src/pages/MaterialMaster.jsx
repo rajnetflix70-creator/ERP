@@ -220,7 +220,7 @@ const MaterialMaster = () => {
                       {item.brand || '—'} {item.spec ? `(${item.spec})` : ''}
                     </td>
                     <td>{item.gst}%</td>
-                    <td style={{ fontWeight: '600' }}>₹{Number(item.current_rate || 0).toLocaleString('en-IN')}</td>
+                    <td style={{ fontWeight: '600' }}>AED {Number(item.current_rate || 0).toLocaleString()}</td>
                     <td>{item.min_stock} {item.unit}</td>
                     <td>
                       <span className={`badge ${item.status === 'Active' ? 'badge-success' : 'badge-default'}`}>
@@ -382,7 +382,7 @@ const MaterialMaster = () => {
                     </select>
                   </div>
                   <div className="form-group">
-                    <label className="form-label">Estimated Rate (₹)</label>
+                    <label className="form-label">Estimated Rate (AED)</label>
                     <input
                       type="number"
                       placeholder="380"

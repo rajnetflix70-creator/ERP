@@ -83,14 +83,14 @@ export default function SiteDetails() {
             engineer: found.engineer || found.site_engineer || 'Not Assigned',
             startDate: found.start_date || found.startDate || 'N/A',
             expectedCompletion: found.expected_completion || found.expectedCompletion || found.planned_end_date || 'N/A',
-            budget: found.budget ? `₹${found.budget}` : '₹0',
+            budget: found.budget ? `AED ${Number(found.budget).toLocaleString()}` : 'AED 0',
             rawBudget: Number(found.budget) || 0,
             progress: Number(found.progress || found.completion_pct) || 0,
             status: found.status ? (found.status.charAt(0).toUpperCase() + found.status.slice(1)) : 'Active',
-            projectValue: found.budget ? `₹${found.budget}` : '₹0',
-            materialBudget: '₹0',
-            materialPurchased: '₹0',
-            materialConsumed: '₹0',
+            projectValue: found.budget ? `AED ${Number(found.budget).toLocaleString()}` : 'AED 0',
+            materialBudget: 'AED 0',
+            materialPurchased: 'AED 0',
+            materialConsumed: 'AED 0',
             floors: found.floors || 'N/A',
             type: found.type || 'Construction Site',
             address: found.address || found.location || 'N/A',
@@ -685,8 +685,8 @@ export default function SiteDetails() {
                   <th>Section</th>
                   <th>Est. Qty</th>
                   <th>Unit</th>
-                  <th>Rate (₹)</th>
-                  <th>Total Amount (₹)</th>
+                  <th>Rate (AED)</th>
+                  <th>Total Amount (AED)</th>
                   <th>Consumed</th>
                   <th>Status</th>
                 </tr>
@@ -706,8 +706,8 @@ export default function SiteDetails() {
                       <td>{b.section}</td>
                       <td>{b.estimatedQty}</td>
                       <td>{b.unit}</td>
-                      <td>₹{b.rate?.toLocaleString()}</td>
-                      <td>₹{b.totalAmount?.toLocaleString()}</td>
+                      <td>AED {b.rate?.toLocaleString()}</td>
+                      <td>AED {b.totalAmount?.toLocaleString()}</td>
                       <td>{b.actualConsumed}</td>
                       <td><span className="badge badge-success">{b.status}</span></td>
                     </tr>

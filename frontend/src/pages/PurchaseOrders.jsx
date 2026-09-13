@@ -5,14 +5,10 @@ import Modal from '../components/Modal';
 import { useAuth } from '../contexts/AuthContext';
 import dayjs from 'dayjs';
 
-// Format Indian Currency: ₹14,40,000
-const formatINR = (amount) => {
+// Format Currency: AED 14,400
+const formatAED = (amount) => {
   const num = Number(amount) || 0;
-  return new Intl.NumberFormat('en-IN', {
-    style: 'currency',
-    currency: 'INR',
-    maximumFractionDigits: 0,
-  }).format(num);
+  return `AED ${num.toLocaleString()}`;
 };
 
 const PurchaseOrders = () => {
@@ -359,7 +355,7 @@ const PurchaseOrders = () => {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16, marginBottom: 20 }}>
         <div className="card" style={{ borderLeft: '4px solid #2563eb' }}>
           <div style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: 600 }}>TOTAL PO VALUE</div>
-          <div style={{ fontSize: '1.65rem', fontWeight: 800, color: '#1e293b', marginTop: 4 }}>{formatINR(totalPOValue)}</div>
+          <div style={{ fontSize: '1.65rem', fontWeight: 800, color: '#1e293b', marginTop: 4 }}>{formatAED(totalPOValue)}</div>
           <div style={{ fontSize: '0.75rem', color: '#2563eb', marginTop: 4 }}>Across {pos.length} procurement orders</div>
         </div>
 
@@ -488,7 +484,7 @@ const PurchaseOrders = () => {
                     </td>
                     <td>
                       <span style={{ fontWeight: 700, color: '#0f172a' }}>
-                        {formatINR(po.total_amount)}
+                        {formatAED(po.total_amount)}
                       </span>
                     </td>
                     <td>
@@ -686,9 +682,9 @@ const PurchaseOrders = () => {
                     <th style={{ minWidth: 160 }}>Description</th>
                     <th style={{ width: 90 }}>Qty</th>
                     <th style={{ width: 80 }}>Unit</th>
-                    <th style={{ width: 110 }}>Unit Price (₹)</th>
-                    <th style={{ width: 90 }}>GST %</th>
-                    <th style={{ width: 120 }}>Total (₹)</th>
+                    <th style={{ width: 110 }}>Unit Price (AED)</th>
+                    <th style={{ width: 90 }}>VAT %</th>
+                    <th style={{ width: 120 }}>Total (AED)</th>
                     <th style={{ width: 50, textAlign: 'center' }}>✕</th>
                   </tr>
                 </thead>
@@ -763,7 +759,7 @@ const PurchaseOrders = () => {
                         </select>
                       </td>
                       <td style={{ fontWeight: 700, color: '#1e293b' }}>
-                        {formatINR(item.total)}
+                        {formatAED(item.total)}
                       </td>
                       <td style={{ textAlign: 'center' }}>
                         <button
@@ -798,16 +794,16 @@ const PurchaseOrders = () => {
             <div style={{ background: '#f8fafc', padding: 14, borderRadius: 8, border: '1px solid #e2e8f0' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6, fontSize: '0.85rem' }}>
                 <span style={{ color: '#64748b' }}>Subtotal (Excl. Tax):</span>
-                <span style={{ fontWeight: 600 }}>{formatINR(subtotal)}</span>
+                <span style={{ fontWeight: 600 }}>{formatAED(subtotal)}</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6, fontSize: '0.85rem' }}>
                 <span style={{ color: '#64748b' }}>Total GST (CGST + SGST):</span>
-                <span style={{ fontWeight: 600, color: '#2563eb' }}>{formatINR(totalGST)}</span>
+                <span style={{ fontWeight: 600, color: '#2563eb' }}>{formatAED(totalGST)}</span>
               </div>
               <div style={{ height: 1, background: '#cbd5e1', margin: '8px 0' }} />
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1.1rem', fontWeight: 800, color: '#0f172a' }}>
                 <span>Grand Total:</span>
-                <span style={{ color: '#16a34a' }}>{formatINR(grandTotal)}</span>
+                <span style={{ color: '#16a34a' }}>{formatAED(grandTotal)}</span>
               </div>
             </div>
           </div>
@@ -898,9 +894,9 @@ const PurchaseOrders = () => {
                         <td style={{ fontWeight: 600 }}>{it.material_name || it.name}</td>
                         <td style={{ color: '#64748b' }}>{it.description || 'Standard supply'}</td>
                         <td>{it.qty || it.qty_ordered} {it.unit}</td>
-                        <td>{formatINR(it.unit_price)}</td>
+                        <td>{formatAED(it.unit_price)}</td>
                         <td>{it.gst_percent || 18}%</td>
-                        <td style={{ fontWeight: 700 }}>{formatINR(it.total || (it.qty * it.unit_price * 1.18))}</td>
+                        <td style={{ fontWeight: 700 }}>{formatAED(it.total || (it.qty * it.unit_price * 1.18))}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -920,7 +916,7 @@ const PurchaseOrders = () => {
               <div style={{ textAlign: 'right' }}>
                 <div style={{ color: '#64748b' }}>Grand Total (Inclusive of Tax):</div>
                 <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#16a34a' }}>
-                  {formatINR(viewingPO.total_amount)}
+                  {formatAED(viewingPO.total_amount)}
                 </div>
               </div>
             </div>
@@ -1036,15 +1032,15 @@ const PurchaseOrders = () => {
                 <div style={{ width: '280px', fontSize: '0.85rem' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0' }}>
                     <span style={{ color: '#64748b' }}>Subtotal:</span>
-                    <span style={{ fontWeight: 600 }}>{formatINR(pdfPO.subtotal || (pdfPO.total_amount * 0.82))}</span>
+                    <span style={{ fontWeight: 600 }}>{formatAED(pdfPO.subtotal || (pdfPO.total_amount * 0.82))}</span>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0' }}>
                     <span style={{ color: '#64748b' }}>GST Component:</span>
-                    <span style={{ fontWeight: 600 }}>{formatINR(pdfPO.tax_amount || (pdfPO.total_amount * 0.18))}</span>
+                    <span style={{ fontWeight: 600 }}>{formatAED(pdfPO.tax_amount || (pdfPO.total_amount * 0.18))}</span>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderTop: '2px solid #cbd5e1', fontSize: '1.05rem', fontWeight: 800 }}>
                     <span>Grand Total:</span>
-                    <span style={{ color: '#2563eb' }}>{formatINR(pdfPO.total_amount)}</span>
+                    <span style={{ color: '#2563eb' }}>{formatAED(pdfPO.total_amount)}</span>
                   </div>
                 </div>
               </div>

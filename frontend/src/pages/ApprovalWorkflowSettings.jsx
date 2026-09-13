@@ -11,9 +11,9 @@ const DEFAULT_WORKFLOW_TEMPLATES = [
     enabled: true,
     levels: [
       { step: 1, role: 'Site Engineer', threshold: 'All values', action: 'Draft & Initial Site Check', autoApprove: false },
-      { step: 2, role: 'Project Manager', threshold: 'Up to ₹2,00,000', action: 'Technical & BOQ Feasibility Review', autoApprove: false },
-      { step: 3, role: 'Purchase Manager', threshold: 'Above ₹2,00,000', action: 'Commercial & Vendor Stock Check', autoApprove: false },
-      { step: 4, role: 'Management / Director', threshold: 'Above ₹10,00,000', action: 'Executive CapEx Approval', autoApprove: false },
+      { step: 2, role: 'Project Manager', threshold: 'Up to AED 20,000', action: 'Technical & BOQ Feasibility Review', autoApprove: false },
+      { step: 3, role: 'Purchase Manager', threshold: 'Above AED 20,000', action: 'Commercial & Vendor Stock Check', autoApprove: false },
+      { step: 4, role: 'Management / Director', threshold: 'Above AED 100,000', action: 'Executive CapEx Approval', autoApprove: false },
     ]
   },
   {
@@ -24,9 +24,9 @@ const DEFAULT_WORKFLOW_TEMPLATES = [
     enabled: true,
     levels: [
       { step: 1, role: 'Purchase Executive', threshold: 'All POs', action: 'Draft PO & Quotation Comparison', autoApprove: false },
-      { step: 2, role: 'Purchase Manager', threshold: 'Up to ₹5,00,000', action: 'Rate Negotiation & Terms Sign-off', autoApprove: false },
-      { step: 3, role: 'Finance / Accounts Head', threshold: 'Above ₹5,00,000', action: 'Budget & Payment Term Verification', autoApprove: false },
-      { step: 4, role: 'Director / Management', threshold: 'Above ₹25,00,000', action: 'High Value Contract Sanction', autoApprove: false },
+      { step: 2, role: 'Purchase Manager', threshold: 'Up to AED 50,000', action: 'Rate Negotiation & Terms Sign-off', autoApprove: false },
+      { step: 3, role: 'Finance / Accounts Head', threshold: 'Above AED 50,000', action: 'Budget & Payment Term Verification', autoApprove: false },
+      { step: 4, role: 'Director / Management', threshold: 'Above AED 250,000', action: 'High Value Contract Sanction', autoApprove: false },
     ]
   },
   {

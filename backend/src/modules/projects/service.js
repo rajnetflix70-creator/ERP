@@ -20,7 +20,8 @@ async function getProject(id) {
 function sanitizeProjectData(data) {
   const allowed = [
     'folder_no', 'ak_job_no', 'project_name', 'area_sqft', 'emirate',
-    'supervisor_names', 'supervisors_assigned', 'supervisors_required',
+    'supervisor_names', 'manager', 'engineer', 'lead_engineer',
+    'supervisors_assigned', 'supervisors_required',
     'technicians_required', 'supervisors_available_march', 'status',
     'has_stressing_machine', 'has_onion_machine', 'has_gun_machine',
     'has_grouting_machine', 'notes', 'is_active', 'client_name',
@@ -36,6 +37,17 @@ function sanitizeProjectData(data) {
     if (!clean.folder_no) clean.folder_no = data.code;
     if (!clean.ak_job_no) clean.ak_job_no = data.code;
   }
+  if (data.manager && !clean.supervisor_names) clean.supervisor_names = data.manager;
+  if (data.supervisor_names && !clean.manager) clean.manager = data.supervisor_names;
+  if (data.engineer && !clean.lead_engineer) clean.lead_engineer = data.engineer;
+  if (data.lead_engineer && !clean.engineer) clean.engineer = data.lead_engineer;
+  if (data.startDate && !clean.start_date) clean.start_date = data.startDate;
+  if (data.expectedCompletion && !clean.planned_end_date) clean.planned_end_date = data.expectedCompletion;
+  if (data.progress !== undefined && clean.completion_pct === undefined) clean.completion_pct = Number(data.progress) || 0;
+  if (clean.budget !== undefined && clean.budget !== null) {
+    clean.budget = Number(String(clean.budget).replace(/[^0-9.-]+/g, '')) || 0;
+  }
+  if (!clean.currency) clean.currency = 'AED';
   if (data.location && !clean.emirate) clean.emirate = data.location;
   if (clean.status && !['pending', 'active', 'needs_supervisor', 'completed', 'grouting_pending', 'stopped', 'strengthening'].includes(clean.status)) {
     // Map non-standard statuses safely if check constraint is still in effect

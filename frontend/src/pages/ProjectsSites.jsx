@@ -213,23 +213,26 @@ export default function ProjectsSites({ initialTab }) {
       if (projRes.status === 'fulfilled') {
         const rawProj = projRes.value?.data?.data?.data || projRes.value?.data?.data || projRes.value?.data || [];
         if (Array.isArray(rawProj)) {
-          const mappedProjects = rawProj.map(p => ({
-            id: p.id,
-            code: p.folder_no || p.ak_job_no || p.code || 'PRJ',
-            name: p.project_name || p.name || 'Untitled Project',
-            client: p.client_name || p.client || '-',
-            location: p.location || p.emirate || '-',
-            manager: p.supervisor_names || p.manager || '-',
-            engineer: p.engineer || '',
-            startDate: p.start_date || '',
-            expectedCompletion: p.planned_end_date || p.expectedCompletion || '',
-            rawBudget: Number(p.budget) || (p.area_sqft ? p.area_sqft * 2500 : 0) || 0,
-            budget: p.budget ? (p.currency ? `${p.currency} ${Number(p.budget).toLocaleString()}` : `₹${Number(p.budget).toLocaleString()}`) : (p.area_sqft ? `₹${(p.area_sqft * 2500 / 10000000).toFixed(1)} Cr` : '-'),
-            progress: Number(p.completion_pct) || 0,
-            status: p.status ? (p.status.charAt(0).toUpperCase() + p.status.slice(1).replace('_', ' ')) : 'Active',
-            sitesCount: p.sites_count || 0,
-            activeSites: [],
-          }));
+          const mappedProjects = rawProj.map(p => {
+            const rawB = Number(p.budget) || (p.area_sqft ? p.area_sqft * 250 : 0) || 0;
+            return {
+              id: p.id,
+              code: p.folder_no || p.ak_job_no || p.code || 'PRJ',
+              name: p.project_name || p.name || 'Untitled Project',
+              client: p.client_name || p.client || '-',
+              location: p.location || p.emirate || 'Dubai',
+              manager: p.manager || p.supervisor_names || '-',
+              engineer: p.engineer || p.lead_engineer || '',
+              startDate: p.start_date ? String(p.start_date).slice(0, 10) : (p.startDate ? String(p.startDate).slice(0, 10) : ''),
+              expectedCompletion: p.planned_end_date ? String(p.planned_end_date).slice(0, 10) : (p.expected_completion ? String(p.expected_completion).slice(0, 10) : (p.expectedCompletion ? String(p.expectedCompletion).slice(0, 10) : '')),
+              rawBudget: rawB,
+              budget: rawB > 0 ? `AED ${rawB.toLocaleString()}` : 'AED 0',
+              progress: Number(p.completion_pct) || 0,
+              status: p.status ? (p.status.charAt(0).toUpperCase() + p.status.slice(1).replace('_', ' ')) : 'Active',
+              sitesCount: p.sites_count || 0,
+              activeSites: [],
+            };
+          });
           setProjects(mappedProjects);
         }
       }
@@ -237,21 +240,24 @@ export default function ProjectsSites({ initialTab }) {
       if (siteRes.status === 'fulfilled') {
         const rawSites = siteRes.value?.data?.data || siteRes.value?.data || [];
         if (Array.isArray(rawSites)) {
-          const mappedSites = rawSites.map(s => ({
-            id: s.id,
-            code: s.site_code || s.code || 'SITE',
-            name: s.name || s.site_name || 'Site',
-            project: s.project_name || s.project || '-',
-            location: s.location || s.emirate || '-',
-            manager: s.manager || s.supervisor_names || '-',
-            engineer: s.engineer || '',
-            startDate: s.startDate || '',
-            expectedCompletion: s.expectedCompletion || '',
-            rawBudget: Number(String(s.budget || '').replace(/[^0-9.-]+/g, '')) || 0,
-            budget: s.budget ? (s.budget.toString().startsWith('₹') ? s.budget : `₹${s.budget}`) : '-',
-            progress: Number(s.progress || s.completion_pct) || 0,
-            status: s.status ? (s.status.charAt(0).toUpperCase() + s.status.slice(1).replace('_', ' ')) : 'Active',
-          }));
+          const mappedSites = rawSites.map(s => {
+            const rawB = Number(String(s.budget || '').replace(/[^0-9.-]+/g, '')) || 0;
+            return {
+              id: s.id,
+              code: s.site_code || s.code || 'SITE',
+              name: s.name || s.site_name || 'Site',
+              project: s.project_name || s.project || '-',
+              location: s.location || s.emirate || 'Dubai',
+              manager: s.manager || s.supervisor_names || '-',
+              engineer: s.engineer || '',
+              startDate: s.start_date ? String(s.start_date).slice(0, 10) : (s.startDate ? String(s.startDate).slice(0, 10) : ''),
+              expectedCompletion: s.expected_completion ? String(s.expected_completion).slice(0, 10) : (s.planned_end_date ? String(s.planned_end_date).slice(0, 10) : (s.expectedCompletion ? String(s.expectedCompletion).slice(0, 10) : '')),
+              rawBudget: rawB,
+              budget: rawB > 0 ? `AED ${rawB.toLocaleString()}` : 'AED 0',
+              progress: Number(s.progress || s.completion_pct) || 0,
+              status: s.status ? (s.status.charAt(0).toUpperCase() + s.status.slice(1).replace('_', ' ')) : 'Active',
+            };
+          });
           setSites(mappedSites);
         }
       }
@@ -299,11 +305,17 @@ export default function ProjectsSites({ initialTab }) {
       }
       if (modalMode === 'add') {
         const slug = siteForm.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+        const budgetNum = Number(String(siteForm.budget || '').replace(/[^0-9.-]+/g, '')) || 0;
         let newSite = {
           ...siteForm,
           id: slug || `site-${Date.now()}`,
+          rawBudget: budgetNum,
+          budget: budgetNum > 0 ? `AED ${budgetNum.toLocaleString()}` : 'AED 0',
+          manager: siteForm.manager,
+          engineer: siteForm.engineer,
+          startDate: siteForm.startDate,
+          expectedCompletion: siteForm.expectedCompletion,
           progress: Number(siteForm.progress) || 0,
-          budget: siteForm.budget.startsWith('₹') ? siteForm.budget : `₹${siteForm.budget}`,
         };
 
         try {
@@ -311,8 +323,17 @@ export default function ProjectsSites({ initialTab }) {
             name: siteForm.name,
             code: siteForm.code,
             site_code: siteForm.code,
-            location: siteForm.location || 'Chennai',
-            emirate: siteForm.location || 'Chennai',
+            location: siteForm.location || 'Dubai',
+            emirate: siteForm.location || 'Dubai',
+            manager: siteForm.manager,
+            supervisor_names: siteForm.manager,
+            engineer: siteForm.engineer,
+            budget: budgetNum,
+            currency: 'AED',
+            start_date: siteForm.startDate || null,
+            expected_completion: siteForm.expectedCompletion || null,
+            planned_end_date: siteForm.expectedCompletion || null,
+            completion_pct: Number(siteForm.progress) || 0,
             status: (siteForm.status || 'Active').toLowerCase()
           });
           if (res.data?.id) {
@@ -326,20 +347,36 @@ export default function ProjectsSites({ initialTab }) {
 
         setSites(prev => [newSite, ...prev]);
       } else {
+        const budgetNum = Number(String(siteForm.budget || '').replace(/[^0-9.-]+/g, '')) || 0;
         try {
           await client.put(`/sites/${editingId}`, {
             name: siteForm.name,
             code: siteForm.code,
             site_code: siteForm.code,
-            location: siteForm.location || 'Chennai',
-            emirate: siteForm.location || 'Chennai',
+            location: siteForm.location || 'Dubai',
+            emirate: siteForm.location || 'Dubai',
+            manager: siteForm.manager,
+            supervisor_names: siteForm.manager,
+            engineer: siteForm.engineer,
+            budget: budgetNum,
+            currency: 'AED',
+            start_date: siteForm.startDate || null,
+            expected_completion: siteForm.expectedCompletion || null,
+            planned_end_date: siteForm.expectedCompletion || null,
+            completion_pct: Number(siteForm.progress) || 0,
             status: (siteForm.status || 'Active').toLowerCase()
           });
         } catch (apiErr) {
           console.error('Site Update API Error:', apiErr);
         }
         setSites(prev =>
-          prev.map(s => (s.id === editingId ? { ...s, ...siteForm, progress: Number(siteForm.progress) || 0 } : s))
+          prev.map(s => (s.id === editingId ? {
+            ...s,
+            ...siteForm,
+            rawBudget: budgetNum,
+            budget: budgetNum > 0 ? `AED ${budgetNum.toLocaleString()}` : 'AED 0',
+            progress: Number(siteForm.progress) || 0
+          } : s))
         );
         showAlert(`Site "${siteForm.name}" updated successfully.`);
       }
@@ -350,11 +387,17 @@ export default function ProjectsSites({ initialTab }) {
       }
       if (modalMode === 'add') {
         const slug = projectForm.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+        const budgetNum = Number(String(projectForm.budget || '').replace(/[^0-9.-]+/g, '')) || 0;
         let newProject = {
           ...projectForm,
           id: slug || `project-${Date.now()}`,
+          rawBudget: budgetNum,
+          budget: budgetNum > 0 ? `AED ${budgetNum.toLocaleString()}` : 'AED 0',
+          manager: projectForm.manager,
+          engineer: projectForm.engineer,
+          startDate: projectForm.startDate,
+          expectedCompletion: projectForm.expectedCompletion,
           progress: Number(projectForm.progress) || 0,
-          budget: projectForm.budget.startsWith('₹') ? projectForm.budget : `₹${projectForm.budget}`,
           sitesCount: 0,
           activeSites: [],
         };
@@ -364,8 +407,14 @@ export default function ProjectsSites({ initialTab }) {
             project_name: projectForm.name,
             folder_no: projectForm.code,
             client_name: projectForm.client,
-            emirate: projectForm.location,
+            emirate: projectForm.location || 'Dubai',
+            location: projectForm.location || 'Dubai',
             supervisor_names: projectForm.manager,
+            manager: projectForm.manager,
+            engineer: projectForm.engineer,
+            lead_engineer: projectForm.engineer,
+            budget: budgetNum,
+            currency: 'AED',
             start_date: projectForm.startDate || null,
             planned_end_date: projectForm.expectedCompletion || null,
             status: (projectForm.status || 'Active').toLowerCase(),
@@ -382,13 +431,20 @@ export default function ProjectsSites({ initialTab }) {
 
         setProjects(prev => [newProject, ...prev]);
       } else {
+        const budgetNum = Number(String(projectForm.budget || '').replace(/[^0-9.-]+/g, '')) || 0;
         try {
           await client.put(`/projects/${editingId}`, {
             project_name: projectForm.name,
             folder_no: projectForm.code,
             client_name: projectForm.client,
-            emirate: projectForm.location,
+            emirate: projectForm.location || 'Dubai',
+            location: projectForm.location || 'Dubai',
             supervisor_names: projectForm.manager,
+            manager: projectForm.manager,
+            engineer: projectForm.engineer,
+            lead_engineer: projectForm.engineer,
+            budget: budgetNum,
+            currency: 'AED',
             start_date: projectForm.startDate || null,
             planned_end_date: projectForm.expectedCompletion || null,
             status: (projectForm.status || 'Active').toLowerCase(),
@@ -398,7 +454,13 @@ export default function ProjectsSites({ initialTab }) {
           console.error('Project Update API Error:', apiErr);
         }
         setProjects(prev =>
-          prev.map(p => (p.id === editingId ? { ...p, ...projectForm, progress: Number(projectForm.progress) || 0 } : p))
+          prev.map(p => (p.id === editingId ? {
+            ...p,
+            ...projectForm,
+            rawBudget: budgetNum,
+            budget: budgetNum > 0 ? `AED ${budgetNum.toLocaleString()}` : 'AED 0',
+            progress: Number(projectForm.progress) || 0
+          } : p))
         );
         showAlert(`Project "${projectForm.name}" updated successfully.`);
       }
@@ -437,18 +499,18 @@ export default function ProjectsSites({ initialTab }) {
     return '#f59e0b'; // warning orange
   };
 
-  // Dynamic total budget / project value calculation
+  // Dynamic total budget / project value calculation (AED currency)
   const totalBudgetOrValue = useMemo(() => {
     const list = activeTab === 'sites' ? sites : projects;
-    if (!list || list.length === 0) return '₹0';
+    if (!list || list.length === 0) return 'AED 0';
     const sum = list.reduce((acc, item) => {
       const b = item.rawBudget ?? (Number(String(item.budget || '').replace(/[^0-9.-]+/g, '')) || 0);
       return acc + b;
     }, 0);
-    if (sum === 0) return '₹0';
-    if (sum >= 10000000) return `₹${(sum / 10000000).toFixed(1)} Cr`;
-    if (sum >= 100000) return `₹${(sum / 100000).toFixed(1)} L`;
-    return `₹${Number(sum).toLocaleString()}`;
+    if (sum === 0) return 'AED 0';
+    if (sum >= 1000000) return `AED ${(sum / 1000000).toFixed(1)} M`;
+    if (sum >= 1000) return `AED ${(sum / 1000).toFixed(1)} K`;
+    return `AED ${Number(sum).toLocaleString()}`;
   }, [activeTab, sites, projects]);
 
   return (
@@ -476,7 +538,7 @@ export default function ProjectsSites({ initialTab }) {
             Projects & Sites
           </h1>
           <p className="page-subtitle" style={{ color: '#64748b', fontSize: '0.85rem' }}>
-            Centralized monitoring of all Indian construction projects, active work sites, and field progress
+            Centralized monitoring of all UAE construction projects, active work sites, and field progress
           </p>
         </div>
         <div style={{ display: 'flex', gap: '10px' }}>
@@ -1001,7 +1063,7 @@ export default function ProjectsSites({ initialTab }) {
                   <th>Client</th>
                   <th>Location</th>
                   <th>Project Manager</th>
-                  <th>Budget (₹)</th>
+                  <th>Budget (AED)</th>
                   <th style={{ width: '140px' }}>Progress</th>
                   <th style={{ width: '100px' }}>Status</th>
                   <th style={{ width: '120px', textAlign: 'center' }}>Actions</th>
@@ -1359,11 +1421,11 @@ export default function ProjectsSites({ initialTab }) {
               </div>
 
               <div className="form-group">
-                <label className="form-label">Allocated Budget (₹)</label>
+                <label className="form-label">Allocated Budget (AED)</label>
                 <input
                   type="text"
                   className="form-control"
-                  placeholder="e.g. ₹4.5 Cr or 45000000"
+                  placeholder="e.g. AED 500,000 or 500000"
                   value={siteForm.budget}
                   onChange={e => setSiteForm({ ...siteForm, budget: e.target.value })}
                 />
@@ -1415,7 +1477,7 @@ export default function ProjectsSites({ initialTab }) {
                   type="text"
                   className="form-control"
                   required
-                  placeholder="e.g. Skyline Towers"
+                  placeholder="e.g. Burj Crown Tower"
                   value={projectForm.name}
                   onChange={e => setProjectForm({ ...projectForm, name: e.target.value })}
                 />
@@ -1427,7 +1489,7 @@ export default function ProjectsSites({ initialTab }) {
                   type="text"
                   className="form-control"
                   required
-                  placeholder="e.g. L&T Realty / DLF"
+                  placeholder="e.g. Emaar Properties / Nakheel"
                   value={projectForm.client}
                   onChange={e => setProjectForm({ ...projectForm, client: e.target.value })}
                 />
@@ -1439,7 +1501,7 @@ export default function ProjectsSites({ initialTab }) {
                   type="text"
                   className="form-control"
                   required
-                  placeholder="e.g. Chennai, Bangalore"
+                  placeholder="e.g. Dubai, Abu Dhabi, Sharjah"
                   value={projectForm.location}
                   onChange={e => setProjectForm({ ...projectForm, location: e.target.value })}
                 />
@@ -1451,7 +1513,7 @@ export default function ProjectsSites({ initialTab }) {
                   type="text"
                   className="form-control"
                   required
-                  placeholder="e.g. Rajesh Sharma"
+                  placeholder="e.g. Tariq Mahmoud"
                   value={projectForm.manager}
                   onChange={e => setProjectForm({ ...projectForm, manager: e.target.value })}
                 />
@@ -1462,7 +1524,7 @@ export default function ProjectsSites({ initialTab }) {
                 <input
                   type="text"
                   className="form-control"
-                  placeholder="e.g. Rajesh Kannan"
+                  placeholder="e.g. Eng. Rashid Al Mansoori"
                   value={projectForm.engineer}
                   onChange={e => setProjectForm({ ...projectForm, engineer: e.target.value })}
                 />
@@ -1489,11 +1551,11 @@ export default function ProjectsSites({ initialTab }) {
               </div>
 
               <div className="form-group">
-                <label className="form-label">Project Budget (₹)</label>
+                <label className="form-label">Project Budget (AED)</label>
                 <input
                   type="text"
                   className="form-control"
-                  placeholder="e.g. ₹50.0 Cr"
+                  placeholder="e.g. AED 5.0 M or 5000000"
                   value={projectForm.budget}
                   onChange={e => setProjectForm({ ...projectForm, budget: e.target.value })}
                 />

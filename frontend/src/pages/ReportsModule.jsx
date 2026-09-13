@@ -356,7 +356,7 @@ const ReportsModule = () => {
               <div className="card" style={{ borderLeft: '4px solid #16a34a' }}>
                 <div style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: '600' }}>TOTAL INVOICED / BILLED</div>
                 <div style={{ fontSize: '1.75rem', fontWeight: '800', color: '#16a34a', marginTop: 4 }}>
-                  ₹{(parseFloat(reportsData.kpis.totalBilled) || 1440000).toLocaleString('en-IN')}
+                  AED {(parseFloat(reportsData.kpis.totalBilled) || 0).toLocaleString()}
                 </div>
                 <div style={{ fontSize: '0.72rem', color: '#64748b', marginTop: 2 }}>Revenue certified this month</div>
               </div>
@@ -391,7 +391,7 @@ const ReportsModule = () => {
 
               <div className="card" style={{ padding: '1.25rem' }}>
                 <h3 style={{ fontSize: '1rem', fontWeight: '700', marginBottom: '1rem', color: '#0f172a' }}>
-                  Monthly Billing / Invoicing (INR)
+                  Monthly Billing / Invoicing (AED)
                 </h3>
                 <div style={{ height: 260, width: '100%' }}>
                   <ResponsiveContainer width="100%" height="100%">
@@ -399,8 +399,8 @@ const ReportsModule = () => {
                       <CartesianGrid strokeDasharray="3 3" vertical={false} />
                       <XAxis dataKey="month" tick={{ fontSize: 11 }} />
                       <YAxis />
-                      <Tooltip formatter={(value) => `₹${parseFloat(value).toLocaleString('en-IN')}`} />
-                      <Bar dataKey="amount" fill="#16a34a" radius={[4, 4, 0, 0]} name="Billed (₹)" />
+                      <Tooltip formatter={(value) => `AED ${parseFloat(value).toLocaleString()}`} />
+                      <Bar dataKey="amount" fill="#16a34a" radius={[4, 4, 0, 0]} name="Billed (AED)" />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>

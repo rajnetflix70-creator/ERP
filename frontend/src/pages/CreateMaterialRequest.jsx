@@ -447,8 +447,8 @@ const CreateMaterialRequest = ({ isModal = false, onClose = null, onSuccess = nu
                   <th style={{ minWidth: '240px' }}>Material Item *</th>
                   <th style={{ width: '120px' }}>Quantity *</th>
                   <th style={{ width: '100px' }}>Unit</th>
-                  <th style={{ width: '130px' }}>Est. Rate (₹)</th>
-                  <th style={{ width: '130px' }}>Total (₹)</th>
+                  <th style={{ width: '130px' }}>Est. Rate (AED)</th>
+                  <th style={{ width: '130px' }}>Total (AED)</th>
                   <th style={{ minWidth: '180px' }}>Remarks / Specs</th>
                   <th style={{ width: '50px' }}>Action</th>
                 </tr>
@@ -511,7 +511,7 @@ const CreateMaterialRequest = ({ isModal = false, onClose = null, onSuccess = nu
                           />
                         </td>
                         <td style={{ fontWeight: 700, color: '#1e293b' }}>
-                          ₹{rowTotal.toLocaleString('en-IN')}
+                          AED {rowTotal.toLocaleString()}
                         </td>
                         <td>
                           <input

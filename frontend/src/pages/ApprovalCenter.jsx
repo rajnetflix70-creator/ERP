@@ -7,13 +7,10 @@ const SITE_FILTER_OPTIONS = ['All Sites'];
 const PRIORITY_FILTER_OPTIONS = ['All Priorities', 'Urgent', 'High', 'Normal'];
 const DATE_FILTER_OPTIONS = ['All Dates', 'Today', 'Last 7 Days', 'This Month'];
 
-const formatINR = (val) => {
-  if (!val && val !== 0) return '₹0';
-  return new Intl.NumberFormat('en-IN', {
-    style: 'currency',
-    currency: 'INR',
-    maximumFractionDigits: 0
-  }).format(val);
+const formatAED = (val) => {
+  if (!val && val !== 0) return 'AED 0';
+  const num = Number(val) || 0;
+  return `AED ${num.toLocaleString()}`;
 };
 
 const ApprovalCenter = () => {
@@ -400,7 +397,7 @@ const ApprovalCenter = () => {
           }}>
             <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Total Pending Value:</span>
             <span style={{ fontSize: '0.95rem', fontWeight: '700', color: 'var(--navy)' }}>
-              {formatINR(totalPendingValue)}
+              {formatAED(totalPendingValue)}
             </span>
           </div>
 
@@ -770,7 +767,7 @@ const ApprovalCenter = () => {
                   {/* Amount */}
                   <td>
                     <span style={{ fontWeight: '700', color: 'var(--navy)', fontSize: '0.88rem' }}>
-                      {formatINR(row.amount)}
+                      {formatAED(row.amount)}
                     </span>
                   </td>
 
@@ -941,7 +938,7 @@ const ApprovalCenter = () => {
                   <div>
                     <span style={{ fontSize: '0.74rem', color: 'var(--text-muted)' }}>Estimated Value:</span>
                     <div style={{ fontSize: '1.1rem', fontWeight: '800', color: 'var(--primary)' }}>
-                      {formatINR(currentReviewItem.amount)}
+                      {formatAED(currentReviewItem.amount)}
                     </div>
                   </div>
                   <div style={{ textAlign: 'right' }}>
@@ -986,9 +983,9 @@ const ApprovalCenter = () => {
                         <td style={{ fontWeight: '700', color: 'var(--primary)' }}>
                           {m.qty} {m.unit}
                         </td>
-                        <td>{m.est_rate ? formatINR(m.est_rate) : '-'}</td>
+                        <td>{m.est_rate ? formatAED(m.est_rate) : '-'}</td>
                         <td style={{ fontWeight: '600', color: 'var(--navy)' }}>
-                          {formatINR(m.total)}
+                          {formatAED(m.total)}
                         </td>
                         <td>
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
