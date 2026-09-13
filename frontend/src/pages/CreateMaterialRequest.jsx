@@ -170,11 +170,7 @@ const CreateMaterialRequest = ({ isModal = false, onClose = null, onSuccess = nu
   }, 0);
 
   const formatCurrency = (val) => {
-    return new Intl.NumberFormat('en-IN', {
-      style: 'currency',
-      currency: 'INR',
-      maximumFractionDigits: 0
-    }).format(val);
+    return `AED ${Number(val || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   };
 
   const handleSubmit = async (e, isDraft = false) => {
@@ -238,8 +234,9 @@ const CreateMaterialRequest = ({ isModal = false, onClose = null, onSuccess = nu
     };
 
     try {
-      await client.post('/material-requests', {
+      const res = await client.post('/material-requests', {
         site_id: matchedSite?.id,
+        project_id: matchedSite?.project_id,
         required_date: requiredDate,
         priority: priority.toLowerCase(),
         notes: purpose,
@@ -249,8 +246,14 @@ const CreateMaterialRequest = ({ isModal = false, onClose = null, onSuccess = nu
           remarks: m.remarks,
         })),
       });
-    } catch {
-      // Local fallback
+
+      if (res.data?.mr_number) {
+        newRequestData.mr_number = res.data.mr_number;
+        newRequestData.request_number = res.data.mr_number;
+        newRequestData.request_no = res.data.mr_number;
+      }
+    } catch (apiErr) {
+      console.warn('Backend API request saved via fallback:', apiErr?.message);
     }
 
     // Persist to localStorage

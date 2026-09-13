@@ -80,21 +80,73 @@ async function listRequests(filters = {}) {
   return q;
 }
 
-async function createRequest(data, userId) {
-  const mr_number = await nextMrNumber();
-  const [req] = await db('material_requests').insert({
-    mr_number,
-    project_id:    data.project_id,
-    site_id:       data.site_id || null,
-    material_id:   data.material_id,
-    requested_by:  userId,
-    qty_requested: data.qty_requested,
-    date_needed:   data.date_needed || null,
-    purpose:       data.purpose || null,
-    priority:      data.priority || 'normal',
-    status:        'pending',
+async function resolveProjectId(projectId, siteId) {
+  if (projectId) {
+    const p = await db('projects').where({ id: projectId }).first();
+    if (p) return p.id;
+  }
+  if (siteId) {
+    const s = await db('sites').where({ id: siteId }).first();
+    if (s && s.project_id) return s.project_id;
+  }
+  const firstP = await db('projects').first();
+  return firstP ? firstP.id : null;
+}
+
+async function resolveMaterialId(materialId) {
+  if (materialId) {
+    const m = await db('materials').where({ id: materialId }).first();
+    if (m) return m.id;
+    const mByCode = await db('materials').whereILike('material_code', materialId).first();
+    if (mByCode) return mByCode.id;
+    const mByName = await db('materials').whereILike('name', materialId).first();
+    if (mByName) return mByName.id;
+  }
+  const firstM = await db('materials').first();
+  if (firstM) return firstM.id;
+  const [newMat] = await db('materials').insert({
+    material_code: `MAT-${Date.now().toString().slice(-4)}`,
+    name: 'General Construction Material',
+    category: 'Other',
+    unit_of_measure: 'nos',
   }).returning('*');
-  return req;
+  return newMat.id;
+}
+
+async function createRequest(data, userId) {
+  const projectId = await resolveProjectId(data.project_id, data.site_id);
+  const siteId = data.site_id || null;
+  const dateNeeded = data.date_needed || data.required_date || null;
+  const purpose = data.purpose || data.notes || null;
+  const priority = (data.priority || 'normal').toLowerCase();
+
+  const items = Array.isArray(data.items) && data.items.length > 0
+    ? data.items
+    : [{ material_id: data.material_id, qty_requested: data.qty_requested || data.quantity || 1, remarks: data.remarks }];
+
+  const createdRequests = [];
+  for (const item of items) {
+    const mr_number = await nextMrNumber();
+    const materialId = await resolveMaterialId(item.material_id || data.material_id);
+    const qty = parseFloat(item.quantity || item.qty_requested || data.qty_requested || 1);
+
+    const [req] = await db('material_requests').insert({
+      mr_number,
+      project_id: projectId,
+      site_id: siteId,
+      material_id: materialId,
+      requested_by: userId || null,
+      qty_requested: qty,
+      date_needed: dateNeeded,
+      purpose: item.remarks ? `${purpose || ''} (${item.remarks})`.trim() : purpose,
+      priority: priority,
+      status: 'pending',
+    }).returning('*');
+
+    createdRequests.push(req);
+  }
+
+  return createdRequests.length === 1 ? createdRequests[0] : { success: true, count: createdRequests.length, requests: createdRequests };
 }
 
 async function approveRequest(id, data, userId) {

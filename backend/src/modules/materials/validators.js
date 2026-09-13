@@ -27,13 +27,24 @@ const updateMaterialSchema = Joi.object({
 }).unknown(true);
 
 const createRequestSchema = Joi.object({
-  project_id: Joi.string().uuid().required().messages({ 'any.required': 'Project is required' }),
-  site_id: Joi.string().uuid().allow(null, '').optional(),
-  material_id: Joi.string().uuid().required().messages({ 'any.required': 'Material is required' }),
-  qty_requested: Joi.number().positive().required().messages({ 'any.required': 'Quantity required' }),
+  project_id: Joi.string().allow(null, '').optional(),
+  site_id: Joi.string().allow(null, '').optional(),
+  material_id: Joi.string().allow(null, '').optional(),
+  qty_requested: Joi.number().positive().allow(null, '').optional(),
+  quantity: Joi.number().positive().allow(null, '').optional(),
   date_needed: Joi.date().allow(null, '').optional(),
+  required_date: Joi.date().allow(null, '').optional(),
   purpose: Joi.string().allow('', null).optional(),
-  priority: Joi.string().valid(...PRIORITIES).default('normal'),
+  notes: Joi.string().allow('', null).optional(),
+  priority: Joi.string().allow('', null).optional(),
+  items: Joi.array().items(
+    Joi.object({
+      material_id: Joi.string().allow('', null).optional(),
+      quantity: Joi.number().positive().optional(),
+      qty_requested: Joi.number().positive().optional(),
+      remarks: Joi.string().allow('', null).optional(),
+    }).unknown(true)
+  ).optional(),
 }).unknown(true);
 
 const approveRequestSchema = Joi.object({

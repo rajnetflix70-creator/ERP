@@ -61,6 +61,7 @@ app.use('/api/v1/projects',  authMiddleware, projectRoutes);
 app.use('/api/v1/sites',     authMiddleware, siteRoutes);
 app.use('/api/v1/work-packages', authMiddleware, workPackageRoutes);
 app.use('/api/v1/materials', authMiddleware, materialRoutes);
+app.use('/api/v1/material-requests', authMiddleware, materialRoutes);
 app.use('/api/v1/equipment-machines', authMiddleware, equipmentMachineRoutes);
 app.use('/api/v1/attendance', authMiddleware, attendanceRoutes);
 app.use('/api/v1/procurement', authMiddleware, procurementRoutes);
