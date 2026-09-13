@@ -430,6 +430,13 @@ export default function ProjectsSites({ initialTab }) {
     return <span className="badge badge-default">{status}</span>;
   };
 
+  // Progress Bar color helper
+  const getProgressColor = (pct) => {
+    if (pct >= 75) return '#22c55e'; // success green
+    if (pct >= 40) return '#2563eb'; // brand blue
+    return '#f59e0b'; // warning orange
+  };
+
   // Dynamic total budget / project value calculation
   const totalBudgetOrValue = useMemo(() => {
     const list = activeTab === 'sites' ? sites : projects;
