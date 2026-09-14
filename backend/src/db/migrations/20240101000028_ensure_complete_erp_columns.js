@@ -1,16 +1,29 @@
 exports.up = async function(knex) {
-  // 1. Drop all check constraints on projects and sites tables
+  // 1. Drop check constraints on projects table
   await knex.raw(`
     DO $$
     DECLARE
       r RECORD;
     BEGIN
+      BEGIN
+        EXECUTE 'ALTER TABLE "projects" DROP CONSTRAINT IF EXISTS "projects_status_check" CASCADE;';
+      EXCEPTION WHEN OTHERS THEN NULL;
+      END;
+
       FOR r IN (
-        SELECT constraint_name
-        FROM information_schema.table_constraints
-        WHERE table_name = 'projects' AND constraint_type = 'CHECK'
+        SELECT tc.constraint_name
+        FROM information_schema.table_constraints tc
+        WHERE tc.table_name = 'projects'
+          AND tc.constraint_type = 'CHECK'
+          AND tc.constraint_name NOT LIKE '%not_null%'
+          AND tc.constraint_name NOT LIKE '%_id_%'
+          AND tc.constraint_name NOT LIKE '%pkey%'
       ) LOOP
-        EXECUTE 'ALTER TABLE "projects" DROP CONSTRAINT IF EXISTS "' || r.constraint_name || '" CASCADE;';
+        BEGIN
+          EXECUTE 'ALTER TABLE "projects" DROP CONSTRAINT IF EXISTS "' || r.constraint_name || '" CASCADE;';
+        EXCEPTION WHEN OTHERS THEN
+          NULL;
+        END;
       END LOOP;
     END $$;
   `);
