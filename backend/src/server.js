@@ -17,10 +17,10 @@ async function startServer() {
     console.error('Migration error on startup:', err);
   }
 
-  app.listen(PORT, () => {
+  app.listen(PORT, '0.0.0.0', () => {
     logger.info(`Server running on port ${PORT} in ${config.env} mode`);
     console.log(`Server running on port ${PORT} in ${config.env} mode`);
-    console.log(`Health check: http://localhost:${PORT}/api/v1/health`);
+    console.log(`Health check: http://0.0.0.0:${PORT}/api/v1/health`);
   });
 }
 

@@ -77,7 +77,21 @@ app.use((req, res, next) => {
   if (req.path.startsWith('/api/')) {
     return res.status(404).json({ error: true, message: 'Route not found' });
   }
-  res.sendFile(path.join(distPath, 'index.html'));
+  const indexPath = path.join(distPath, 'index.html');
+  res.sendFile(indexPath, (err) => {
+    if (err) {
+      res.status(200).send(`
+        <!DOCTYPE html>
+        <html>
+        <head><title>SiteTrack ERP</title></head>
+        <body style="font-family:sans-serif;padding:2rem;text-align:center;">
+          <h2>🏗️ SiteTrack ERP Server Active</h2>
+          <p>Health check: <a href="/api/v1/health">/api/v1/health</a></p>
+        </body>
+        </html>
+      `);
+    }
+  });
 });
 
 app.use(errorHandler);
