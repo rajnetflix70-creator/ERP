@@ -12,8 +12,13 @@ const AttendanceHistory = () => {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    // Fetch users for dropdown
-    apiClient.get('/users/list').then(r => setUsers(r.data)).catch(console.error);
+    // Fetch employees for dropdown
+    apiClient.get('/employees').then(r => {
+      const raw = r.data?.data?.data || r.data?.data || r.data || [];
+      if (Array.isArray(raw)) {
+        setUsers(raw.map(u => ({ id: u.id, full_name: u.full_name || u.name, employee_id: u.employee_id || u.code })));
+      }
+    }).catch(console.error);
   }, []);
 
   useEffect(() => {

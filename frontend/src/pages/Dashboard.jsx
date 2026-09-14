@@ -75,7 +75,7 @@ const Dashboard = () => {
           client.get('/materials?limit=100'),
           client.get('/materials/low-stock'),
           client.get('/employees?limit=100'),
-          client.get('/audit-logs?limit=5')
+          client.get('/reports/audit-logs?limit=5')
         ]);
 
         if (!isMounted) return;
