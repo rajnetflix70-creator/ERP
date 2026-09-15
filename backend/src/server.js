@@ -4,7 +4,7 @@ const config = require('./config');
 const db = require('./db');
 const logger = require('./utils/logger');
 
-const PORT = parseInt(process.env.PORT || config.port || '3001', 10);
+const PORT = parseInt(process.env.PORT || config.port || '3000', 10);
 
 async function startServer() {
   // 1. Immediately bind and listen on PORT for Railway healthcheck

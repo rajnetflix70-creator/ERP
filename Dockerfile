@@ -23,6 +23,6 @@ ENV NODE_ENV=production
 COPY --from=builder /app/frontend/dist ./frontend/dist
 COPY --from=builder /app/backend ./backend
 
-EXPOSE 3001
+EXPOSE 3000
 
 CMD ["node", "backend/src/server.js"]
