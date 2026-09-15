@@ -21,12 +21,20 @@ const reportsRoutes = require('./modules/reports/routes');
 const mainStoreRoutes = require('./modules/main_store/routes');
 const vendorRoutes = require('./modules/vendors/routes');
 
+const fs = require('fs');
 const app = express();
 
 app.use(helmet({ contentSecurityPolicy: false }));
 
 // Static assets from frontend build — served BEFORE CORS so JS/CSS never trigger 500 CORS errors
-const distPath = path.join(__dirname, '../../frontend/dist');
+const candidateDistPaths = [
+  path.join(__dirname, '../../frontend/dist'),
+  path.join(process.cwd(), 'frontend/dist'),
+  path.join(__dirname, '../../../frontend/dist'),
+  path.join(__dirname, '../public'),
+];
+const distPath = candidateDistPaths.find(p => fs.existsSync(p)) || candidateDistPaths[0];
+
 app.use(express.static(distPath, {
   setHeaders: (res, filePath) => {
     if (filePath.endsWith('index.html')) {

@@ -1,7 +1,7 @@
 [build]
-  buildCommand = "cd frontend && npm ci && npm run build && cd ../backend && npm ci --only=production"
+  builder = "DOCKERFILE"
 
 [deploy]
-  startCommand = "cd backend && npm run migrate && npm start"
+  startCommand = "node backend/src/server.js"
   restartPolicyType = "on_failure"
   restartPolicyMaxRetries = 3
