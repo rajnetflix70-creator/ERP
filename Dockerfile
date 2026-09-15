@@ -1,4 +1,4 @@
-﻿# Stage 1: Build Frontend and Backend
+# Stage 1: Build Frontend and Backend
 FROM node:20-alpine AS builder
 
 WORKDIR /app
@@ -19,7 +19,6 @@ FROM node:20-alpine
 WORKDIR /app
 
 ENV NODE_ENV=production
-ENV PORT=3001
 
 COPY --from=builder /app/frontend/dist ./frontend/dist
 COPY --from=builder /app/backend ./backend

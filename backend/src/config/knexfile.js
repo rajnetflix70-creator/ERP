@@ -17,9 +17,10 @@ function getConnection() {
     return dbUrl;
   }
   if (isProduction) {
+    const isInternal = dbUrl.includes('.railway.internal') || dbUrl.includes('localhost') || dbUrl.includes('127.0.0.1') || dbUrl.includes('sslmode=disable');
     return {
       connectionString: dbUrl,
-      ssl: { rejectUnauthorized: false }
+      ssl: isInternal ? false : { rejectUnauthorized: false }
     };
   }
   return dbUrl;
