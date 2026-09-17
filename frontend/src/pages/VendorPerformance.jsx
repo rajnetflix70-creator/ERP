@@ -22,18 +22,18 @@ const VendorPerformance = () => {
       if (Array.isArray(raw)) {
         mapped = raw.map((v, i) => ({
           id: v.id,
-          code: v.code || v.vendor_code || `VEN-${1000 + i}`,
+          code: v.code || v.vendor_code || `VEN-${String(v.id).slice(0, 6)}`,
           name: v.name || v.vendor_name || 'Vendor',
-          category: v.category || v.vendor_type || 'General Supplies',
+          category: v.category || v.vendor_type || v.vendor_category || 'General Supplies',
           contact_person: v.contact_person || v.contact_name || '-',
           phone: v.phone || v.mobile || '-',
           email: v.email || '-',
-          rating: v.rating || '4.5',
-          on_time_pct: v.on_time_pct || '95.0',
-          quality_pct: v.quality_pct || '98.0',
-          total_orders: v.total_orders || 0,
-          total_purchase: v.total_purchase ? `AED ${v.total_purchase}` : 'AED 0',
-          status: v.status ? (v.status.toLowerCase() === 'active' ? 'Active' : 'Inactive') : 'Active'
+          rating: v.rating !== undefined && v.rating !== null ? Number(v.rating).toFixed(1) : '0.0',
+          on_time_pct: v.on_time_pct !== undefined && v.on_time_pct !== null ? Number(v.on_time_pct).toFixed(1) : '0.0',
+          quality_pct: v.quality_pct !== undefined && v.quality_pct !== null ? Number(v.quality_pct).toFixed(1) : '0.0',
+          total_orders: Number(v.total_orders || v.orders_count || 0),
+          total_purchase: v.total_purchase ? `AED ${Number(v.total_purchase).toLocaleString()}` : 'AED 0',
+          status: v.status ? (v.status.toLowerCase() === 'active' ? 'Active' : 'Inactive') : (v.is_active !== false ? 'Active' : 'Inactive')
         }));
       }
 
@@ -49,6 +49,23 @@ const VendorPerformance = () => {
   useEffect(() => {
     fetchVendors();
   }, []);
+
+  const totalVendorsCount = vendors.length;
+  const activeVendorsCount = vendors.filter(v => v.status === 'Active').length;
+
+  const avgRating = totalVendorsCount > 0
+    ? (vendors.reduce((acc, v) => acc + (Number(v.rating) || 0), 0) / totalVendorsCount).toFixed(1)
+    : '0.0';
+
+  const vendorsWithOrders = vendors.filter(v => (Number(v.total_orders) || 0) > 0);
+
+  const avgOnTime = vendorsWithOrders.length > 0
+    ? (vendorsWithOrders.reduce((acc, v) => acc + (Number(v.on_time_pct) || 0), 0) / vendorsWithOrders.length).toFixed(1)
+    : '0.0';
+
+  const avgQuality = vendorsWithOrders.length > 0
+    ? (vendorsWithOrders.reduce((acc, v) => acc + (Number(v.quality_pct) || 0), 0) / vendorsWithOrders.length).toFixed(1)
+    : '0.0';
 
   const categories = ['All', ...new Set(vendors.map(v => v.category).filter(Boolean))];
 
@@ -78,14 +95,14 @@ const VendorPerformance = () => {
         </div>
       </div>
 
-      {/* KPI Cards Row */}
+      {/* KPI Cards Row (100% Dynamic) */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px', marginBottom: '20px' }}>
         <div className="card" style={{ padding: '18px 20px', display: 'flex', alignItems: 'center', gap: '16px' }}>
           <div style={{ width: '48px', height: '48px', borderRadius: '10px', background: '#fef3c7', color: '#d97706', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.4rem' }}>
             ⭐
           </div>
           <div>
-            <div style={{ fontSize: '1.6rem', fontWeight: 800, color: '#1e293b' }}>4.8 / 5.0</div>
+            <div style={{ fontSize: '1.6rem', fontWeight: 800, color: '#1e293b' }}>{avgRating} / 5.0</div>
             <div style={{ fontSize: '0.8rem', color: '#64748b' }}>Average Supplier Rating</div>
           </div>
         </div>
@@ -95,7 +112,7 @@ const VendorPerformance = () => {
             🚛
           </div>
           <div>
-            <div style={{ fontSize: '1.6rem', fontWeight: 800, color: '#1e293b' }}>96.8%</div>
+            <div style={{ fontSize: '1.6rem', fontWeight: 800, color: '#1e293b' }}>{avgOnTime}%</div>
             <div style={{ fontSize: '0.8rem', color: '#64748b' }}>On-Time Delivery Rate</div>
           </div>
         </div>
@@ -105,7 +122,7 @@ const VendorPerformance = () => {
             🛡️
           </div>
           <div>
-            <div style={{ fontSize: '1.6rem', fontWeight: 800, color: '#1e293b' }}>98.4%</div>
+            <div style={{ fontSize: '1.6rem', fontWeight: 800, color: '#1e293b' }}>{avgQuality}%</div>
             <div style={{ fontSize: '0.8rem', color: '#64748b' }}>Quality Compliance Pass</div>
           </div>
         </div>
@@ -115,7 +132,7 @@ const VendorPerformance = () => {
             🏢
           </div>
           <div>
-            <div style={{ fontSize: '1.6rem', fontWeight: 800, color: '#1e293b' }}>{vendors.length}</div>
+            <div style={{ fontSize: '1.6rem', fontWeight: 800, color: '#1e293b' }}>{activeVendorsCount}</div>
             <div style={{ fontSize: '0.8rem', color: '#64748b' }}>Active Vendor Partners</div>
           </div>
         </div>

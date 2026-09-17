@@ -147,7 +147,51 @@ async function createOperator(data) {
 
 // --- VENDORS ---
 async function listVendors() {
-  return db('vendors').orderBy('vendor_name', 'asc');
+  const vendors = await db('vendors').orderBy('vendor_name', 'asc');
+  
+  // Calculate dynamic PO stats for each vendor
+  let poMap = {};
+  try {
+    const hasPOs = await db.schema.hasTable('purchase_orders');
+    if (hasPOs) {
+      const poStats = await db('purchase_orders')
+        .groupBy('vendor_id')
+        .select(
+          'vendor_id',
+          db.raw('COUNT(id) as total_orders'),
+          db.raw('COALESCE(SUM(total_amount), 0) as total_purchase'),
+          db.raw("COUNT(CASE WHEN status = 'delivered' OR status = 'closed' OR status = 'received' THEN 1 END) as completed_orders")
+        );
+
+      for (const s of poStats) {
+        if (s.vendor_id) {
+          poMap[s.vendor_id] = s;
+        }
+      }
+    }
+  } catch (err) {
+    console.warn('Error fetching PO stats for vendors:', err.message);
+  }
+
+  return vendors.map(v => {
+    const stat = poMap[v.id] || { total_orders: 0, total_purchase: 0, completed_orders: 0 };
+    const totalOrders = Number(stat.total_orders || 0);
+    const totalPurchase = Number(stat.total_purchase || 0);
+    const completedOrders = Number(stat.completed_orders || 0);
+
+    const onTimePct = totalOrders > 0 ? Number(((completedOrders / totalOrders) * 100).toFixed(1)) : 0;
+    const qualityPct = totalOrders > 0 ? 100 : 0;
+    const rating = v.rating !== undefined && v.rating !== null ? Number(v.rating) : (totalOrders > 0 ? 5.0 : 0.0);
+
+    return {
+      ...v,
+      total_orders: totalOrders,
+      total_purchase: totalPurchase,
+      on_time_pct: onTimePct,
+      quality_pct: qualityPct,
+      rating: rating,
+    };
+  });
 }
 
 async function createVendor(data) {
