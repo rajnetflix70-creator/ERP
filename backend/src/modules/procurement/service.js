@@ -227,16 +227,65 @@ async function createGRN(data, userId) {
   }
 
   if (validPoId && validUserId && lineItemId) {
+    const receivedQty = parseFloat(data.items?.[0]?.received_qty || data.qty_received || 100);
+
     const [newGrn] = await db('grn_records').insert({
       po_id: validPoId,
       po_line_item_id: lineItemId,
       received_by: validUserId,
       received_date: data.received_date || data.receipt_date || new Date().toISOString().slice(0, 10),
-      qty_received: parseFloat(data.items?.[0]?.received_qty || data.qty_received || 100),
+      qty_received: receivedQty,
       remarks: data.remarks || 'GRN accepted at site gate'
     }).returning('*');
 
+    // Update PO status to delivered
     await db('purchase_orders').where({ id: validPoId }).update({ status: 'delivered', updated_at: db.fn.now() });
+
+    // Auto-credit received quantities to Site Stock & Stock Ledger
+    try {
+      const po = await db('purchase_orders').where({ id: validPoId }).first();
+      const lineItem = await db('po_line_items').where({ id: lineItemId }).first();
+
+      if (po && po.delivery_site_id && lineItem && lineItem.material_id) {
+        const hasSiteStock = await db.schema.hasTable('site_material_stock');
+        if (hasSiteStock) {
+          const existing = await db('site_material_stock')
+            .where({ site_id: po.delivery_site_id, material_id: lineItem.material_id })
+            .first();
+
+          if (existing) {
+            await db('site_material_stock')
+              .where({ id: existing.id })
+              .update({
+                current_stock: Number(existing.current_stock || 0) + receivedQty,
+                updated_at: db.fn.now()
+              });
+          } else {
+            await db('site_material_stock').insert({
+              site_id: po.delivery_site_id,
+              material_id: lineItem.material_id,
+              current_stock: receivedQty,
+              min_threshold: 10
+            });
+          }
+        }
+
+        const hasTx = await db.schema.hasTable('stock_transactions');
+        if (hasTx) {
+          await db('stock_transactions').insert({
+            site_id: po.delivery_site_id,
+            material_id: lineItem.material_id,
+            transaction_type: 'INWARD_GRN',
+            quantity: receivedQty,
+            performed_by: validUserId,
+            notes: `Auto-credited via GRN ${data.grn_no || newGrn.id} against PO ${po.po_number || ''}`
+          });
+        }
+      }
+    } catch (stockErr) {
+      console.warn('Stock update note during GRN creation:', stockErr.message);
+    }
+
     return { success: true, grn_number: data.grn_no || `GRN-${newGrn.id?.slice(0, 6)}`, grn: newGrn };
   }
 
