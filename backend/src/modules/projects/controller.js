@@ -27,8 +27,86 @@ async function deleteProject(req, res, next) {
   try { res.json(await service.deleteProject(req.params.id)); } catch (e) { next(e); }
 }
 
-async function getStats(req, res, next) {
-  try { res.json(await service.getStats()); } catch (e) { next(e); }
+async function getProjectDetails(req, res, next) {
+  try { res.json(await service.getProjectWithDetails(req.params.id)); } catch (e) { next(e); }
 }
 
-module.exports = { listProjects, getProject, createProject, updateProject, deleteProject, getStats };
+/* Slabs */
+async function listSlabs(req, res, next) {
+  try { res.json(await service.getSlabs(req.params.id)); } catch (e) { next(e); }
+}
+
+async function upsertSlab(req, res, next) {
+  try { res.json(await service.upsertSlab(req.params.id, req.body)); } catch (e) { next(e); }
+}
+
+async function batchUpdateSlabs(req, res, next) {
+  try { res.json(await service.batchUpdateSlabs(req.params.id, req.body.slabs || req.body)); } catch (e) { next(e); }
+}
+
+async function deleteSlab(req, res, next) {
+  try { res.json(await service.deleteSlab(req.params.id, req.params.slabId)); } catch (e) { next(e); }
+}
+
+/* Drawings */
+async function listDrawings(req, res, next) {
+  try { res.json(await service.getDrawings(req.params.id)); } catch (e) { next(e); }
+}
+
+async function createDrawing(req, res, next) {
+  try { res.status(201).json(await service.createDrawing(req.params.id, req.body)); } catch (e) { next(e); }
+}
+
+async function updateDrawing(req, res, next) {
+  try { res.json(await service.updateDrawing(req.params.id, req.params.drawingId, req.body)); } catch (e) { next(e); }
+}
+
+async function deleteDrawing(req, res, next) {
+  try { res.json(await service.deleteDrawing(req.params.id, req.params.drawingId)); } catch (e) { next(e); }
+}
+
+/* Supervisors */
+async function listSupervisors(req, res, next) {
+  try { res.json(await service.getSupervisors(req.params.id)); } catch (e) { next(e); }
+}
+
+async function addSupervisor(req, res, next) {
+  try { res.status(201).json(await service.addSupervisor(req.params.id, req.body)); } catch (e) { next(e); }
+}
+
+async function removeSupervisor(req, res, next) {
+  try { res.json(await service.removeSupervisor(req.params.id, req.params.supervisorId)); } catch (e) { next(e); }
+}
+
+/* Commercials */
+async function getCommercials(req, res, next) {
+  try { res.json(await service.getCommercials(req.params.id)); } catch (e) { next(e); }
+}
+
+async function upsertCommercials(req, res, next) {
+  try { res.json(await service.upsertCommercials(req.params.id, req.body)); } catch (e) { next(e); }
+}
+
+module.exports = {
+  listProjects,
+  getProject,
+  createProject,
+  updateProject,
+  deleteProject,
+  getStats,
+  getProjectDetails,
+  listSlabs,
+  upsertSlab,
+  batchUpdateSlabs,
+  deleteSlab,
+  listDrawings,
+  createDrawing,
+  updateDrawing,
+  deleteDrawing,
+  listSupervisors,
+  addSupervisor,
+  removeSupervisor,
+  getCommercials,
+  upsertCommercials,
+};
+
