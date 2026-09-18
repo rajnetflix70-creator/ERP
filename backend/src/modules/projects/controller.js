@@ -27,9 +27,14 @@ async function deleteProject(req, res, next) {
   try { res.json(await service.deleteProject(req.params.id)); } catch (e) { next(e); }
 }
 
+async function getStats(req, res, next) {
+  try { res.json(await service.getStats()); } catch (e) { next(e); }
+}
+
 async function getProjectDetails(req, res, next) {
   try { res.json(await service.getProjectWithDetails(req.params.id)); } catch (e) { next(e); }
 }
+
 
 /* Slabs */
 async function listSlabs(req, res, next) {
