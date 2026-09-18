@@ -623,8 +623,8 @@ export default function ProjectsSites({ initialTab }) {
         </div>
       </div>
 
-      {/* ── Tabs Bar: [Projects] and [Sites] ────────────────────── */}
-      <div className="tab-bar" style={{ marginBottom: '16px' }}>
+      {/* ── Tabs Bar: [Projects], [Sites], [Project Master (PT)] ── */}
+      <div className="tab-bar" style={{ marginBottom: '16px', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
         <button
           className={`tab-item ${activeTab === 'projects' ? 'active' : ''}`}
           onClick={() => {
@@ -657,7 +657,7 @@ export default function ProjectsSites({ initialTab }) {
           }}
           style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
         >
-          <span>🏗️</span>
+          <span>🏢</span>
           <span>Sites</span>
           <span
             style={{
@@ -671,6 +671,15 @@ export default function ProjectsSites({ initialTab }) {
           >
             {sites.length}
           </span>
+        </button>
+
+        <button
+          className="tab-item"
+          onClick={() => navigate('/masters/projects')}
+          style={{ display: 'flex', alignItems: 'center', gap: '8px', background: '#f0fdf4', borderColor: '#bbf7d0', color: '#15803d', fontWeight: 600 }}
+        >
+          <span>🏗️</span>
+          <span>Project Master & PT Details</span>
         </button>
       </div>
 
@@ -1188,7 +1197,23 @@ export default function ProjectsSites({ initialTab }) {
 
                       {/* Actions */}
                       <td style={{ textAlign: 'center' }}>
-                        <div style={{ display: 'flex', justifyContent: 'center', gap: '4px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'center', gap: '4px', flexWrap: 'wrap' }}>
+                          <button
+                            title="Manage Floor Slabs, Drawings, Commercials & PT Master Details"
+                            onClick={() => navigate('/masters/projects')}
+                            style={{
+                              background: '#f0fdf4',
+                              border: '1px solid #bbf7d0',
+                              borderRadius: '5px',
+                              padding: '4px 8px',
+                              cursor: 'pointer',
+                              fontSize: '0.82rem',
+                              color: '#15803d',
+                              fontWeight: 600,
+                            }}
+                          >
+                            📊 PT Details
+                          </button>
                           <button
                             title="View Sites in Project"
                             onClick={() => {

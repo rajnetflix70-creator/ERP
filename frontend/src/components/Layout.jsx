@@ -144,6 +144,7 @@ const Layout = () => {
     const titles = {
       '/': 'Dashboard',
       '/projects': 'Projects',
+      '/masters/projects': 'Project Master (PT)',
       '/sites': 'Sites',
       '/boq': 'BOQ',
       '/materials/master': 'Material Master',
@@ -206,7 +207,8 @@ const Layout = () => {
 
           <NavGroup label="PROJECT MANAGEMENT">
             <SideLink to="/projects" icon="📁" label="Projects" onClick={closeSidebar} />
-            <SideLink to="/sites" icon="🏗️" label="Sites" onClick={closeSidebar} />
+            <SideLink to="/masters/projects" icon="🏗️" label="Project Master (PT)" onClick={closeSidebar} />
+            <SideLink to="/sites" icon="🏢" label="Sites" onClick={closeSidebar} />
             <SideLink to="/boq" icon="📋" label="BOQ" onClick={closeSidebar} />
           </NavGroup>
 
