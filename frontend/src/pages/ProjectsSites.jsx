@@ -1075,7 +1075,7 @@ export default function ProjectsSites({ initialTab }) {
                   <th>Budget (AED)</th>
                   <th style={{ width: '140px' }}>Progress</th>
                   <th style={{ width: '100px' }}>Status</th>
-                  <th style={{ width: '120px', textAlign: 'center' }}>Actions</th>
+                  <th style={{ width: '180px', textAlign: 'center' }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -1196,20 +1196,24 @@ export default function ProjectsSites({ initialTab }) {
                       <td>{renderStatusBadge(prj.status)}</td>
 
                       {/* Actions */}
-                      <td style={{ textAlign: 'center' }}>
-                        <div style={{ display: 'flex', justifyContent: 'center', gap: '4px', flexWrap: 'wrap' }}>
+                      <td style={{ textAlign: 'center', verticalAlign: 'middle' }}>
+                        <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '6px', flexWrap: 'nowrap' }}>
                           <button
                             title="Manage Floor Slabs, Drawings, Commercials & PT Master Details"
                             onClick={() => navigate('/masters/projects')}
                             style={{
                               background: '#f0fdf4',
                               border: '1px solid #bbf7d0',
-                              borderRadius: '5px',
-                              padding: '4px 8px',
+                              borderRadius: '6px',
+                              padding: '5px 10px',
                               cursor: 'pointer',
-                              fontSize: '0.82rem',
+                              fontSize: '0.78rem',
                               color: '#15803d',
                               fontWeight: 600,
+                              whiteSpace: 'nowrap',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '4px'
                             }}
                           >
                             📊 PT Details
@@ -1223,11 +1227,13 @@ export default function ProjectsSites({ initialTab }) {
                             style={{
                               background: '#eff6ff',
                               border: '1px solid #bfdbfe',
-                              borderRadius: '5px',
-                              padding: '4px 8px',
+                              borderRadius: '6px',
+                              padding: '5px 8px',
                               cursor: 'pointer',
                               fontSize: '0.85rem',
                               color: '#2563eb',
+                              display: 'inline-flex',
+                              alignItems: 'center'
                             }}
                           >
                             👁️
@@ -1238,11 +1244,13 @@ export default function ProjectsSites({ initialTab }) {
                             style={{
                               background: '#f8fafc',
                               border: '1px solid #e2e8f0',
-                              borderRadius: '5px',
-                              padding: '4px 8px',
+                              borderRadius: '6px',
+                              padding: '5px 8px',
                               cursor: 'pointer',
                               fontSize: '0.85rem',
                               color: '#475569',
+                              display: 'inline-flex',
+                              alignItems: 'center'
                             }}
                           >
                             ✏️
@@ -1253,11 +1261,13 @@ export default function ProjectsSites({ initialTab }) {
                             style={{
                               background: '#fef2f2',
                               border: '1px solid #fecaca',
-                              borderRadius: '5px',
-                              padding: '4px 8px',
+                              borderRadius: '6px',
+                              padding: '5px 8px',
                               cursor: 'pointer',
                               fontSize: '0.85rem',
                               color: '#ef4444',
+                              display: 'inline-flex',
+                              alignItems: 'center'
                             }}
                           >
                             🗑️

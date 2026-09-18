@@ -206,10 +206,9 @@ const Layout = () => {
           <SideLink to="/" icon="📊" label="Dashboard" end onClick={closeSidebar} />
 
           <NavGroup label="PROJECT MANAGEMENT">
-            <SideLink to="/projects" icon="📁" label="Projects" onClick={closeSidebar} />
             <SideLink to="/masters/projects" icon="🏗️" label="Project Master (PT)" onClick={closeSidebar} />
-            <SideLink to="/sites" icon="🏢" label="Sites" onClick={closeSidebar} />
-            <SideLink to="/boq" icon="📋" label="BOQ" onClick={closeSidebar} />
+            <SideLink to="/projects" icon="📁" label="Projects & Sites" onClick={closeSidebar} />
+            <SideLink to="/boq" icon="📋" label="BOQ & Work Packages" onClick={closeSidebar} />
           </NavGroup>
 
           <NavGroup label="MATERIALS">
