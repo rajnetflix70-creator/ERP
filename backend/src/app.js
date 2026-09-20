@@ -63,22 +63,47 @@ app.use(cors({
 app.use(express.json());
 app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 
-app.get('/api/v1/health', (req, res) => res.json({ status: 'ok' }));
+const autoAudit = require('./middleware/auditMiddleware');
+const lookupRoutes = require('./modules/lookup/routes');
+const db = require('./db');
+
+app.get('/api/v1/health', async (req, res) => {
+  try {
+    await db.raw('SELECT 1');
+    res.json({
+      status: 'ok',
+      db: 'connected',
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime()
+    });
+  } catch (err) {
+    res.status(503).json({
+      status: 'degraded',
+      db: 'disconnected',
+      error: err.message,
+      timestamp: new Date().toISOString()
+    });
+  }
+});
 
 app.use('/api/v1/auth', authRoutes);
-app.use('/api/v1/employees', authMiddleware, employeeRoutes);
-app.use('/api/v1/projects',  authMiddleware, projectRoutes);
-app.use('/api/v1/sites',     authMiddleware, siteRoutes);
-app.use('/api/v1/work-packages', authMiddleware, workPackageRoutes);
-app.use('/api/v1/materials', authMiddleware, materialRoutes);
-app.use('/api/v1/material-requests', authMiddleware, materialRequestRoutes);
-app.use('/api/v1/equipment-machines', authMiddleware, equipmentMachineRoutes);
-app.use('/api/v1/vendors', authMiddleware, vendorRoutes);
-app.use('/api/v1/attendance', authMiddleware, attendanceRoutes);
-app.use('/api/v1/procurement', authMiddleware, procurementRoutes);
-app.use('/api/v1/billing', authMiddleware, billingRoutes);
-app.use('/api/v1/reports', authMiddleware, reportsRoutes);
-app.use('/api/v1/main-store', authMiddleware, mainStoreRoutes);
+app.use(authMiddleware);
+app.use(autoAudit());
+
+app.use('/api/v1/lookup', lookupRoutes);
+app.use('/api/v1/employees', employeeRoutes);
+app.use('/api/v1/projects',  projectRoutes);
+app.use('/api/v1/sites',     siteRoutes);
+app.use('/api/v1/work-packages', workPackageRoutes);
+app.use('/api/v1/materials', materialRoutes);
+app.use('/api/v1/material-requests', materialRequestRoutes);
+app.use('/api/v1/equipment-machines', equipmentMachineRoutes);
+app.use('/api/v1/vendors', vendorRoutes);
+app.use('/api/v1/attendance', attendanceRoutes);
+app.use('/api/v1/procurement', procurementRoutes);
+app.use('/api/v1/billing', billingRoutes);
+app.use('/api/v1/reports', reportsRoutes);
+app.use('/api/v1/main-store', mainStoreRoutes);
 
 // SPA fallback for React Router & 404 for unknown API routes
 app.use((req, res, next) => {

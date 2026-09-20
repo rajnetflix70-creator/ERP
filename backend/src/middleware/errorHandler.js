@@ -10,7 +10,9 @@ module.exports = (err, req, res, next) => {
     });
     return res.status(400).json({
       error: true,
-      message: err.details[0].message
+      code: 'VALIDATION_ERROR',
+      message: err.details[0]?.message || 'Validation failed',
+      details: err.details
     });
   }
 
@@ -20,7 +22,27 @@ module.exports = (err, req, res, next) => {
       method: req.method,
       ip: req.ip || req.connection?.remoteAddress,
     });
-    return res.status(401).json({ error: true, message: err.message || 'Unauthorized' });
+    return res.status(401).json({ error: true, code: 'UNAUTHORIZED', message: err.message || 'Unauthorized' });
+  }
+
+  // Database Connection or Query Errors
+  const isDbConnectionError = err.code === 'ECONNREFUSED' || 
+    err.code === 'ETIMEDOUT' || 
+    err.code === 'PROTOCOL_CONNECTION_LOST' ||
+    (err.message && (err.message.includes('Knex: Timeout') || err.message.includes('Connection terminated') || err.message.includes('connect ECONNREFUSED')));
+
+  if (isDbConnectionError) {
+    logger.error(`[503 DB ERROR] ${req.method} ${req.originalUrl} - ${err.message}`, {
+      url: req.originalUrl,
+      method: req.method,
+      code: err.code,
+      stack: err.stack
+    });
+    return res.status(503).json({
+      error: true,
+      code: 'DB_CONNECTION_ERROR',
+      message: 'Database server is currently unavailable. Please try again shortly.'
+    });
   }
 
   const statusCode = err.statusCode || 500;
@@ -36,5 +58,6 @@ module.exports = (err, req, res, next) => {
     detail: err.detail,
   });
 
-  res.status(statusCode).json({ error: true, message, detail: err.detail || err.message });
+  res.status(statusCode).json({ error: true, code: err.code || 'INTERNAL_ERROR', message, detail: err.detail || err.message });
 };
+

@@ -1,16 +1,21 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
+import { ToastProvider } from './contexts/ToastContext';
+import ErrorBoundary from './components/ErrorBoundary';
 import ProtectedRoute from './components/ProtectedRoute';
 import Layout from './components/Layout';
 
-/* Auth */
+/* Auth & Errors */
 import Login from './pages/Login';
+import Forbidden from './pages/Forbidden';
 
 /* Dashboard */
 import Dashboard from './pages/Dashboard';
 
-/* Project Management */
+/* Project Management (V2 Unified Hub) */
+import ProjectHub from './pages/ProjectHub';
+import ProjectDetail from './pages/ProjectDetail';
 import ProjectsSites from './pages/ProjectsSites';
 import SiteDetails from './pages/SiteDetails';
 import ProjectMaster from './pages/ProjectMaster';
@@ -21,6 +26,7 @@ import MaterialMaster from './pages/MaterialMaster';
 import MainStoreCategory from './pages/MainStoreCategory';
 import MainStoreBrand from './pages/MainStoreBrand';
 import MainStoreMaterial from './pages/MainStoreMaterial';
+
 
 /* Procurement */
 import MaterialRequest from './pages/MaterialRequest';
@@ -83,25 +89,29 @@ import ChangePassword from './pages/ChangePassword';
 
 function App() {
   return (
-    <AuthProvider>
-      <Router>
-        <Routes>
-          <Route path="/login" element={<Login />} />
+    <ErrorBoundary>
+      <AuthProvider>
+        <ToastProvider>
+          <Router>
+            <Routes>
+              <Route path="/login" element={<Login />} />
+              <Route path="/403" element={<Forbidden />} />
 
-          <Route path="/" element={<ProtectedRoute />}>
-            <Route element={<Layout />}>
-              {/* Dashboard */}
-              <Route index element={<Dashboard />} />
+              <Route path="/" element={<ProtectedRoute />}>
+                <Route element={<Layout />}>
+                  {/* Dashboard */}
+                  <Route index element={<Dashboard />} />
 
-              {/* ── PROJECT MANAGEMENT ── */}
-              <Route path="projects" element={<ProjectsSites initialTab="projects" />} />
-              <Route path="sites" element={<ProjectsSites initialTab="sites" />} />
-              <Route path="sites/:id" element={<SiteDetails />} />
-              <Route path="projects-sites" element={<ProjectsSites />} />
-              <Route path="boq" element={<ProjectManagement />} />
-              {/* Legacy routes (backward compat) */}
-              <Route path="masters/projects" element={<ProjectMaster />} />
-              <Route path="project/work-packages" element={<ProjectManagement />} />
+                  {/* ── PROJECT MANAGEMENT (V2 UNIFIED COMMAND HUB) ── */}
+                  <Route path="projects" element={<ProjectHub />} />
+                  <Route path="projects/:id" element={<ProjectDetail />} />
+                  <Route path="sites" element={<ProjectsSites initialTab="sites" />} />
+                  <Route path="sites/:id" element={<SiteDetails />} />
+                  <Route path="projects-sites" element={<ProjectHub />} />
+                  <Route path="boq" element={<ProjectManagement />} />
+                  {/* Legacy routes (backward compat) */}
+                  <Route path="masters/projects" element={<ProjectHub />} />
+                  <Route path="project/work-packages" element={<ProjectManagement />} />
 
               {/* ── MATERIALS ── */}
               <Route path="materials/master" element={<MaterialMaster />} />
@@ -198,8 +208,11 @@ function App() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Router>
-    </AuthProvider>
+    </ToastProvider>
+  </AuthProvider>
+</ErrorBoundary>
   );
 }
 
 export default App;
+

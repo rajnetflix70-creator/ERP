@@ -4,7 +4,7 @@ const config = require('../config/index');
 module.exports = (req, res, next) => {
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({ error: true, message: 'Authentication token missing or invalid' });
+    return res.status(401).json({ error: true, code: 'TOKEN_MISSING', message: 'Authentication token missing or invalid' });
   }
 
   const token = authHeader.split(' ')[1];
@@ -13,6 +13,9 @@ module.exports = (req, res, next) => {
     req.user = payload;
     next();
   } catch (err) {
-    return res.status(401).json({ error: true, message: 'Invalid or expired token' });
+    if (err.name === 'TokenExpiredError') {
+      return res.status(401).json({ error: true, code: 'TOKEN_EXPIRED', message: 'Session expired. Please login again.' });
+    }
+    return res.status(401).json({ error: true, code: 'TOKEN_INVALID', message: 'Invalid or expired token' });
   }
 };
