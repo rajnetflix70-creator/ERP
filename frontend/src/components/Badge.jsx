@@ -1,41 +1,42 @@
 import React from 'react';
 
-const BADGE_STYLES = {
-  active: 'bg-emerald-950/80 text-emerald-300 border-emerald-700/60',
-  done: 'bg-emerald-950/80 text-emerald-300 border-emerald-700/60',
-  completed: 'bg-purple-950/80 text-purple-300 border-purple-700/60',
-  approved: 'bg-emerald-950/80 text-emerald-300 border-emerald-700/60',
-  planning: 'bg-blue-950/80 text-blue-300 border-blue-700/60',
-  scheduled: 'bg-blue-950/80 text-blue-300 border-blue-700/60',
-  in_progress: 'bg-amber-950/80 text-amber-300 border-amber-700/60',
-  pending: 'bg-amber-950/80 text-amber-300 border-amber-700/60',
-  review: 'bg-amber-950/80 text-amber-300 border-amber-700/60',
-  on_hold: 'bg-slate-800 text-slate-300 border-slate-600',
-  rejected: 'bg-rose-950/80 text-rose-300 border-rose-700/60',
-  cancelled: 'bg-rose-950/80 text-rose-300 border-rose-700/60',
-  neutral: 'bg-slate-800 text-slate-300 border-slate-700'
+const BADGE_MAP = {
+  active: { bg: '#dcfce7', color: '#15803d', label: 'Active' },
+  done: { bg: '#dcfce7', color: '#15803d', label: 'Done' },
+  completed: { bg: '#f3e8ff', color: '#7e22ce', label: 'Completed' },
+  planning: { bg: '#dbeafe', color: '#1d4ed8', label: 'Planning' },
+  scheduled: { bg: '#dbeafe', color: '#1d4ed8', label: 'Scheduled' },
+  in_progress: { bg: '#fef3c7', color: '#b45309', label: 'In Progress' },
+  pending: { bg: '#fef3c7', color: '#b45309', label: 'Pending' },
+  on_hold: { bg: '#f1f5f9', color: '#475569', label: 'On Hold' },
+  cancelled: { bg: '#fee2e2', color: '#b91c1c', label: 'Cancelled' },
+  rejected: { bg: '#fee2e2', color: '#b91c1c', label: 'Rejected' },
 };
 
-export const Badge = ({
-  status,
-  children,
-  variant,
-  size = 'sm',
-  dot = false
-}) => {
-  const key = (variant || status || 'neutral').toString().toLowerCase().replace(/\s+/g, '_');
-  const styleClass = BADGE_STYLES[key] || BADGE_STYLES.neutral;
-
-  const sizeClass = size === 'xs' ? 'text-[10px] px-1.5 py-0.5' : 'text-xs px-2.5 py-1';
+export const Badge = ({ status, children, size = 'sm', dot = false }) => {
+  const key = (status || 'active').toLowerCase().replace(/\s+/g, '_');
+  const conf = BADGE_MAP[key] || { bg: '#f1f5f9', color: '#475569', label: status };
 
   return (
-    <span className={`inline-flex items-center gap-1.5 rounded-md font-semibold border ${sizeClass} ${styleClass} select-none`}>
-      {dot && (
-        <span className="w-1.5 h-1.5 rounded-full bg-current opacity-80" />
-      )}
-      {children || status}
+    <span
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: '4px',
+        padding: size === 'xs' ? '1px 6px' : '3px 8px',
+        borderRadius: '12px',
+        fontSize: size === 'xs' ? '0.7rem' : '0.75rem',
+        fontWeight: 600,
+        backgroundColor: conf.bg,
+        color: conf.color,
+        whiteSpace: 'nowrap'
+      }}
+    >
+      {dot && <span style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: conf.color }} />}
+      {children || conf.label || status}
     </span>
   );
 };
 
 export default Badge;
+

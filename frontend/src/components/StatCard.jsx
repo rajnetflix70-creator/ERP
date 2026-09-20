@@ -1,13 +1,5 @@
 import React from 'react';
 
-const ACCENT_COLORS = {
-  blue: { bar: 'bg-blue-500', pill: 'bg-blue-500/10 text-blue-400 border-blue-500/30' },
-  emerald: { bar: 'bg-emerald-500', pill: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' },
-  amber: { bar: 'bg-amber-500', pill: 'bg-amber-500/10 text-amber-400 border-amber-500/30' },
-  purple: { bar: 'bg-purple-500', pill: 'bg-purple-500/10 text-purple-400 border-purple-500/30' },
-  rose: { bar: 'bg-rose-500', pill: 'bg-rose-500/10 text-rose-400 border-rose-500/30' }
-};
-
 export const StatCard = ({
   label,
   value,
@@ -17,42 +9,77 @@ export const StatCard = ({
   icon,
   onClick
 }) => {
-  const scheme = ACCENT_COLORS[color] || ACCENT_COLORS.blue;
+  const accentBorders = {
+    blue: '#2563eb',
+    emerald: '#10b981',
+    amber: '#f59e0b',
+    purple: '#8b5cf6',
+    rose: '#ef4444'
+  };
+
+  const badgeBg = {
+    blue: '#eff6ff',
+    emerald: '#ecfdf5',
+    amber: '#fffbeb',
+    purple: '#f5f3ff',
+    rose: '#fff1f2'
+  };
+
+  const badgeColor = {
+    blue: '#1d4ed8',
+    emerald: '#047857',
+    amber: '#b45309',
+    purple: '#6d28d9',
+    rose: '#be123c'
+  };
 
   return (
     <div
       onClick={onClick}
-      className={`bg-slate-900/90 border border-slate-800 p-4 rounded-xl relative overflow-hidden group hover:border-slate-700 transition select-none ${
-        onClick ? 'cursor-pointer hover:bg-slate-800/40' : ''
-      }`}
-      style={{ boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}
+      className="stat-card"
+      style={{
+        position: 'relative',
+        overflow: 'hidden',
+        borderBottom: `3px solid ${accentBorders[color] || '#2563eb'}`,
+        cursor: onClick ? 'pointer' : 'default',
+        padding: '16px 20px',
+        backgroundColor: '#ffffff',
+        borderRadius: '10px',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.06)'
+      }}
     >
-      <div className="flex items-center justify-between">
-        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+        <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
           {label}
         </span>
         {badgeText && (
-          <span className={`text-xs font-mono px-2 py-0.5 rounded border font-semibold ${scheme.pill}`}>
+          <span
+            style={{
+              fontSize: '0.7rem',
+              fontWeight: 600,
+              padding: '2px 8px',
+              borderRadius: '12px',
+              backgroundColor: badgeBg[color] || '#eff6ff',
+              color: badgeColor[color] || '#1d4ed8'
+            }}
+          >
             {badgeText}
           </span>
         )}
       </div>
 
-      <div className="mt-3 flex items-baseline gap-2">
-        <span className="text-2xl font-black font-mono text-white tracking-tight">
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px', margin: '4px 0 6px' }}>
+        <span style={{ fontSize: '1.75rem', fontWeight: 800, color: '#0f172a', fontFamily: 'monospace', lineHeight: 1 }}>
           {value !== undefined && value !== null ? value : '—'}
         </span>
-        {icon && <span className="text-lg opacity-80">{icon}</span>}
+        {icon && <span style={{ fontSize: '1.2rem' }}>{icon}</span>}
       </div>
 
       {subtext && (
-        <div className="mt-2 text-[11px] text-slate-400 font-medium truncate">
+        <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '4px' }}>
           {subtext}
         </div>
       )}
-
-      {/* Colored bottom accent line */}
-      <div className={`absolute bottom-0 left-0 right-0 h-0.5 ${scheme.bar}`} />
     </div>
   );
 };

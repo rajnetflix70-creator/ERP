@@ -1,39 +1,40 @@
 import React from 'react';
 
 export const ToastItem = ({ id, type = 'info', title, message, onClose }) => {
-  const icons = {
-    success: '?',
-    error: '?',
-    warning: '??',
-    info: '??'
+  const colors = {
+    success: { bg: '#f0fdf4', border: '#bbf7d0', text: '#166534', icon: '✅' },
+    error: { bg: '#fef2f2', border: '#fecaca', text: '#991b1b', icon: '❌' },
+    warning: { bg: '#fffbeb', border: '#fde68a', text: '#92400e', icon: '⚠️' },
+    info: { bg: '#eff6ff', border: '#bfdbfe', text: '#1e40af', icon: 'ℹ️' }
   };
-
-  const bgStyles = {
-    success: 'bg-emerald-950/95 border-emerald-500/50 text-emerald-100',
-    error: 'bg-rose-950/95 border-rose-500/50 text-rose-100',
-    warning: 'bg-amber-950/95 border-amber-500/50 text-amber-100',
-    info: 'bg-slate-900/95 border-blue-500/50 text-blue-100'
-  };
+  const conf = colors[type] || colors.info;
 
   return (
     <div
-      className={`flex items-start gap-3 p-4 rounded-xl border shadow-2xl backdrop-blur max-w-md w-full animate-slideIn transition-all duration-200 ${bgStyles[type] || bgStyles.info}`}
       style={{
-        boxShadow: '0 10px 30px rgba(0,0,0,0.3)',
-        animation: 'slideInToast 0.25s cubic-bezier(0.16, 1, 0.3, 1)'
+        display: 'flex',
+        alignItems: 'flex-start',
+        gap: '10px',
+        padding: '12px 16px',
+        borderRadius: '8px',
+        border: `1px solid ${conf.border}`,
+        backgroundColor: conf.bg,
+        color: conf.text,
+        boxShadow: '0 10px 25px rgba(0,0,0,0.1)',
+        minWidth: '280px',
+        maxWidth: '420px'
       }}
     >
-      <span className="text-xl flex-shrink-0">{icons[type] || icons.info}</span>
-      <div className="flex-1 min-w-0">
-        {title && <h5 className="font-bold text-sm tracking-wide mb-0.5">{title}</h5>}
-        <p className="text-xs leading-relaxed opacity-90 break-words">{message}</p>
+      <span style={{ fontSize: '1.1rem' }}>{conf.icon}</span>
+      <div style={{ flex: 1 }}>
+        {title && <div style={{ fontWeight: 700, fontSize: '0.85rem', marginBottom: '2px' }}>{title}</div>}
+        <div style={{ fontSize: '0.8rem', lineHeight: 1.4 }}>{message}</div>
       </div>
       <button
         onClick={() => onClose(id)}
-        className="text-slate-400 hover:text-white p-1 rounded transition text-xs flex-shrink-0"
-        aria-label="Close"
+        style={{ background: 'none', border: 'none', color: conf.text, cursor: 'pointer', fontSize: '0.85rem', opacity: 0.7 }}
       >
-        ?
+        ✕
       </button>
     </div>
   );
@@ -44,10 +45,17 @@ export const ToastContainer = ({ toasts, onClose }) => {
 
   return (
     <div
-      className="fixed bottom-5 right-5 z-[9999] flex flex-col gap-2.5 pointer-events-auto"
-      style={{ maxWidth: 'calc(100vw - 32px)' }}
+      style={{
+        position: 'fixed',
+        bottom: '24px',
+        right: '24px',
+        zIndex: 9999,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '8px'
+      }}
     >
-      {toasts.map(toast => (
+      {toasts.map((toast) => (
         <ToastItem key={toast.id} {...toast} onClose={onClose} />
       ))}
     </div>
@@ -55,3 +63,4 @@ export const ToastContainer = ({ toasts, onClose }) => {
 };
 
 export default ToastContainer;
+

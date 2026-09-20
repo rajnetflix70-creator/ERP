@@ -102,16 +102,17 @@ function App() {
                   {/* Dashboard */}
                   <Route index element={<Dashboard />} />
 
-                  {/* ── PROJECT MANAGEMENT (V2 UNIFIED COMMAND HUB) ── */}
-                  <Route path="projects" element={<ProjectHub />} />
+                  {/* ── PROJECT MANAGEMENT ── */}
+                  <Route path="projects" element={<ProjectsSites initialTab="projects" />} />
                   <Route path="projects/:id" element={<ProjectDetail />} />
                   <Route path="sites" element={<ProjectsSites initialTab="sites" />} />
                   <Route path="sites/:id" element={<SiteDetails />} />
-                  <Route path="projects-sites" element={<ProjectHub />} />
+                  <Route path="projects-sites" element={<ProjectsSites />} />
                   <Route path="boq" element={<ProjectManagement />} />
                   {/* Legacy routes (backward compat) */}
-                  <Route path="masters/projects" element={<ProjectHub />} />
+                  <Route path="masters/projects" element={<ProjectMaster />} />
                   <Route path="project/work-packages" element={<ProjectManagement />} />
+
 
               {/* ── MATERIALS ── */}
               <Route path="materials/master" element={<MaterialMaster />} />

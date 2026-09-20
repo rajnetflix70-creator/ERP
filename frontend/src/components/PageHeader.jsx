@@ -9,45 +9,51 @@ export const PageHeader = ({
   breadcrumbs
 }) => {
   return (
-    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800 pb-5">
-      <div className="space-y-1">
-        {breadcrumbs && (
-          <div className="flex items-center gap-1.5 text-[11px] text-slate-500 font-medium mb-1">
-            {breadcrumbs.map((b, i) => (
-              <React.Fragment key={i}>
-                {i > 0 && <span>/</span>}
-                <span className={i === breadcrumbs.length - 1 ? 'text-slate-300 font-semibold' : ''}>
-                  {b}
-                </span>
-              </React.Fragment>
-            ))}
-          </div>
-        )}
-
-        <div className="flex items-center gap-2.5 flex-wrap">
-          {icon && <span className="text-xl">{icon}</span>}
-          <h2 className="text-xl font-bold text-white tracking-tight">{title}</h2>
-          {tag && (
-            <span className="bg-blue-500/10 text-blue-400 border border-blue-500/30 text-[10px] font-bold px-2 py-0.5 rounded-full">
-              {tag}
-            </span>
-          )}
-        </div>
-
-        {subtitle && (
-          <p className="text-xs text-slate-400 leading-relaxed max-w-3xl">
-            {subtitle}
-          </p>
-        )}
-      </div>
-
-      {actions && (
-        <div className="flex items-center gap-2.5 flex-wrap flex-shrink-0">
-          {actions}
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '20px' }}>
+      {breadcrumbs && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.78rem', color: '#64748b' }}>
+          {breadcrumbs.map((b, i) => (
+            <React.Fragment key={i}>
+              {i > 0 && <span>/</span>}
+              <span style={{ color: i === breadcrumbs.length - 1 ? '#0f172a' : '#64748b', fontWeight: i === breadcrumbs.length - 1 ? 600 : 400 }}>
+                {b}
+              </span>
+            </React.Fragment>
+          ))}
         </div>
       )}
+
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          {icon && <span style={{ fontSize: '1.4rem' }}>{icon}</span>}
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <h1 style={{ fontSize: '1.4rem', fontWeight: 800, color: '#0f172a', margin: 0 }}>
+                {title}
+              </h1>
+              {tag && (
+                <span style={{ fontSize: '0.7rem', fontWeight: 700, padding: '2px 8px', borderRadius: '12px', background: '#eff6ff', color: '#2563eb', border: '1px solid #bfdbfe' }}>
+                  {tag}
+                </span>
+              )}
+            </div>
+            {subtitle && (
+              <p style={{ fontSize: '0.82rem', color: '#64748b', margin: '4px 0 0 0' }}>
+                {subtitle}
+              </p>
+            )}
+          </div>
+        </div>
+
+        {actions && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            {actions}
+          </div>
+        )}
+      </div>
     </div>
   );
 };
 
 export default PageHeader;
+
