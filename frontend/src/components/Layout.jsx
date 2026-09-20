@@ -42,7 +42,7 @@ const MobileBottomNav = ({ onMenuOpen }) => {
   ];
 
   return (
-    <nav className="mobile-bottom-nav" style={{ display: 'flex' }}>
+    <nav className="mobile-bottom-nav">
       {items.map(item => (
         <button
           key={item.path}
