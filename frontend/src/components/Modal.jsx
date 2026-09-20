@@ -31,7 +31,7 @@ const Modal = ({ isOpen, onClose, title, subtitle, icon, children, size = 'defau
         onClick={e => e.stopPropagation()}
         tabIndex={-1}
       >
-        {/* Header */}
+        {/* Drag handle for mobile bottom sheet */}
         <div className="modal-header">
           <div className="modal-header-content">
             {icon && (
@@ -52,8 +52,8 @@ const Modal = ({ isOpen, onClose, title, subtitle, icon, children, size = 'defau
           </button>
         </div>
 
-        {/* Body */}
-        <div className="modal-body">
+        {/* Body — pt-modal-table-wrap enables horizontal scroll for inner tables on mobile */}
+        <div className="modal-body pt-modal-table-wrap">
           {children}
         </div>
       </div>

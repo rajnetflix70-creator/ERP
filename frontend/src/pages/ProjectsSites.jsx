@@ -624,7 +624,7 @@ export default function ProjectsSites({ initialTab }) {
       </div>
 
       {/* ── Tabs Bar: [Projects], [Sites], [Project Master (PT)] ── */}
-      <div className="tab-bar" style={{ marginBottom: '16px', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+      <div className="tab-bar tabs-scroll-row" style={{ marginBottom: '16px', display: 'flex', gap: '8px' }}>
         <button
           className={`tab-item ${activeTab === 'projects' ? 'active' : ''}`}
           onClick={() => {
@@ -1095,7 +1095,7 @@ export default function ProjectsSites({ initialTab }) {
                   paginatedItems.map(prj => (
                     <tr key={prj.id}>
                       {/* Project Code */}
-                      <td>
+                      <td data-label="Code">
                         <span
                           style={{
                             fontFamily: 'monospace',
@@ -1112,7 +1112,7 @@ export default function ProjectsSites({ initialTab }) {
                       </td>
 
                       {/* Project Name */}
-                      <td>
+                      <td data-label="Project">
                         <div style={{ fontWeight: 600, color: '#1e293b', fontSize: '0.88rem' }}>
                           {prj.name}
                         </div>
@@ -1124,19 +1124,19 @@ export default function ProjectsSites({ initialTab }) {
                       </td>
 
                       {/* Client */}
-                      <td>
+                      <td data-label="Client">
                         <span style={{ fontWeight: 500, color: '#334155' }}>{prj.client}</span>
                       </td>
 
                       {/* Location */}
-                      <td>
+                      <td data-label="Location">
                         <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', color: '#475569' }}>
                           <span>📍</span> {prj.location}
                         </span>
                       </td>
 
                       {/* Project Manager */}
-                      <td>
+                      <td data-label="Manager">
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                           <div
                             style={{
@@ -1161,12 +1161,12 @@ export default function ProjectsSites({ initialTab }) {
                       </td>
 
                       {/* Budget */}
-                      <td>
+                      <td data-label="Budget (AED)">
                         <span style={{ fontWeight: 600, color: '#0f766e' }}>{prj.budget}</span>
                       </td>
 
                       {/* Progress */}
-                      <td>
+                      <td data-label="Progress">
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                           <div
                             style={{
@@ -1193,10 +1193,10 @@ export default function ProjectsSites({ initialTab }) {
                       </td>
 
                       {/* Status */}
-                      <td>{renderStatusBadge(prj.status)}</td>
+                      <td data-label="Status">{renderStatusBadge(prj.status)}</td>
 
                       {/* Actions */}
-                      <td style={{ textAlign: 'center', verticalAlign: 'middle' }}>
+                      <td data-label="Actions" style={{ textAlign: 'center', verticalAlign: 'middle' }}>
                         <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '6px', flexWrap: 'nowrap' }}>
                           <button
                             title="Manage Floor Slabs, Drawings, Commercials & PT Master Details"

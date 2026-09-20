@@ -28,6 +28,42 @@ const SideLink = ({ to, icon, label, end = false, onClick }) => (
   </NavLink>
 );
 
+/* ── Mobile Bottom Navigation Dock (< 768px phones only) ── */
+const MobileBottomNav = ({ onMenuOpen }) => {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const isActive = (path) => location.pathname === path || location.pathname.startsWith(path + '/');
+
+  const items = [
+    { icon: '📁', label: 'Projects', path: '/projects' },
+    { icon: '👷', label: 'Attendance', path: '/hr/attendance' },
+    { icon: '📤', label: 'Requests', path: '/materials/requests' },
+    { icon: '📦', label: 'Stock', path: '/inventory/stock' },
+  ];
+
+  return (
+    <nav className="mobile-bottom-nav" style={{ display: 'flex' }}>
+      {items.map(item => (
+        <button
+          key={item.path}
+          className={`mobile-nav-item${isActive(item.path) ? ' active' : ''}`}
+          onClick={() => navigate(item.path)}
+        >
+          <div className="mobile-nav-icon">{item.icon}</div>
+          <span className="mobile-nav-label">{item.label}</span>
+        </button>
+      ))}
+      <button
+        className="mobile-nav-item"
+        onClick={onMenuOpen}
+      >
+        <div className="mobile-nav-icon">☰</div>
+        <span className="mobile-nav-label">Menu</span>
+      </button>
+    </nav>
+  );
+};
+
 const UserDropdown = ({ user, onLogout }) => {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
@@ -320,6 +356,10 @@ const Layout = () => {
           <Outlet />
         </div>
       </div>
+
+      {/* Mobile Bottom Nav — only visible on phones < 768px */}
+      <MobileBottomNav onMenuOpen={() => setSidebarOpen(true)} />
+
     </div>
   );
 };

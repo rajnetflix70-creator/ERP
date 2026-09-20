@@ -573,35 +573,35 @@ const ProjectMaster = () => {
           <p>No project data available.</p>
         ) : (
           <div>
-            {/* Tabs Header */}
-            <div style={{ display: 'flex', gap: 8, borderBottom: '2px solid var(--color-border)', marginBottom: 16 }}>
+            {/* Tabs Header — horizontally scrollable on mobile via pt-modal-tabs class */}
+            <div className="pt-modal-tabs" style={{ display: 'flex', gap: 8, borderBottom: '2px solid var(--color-border)', marginBottom: 16 }}>
               <button
                 className={`btn btn-sm ${ptActiveTab === 'slabs' ? 'btn-primary' : 'btn-secondary'}`}
-                style={{ borderRadius: '6px 6px 0 0' }}
+                style={{ borderRadius: '6px 6px 0 0', flexShrink: 0 }}
                 onClick={() => setPtActiveTab('slabs')}
               >
                 🏗️ Floor Slabs ({ptDetails.slabs?.length || 0})
               </button>
               <button
                 className={`btn btn-sm ${ptActiveTab === 'drawings' ? 'btn-primary' : 'btn-secondary'}`}
-                style={{ borderRadius: '6px 6px 0 0' }}
+                style={{ borderRadius: '6px 6px 0 0', flexShrink: 0 }}
                 onClick={() => setPtActiveTab('drawings')}
               >
                 📐 Drawings ({ptDetails.drawings?.length || 0})
               </button>
               <button
                 className={`btn btn-sm ${ptActiveTab === 'supervisors' ? 'btn-primary' : 'btn-secondary'}`}
-                style={{ borderRadius: '6px 6px 0 0' }}
+                style={{ borderRadius: '6px 6px 0 0', flexShrink: 0 }}
                 onClick={() => setPtActiveTab('supervisors')}
               >
                 👷 Supervisors ({ptDetails.supervisors?.length || 0})
               </button>
               <button
                 className={`btn btn-sm ${ptActiveTab === 'commercials' ? 'btn-primary' : 'btn-secondary'}`}
-                style={{ borderRadius: '6px 6px 0 0' }}
+                style={{ borderRadius: '6px 6px 0 0', flexShrink: 0 }}
                 onClick={() => setPtActiveTab('commercials')}
               >
-                💰 Commercial & Billing
+                💰 Commercial &amp; Billing
               </button>
             </div>
 
